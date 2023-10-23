@@ -1,0 +1,95 @@
+package view 
+
+templ SignError(msg string) {
+    <input id="onError" type="text" placeholder={msg} aria-invalid="true" readonly/>
+}
+
+templ Signin() {
+    <main class="container">
+      <article class="grid">
+        <section>
+          <hgroup>
+            <h1>Sign in</h1>
+            <p>A minimalist macro tracker</p>
+          </hgroup>
+          <form hx-post="/signin" hx-target="#onError">
+            <input
+              type="text"
+              name="login"
+              placeholder="Login"
+              aria-label="Login"
+              autocomplete="nickname"
+              required
+            />
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              aria-label="Password"
+              autocomplete="current-password"
+              required
+            />
+            <fieldset>
+              <label for="remember">
+                <input type="checkbox" role="switch" id="remember" name="remember" />
+                Remember me
+              </label>
+            </fieldset>
+            <button class="contrast" >Login</button>
+          </form>
+          <nav class="container-fluid">
+            <div>
+              <a> Forgot Your Password?</a>
+            </div>
+            <div>
+              <a hx-boost="true" href="/signup"> Need an Account?</a>
+            </div>
+          </nav>
+          <div id="onError"></div>
+        </section>
+        <div></div> <!-- Room for img -->
+      </article>
+    </main>
+}
+
+templ Signup() {
+  <main class="container">
+    <article class="grid">
+      <section>
+        <hgroup>
+          <h1>Sign up for an Account</h1>
+          <p>A minimalist macro tracker</p>
+        </hgroup>
+        <form hx-post="/signup" hx-target="#onError">
+          <input
+            type="text"
+            name="login"
+            placeholder="Login"
+            aria-label="Login"
+            autocomplete="nickname"
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            aria-label="Password"
+            autocomplete="current-password"
+            required
+          />
+          <button class="contrast" >Create My Account</button>
+        </form>
+        <nav class="container-fluid">
+          <div>
+            <a> Forgot Your Password?</a>
+          </div>
+          <div>
+            <a hx-boost="true" href="/signin"> Have an Account</a>
+          </div>
+        </nav>
+        <div id="onError"></div>
+      </section>
+      <div></div> <!-- Room for img -->
+    </article>
+  </main>
+}

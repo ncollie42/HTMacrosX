@@ -1,0 +1,188 @@
+package view
+
+import (
+	db "myapp/DB"
+	"fmt"
+	"time"
+)
+
+const calories_color = "d81b60"
+const fat_color = "fdd835"
+const carb_color = "7cb342"
+const fiber_color = "00acc1"
+const protein_color = "3949ab"
+
+templ DayOverview(date time.Time, total db.Macro, target db.Macro) {
+  <nav class="container-fluid">
+    <a hx-boost="true" href={templ.SafeURL(fmt.Sprint("/",date.Add(-time.Hour * 24).Unix()))}><strong>Prev</strong></a>
+    <a hx-boost="true" href="/"><strong>Today</strong></a>
+    <a hx-boost="true" href={templ.SafeURL(fmt.Sprint("/",date.Add(time.Hour * 24).Unix()))}><strong>Next</strong></a>
+  </nav>
+  <table>
+    <thead>
+      <tr>
+        <th scope="col"> Macro </th>
+        <th scope="col"> Used </th>
+        <th scope="col"> Leftover</th>
+        <th scope="col"> Progress </th>
+      </tr>
+    </thead>
+    <tbody>
+      @overview("Calories", total.Calories, target.Calories, calories_color)
+      @overview("Fat", total.Fat, target.Fat, fat_color)
+      @overview("Carb", total.Carb, target.Carb, carb_color)
+      @overview("Protein", total.Protein, target.Protein, protein_color)
+    </tbody>
+  </table>
+}
+
+templ overview(name string, total float32, target float32, color string) {
+  <tr>
+    <th scope="row">{name}</th>
+    <td>{fmt.Sprintf("%.1f",total)} / {fmt.Sprintf("%.1f",target)}Kcal</td>
+    <td>{fmt.Sprintf("%.1f",target - total)} left</td>
+    <td>
+      <progress class={"progress", ProgressCssColor(color)}
+                value={fmt.Sprint(total / target * 100)} max="100">
+      </progress>
+    </td>
+  </tr>
+}
+
+templ DayQuickview(macros []db.MacroOverview) {
+  <table>
+    <thead>
+      <th scope="col"> Meal </th>
+      <th scope="col"> Calories</th>
+      <th scope="col"> Fat</th>
+      <th scope="col"> Carb</th>
+      <th scope="col"> Fiber</th>
+      <th scope="col"> Protein</th>
+      <th scope="col"> Edit</th>
+    </thead>
+    <tbody>
+    for _, m := range macros {
+      <tr>
+        <th scope="row"> {m.Name} </th>
+        <td> {fmt.Sprintf("%.1f",m.Macros.Calories) } </td>
+        <td> {fmt.Sprintf("%.1f",m.Macros.Fat) } </td>
+        <td> {fmt.Sprintf("%.1f",m.Macros.Carb) } </td>
+        <td> {fmt.Sprintf("%.1f",m.Macros.Fiber) } </td>
+        <td> {fmt.Sprintf("%.1f",m.Macros.Protein) } </td>
+        <td><a hx-boost="true" href={templ.SafeURL(fmt.Sprint("/meal/",m.ID))} role="button">EDIT</a></td>
+      </tr>
+    }
+    </tbody>
+  </table>
+  <nav>
+    <button hx-get="template" hx-target="closest body" hx-push-url="true"> Template </button>
+    <button hx-post="meal"> Quick Add </button>
+  </nav>
+}
+
+templ DayQuickview2(macros []db.MacroOverview) {
+  <p><b>Quick View: </b></p>
+  for _, m := range macros {
+    @button3(m)
+  }
+  <nav>
+    <button hx-get="template" hx-target="closest body" hx-push-url="true"> Template </button>
+    <button hx-post="meal"> Quick Add </button>
+  </nav>
+}
+
+// ----------------------------------------------- TESTING BUTTON LAYOUT----------------------
+
+templ button1(m db.MacroOverview) {
+    <button class="outline" 
+      hx-get={fmt.Sprint("/meal/",m.ID)}
+      hx-target="closest body"
+      hx-push-url="true">
+      <article >
+      <header>{m.Name}</header>
+      <nav>
+        <ul>
+          <li>{fmt.Sprintf("%.1f",m.Macros.Calories) } </li>
+        </ul>
+          <li>{fmt.Sprintf("%.1f",m.Macros.Fat) } </li>
+        <ul>
+          <li>{fmt.Sprintf("%.1f",m.Macros.Carb) } </li>
+        </ul>
+          <li>{fmt.Sprintf("%.1f",m.Macros.Fiber) } </li>
+        <ul>
+          <li>{fmt.Sprintf("%.1f",m.Macros.Protein) } </li>
+        </ul>
+      </nav>
+      <nav>
+        <progress value="100" 
+          class={ProgressCssColor(fat_color), 
+          ProgressCssFlexPercent(int(m.Macros.Fat * 9 / m.Macros.Calories * 100))}></progress>
+        <progress value="100" 
+          class={ProgressCssColor(carb_color), 
+          ProgressCssFlexPercent(int(m.Macros.Carb * 4 / m.Macros.Calories * 100))}></progress>
+        <progress value="100" 
+          class={ProgressCssColor(protein_color), 
+          ProgressCssFlexPercent(int(m.Macros.Protein * 4 / m.Macros.Calories * 100))}></progress>
+      </nav>
+      </article>
+    </button>
+}
+
+templ button2(m db.MacroOverview) {
+    <article >
+      <header>{m.Name}</header>
+      <button class="outline">
+        <nav>
+          <ul>
+            <li>{fmt.Sprintf("%.1f",m.Macros.Calories) } </li>
+          </ul>
+            <li>{fmt.Sprintf("%.1f",m.Macros.Fat) } </li>
+          <ul>
+            <li>{fmt.Sprintf("%.1f",m.Macros.Carb) } </li>
+          </ul>
+            <li>{fmt.Sprintf("%.1f",m.Macros.Fiber) } </li>
+          <ul>
+            <li>{fmt.Sprintf("%.1f",m.Macros.Protein) } </li>
+          </ul>
+        </nav>
+      <div style="display : flex">
+        <progress value="100"></progress>
+        <progress value="100"></progress>
+        <progress value="100"></progress>
+      </div>
+      </button>
+    </article>
+}
+
+templ button3(m db.MacroOverview) {
+    <button class="outline" 
+      hx-get={fmt.Sprint("/meal/",m.ID)}
+      hx-target="closest body"
+      hx-push-url="true">
+      <strong>{m.Name}</strong>
+      <nav>
+        <ul>
+          <li>{fmt.Sprintf("%.1f",m.Macros.Calories) } </li>
+        </ul>
+          <li>{fmt.Sprintf("%.1f",m.Macros.Fat) } </li>
+        <ul>
+          <li>{fmt.Sprintf("%.1f",m.Macros.Carb) } </li>
+        </ul>
+          <li>{fmt.Sprintf("%.1f",m.Macros.Fiber) } </li>
+        <ul>
+          <li>{fmt.Sprintf("%.1f",m.Macros.Protein) } </li>
+        </ul>
+      </nav>
+      <section style="display : flex">
+        <progress value="100" 
+          class={ProgressCssColor(fat_color), 
+          ProgressCssFlexPercent(int(m.Macros.Fat * 9 / m.Macros.Calories * 100))}></progress>
+        <progress value="100" 
+          class={ProgressCssColor(carb_color), 
+          ProgressCssFlexPercent(int(m.Macros.Carb * 4 / m.Macros.Calories * 100))}></progress>
+        <progress value="100" 
+          class={ProgressCssColor(protein_color), 
+          ProgressCssFlexPercent(int(m.Macros.Protein * 4 / m.Macros.Calories * 100))}></progress>
+      </section>
+    </button>
+}

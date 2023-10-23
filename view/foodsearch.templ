@@ -1,0 +1,43 @@
+package view
+
+import (
+	db "myapp/DB"
+	"fmt"
+)
+
+templ FoodSearch(foods []db.Food) {
+  <h1> Food in base 100g </h1>
+  <input type="search" placeholder="Search..."
+    name="search"
+	  hx-get="food_search"
+    hx-select="#search-results"
+	  hx-trigger="keyup changed delay:500ms, search"
+	  hx-target="#search-results"
+    hx-swap="outerHTML"/>
+  <table>
+    <thead>
+      <th scope="col"> Name </th>
+      <th scope="col"> Calories </th>
+      <th scope="col"> Protein </th>
+      <th scope="col"> Fat </th>
+      <th scope="col"> Carb</th>
+    </thead>
+    <tbody id="search-results">
+    for _, food := range foods {
+      <tr>
+        <th scope="row"> {food.Name} </th>
+        <th> {fmt.Sprintf("%.1f",food.Macros.Calories) }</th>
+        <th> {fmt.Sprintf("%.1f",food.Macros.Protein) }</th>
+        <th> {fmt.Sprintf("%.1f",food.Macros.Fat) }</th>
+        <th> {fmt.Sprintf("%.1f",food.Macros.Carb) }</th>
+			  <th>
+          <button hx-post="join" name="foodID" value={fmt.Sprint(food.ID)}>
+            Select 
+          </button>
+        </th>
+      </tr>
+    }
+    </tbody>
+  </table>
+  <!-- <button hx-get="/food/new/{mealID}" hx-target="#search-results" hx-swap="afterend"> Create New </button>-->
+}

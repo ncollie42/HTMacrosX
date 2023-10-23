@@ -1,0 +1,52 @@
+package view
+
+import "fmt"
+
+templ Header() {
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title> Macros • Simple</title>
+
+    <link rel="shortcut icon" href="https://picocss.com/favicon.ico" />
+    <link rel="canonical" href="https://picocss.com/examples/sign-in/" />
+
+    <script src="/htmx"></script>
+    <!-- Pico.css -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" />
+}
+
+templ Full(components ...templ.Component) {
+    <!DOCTYPE html>
+    <html lang="en" data-theme="dark">
+        <head>
+            @Header()
+        </head>
+        <body hx-boost="true">
+        for _, c := range components {
+          {! c}
+        }
+        </body>
+    </html>
+}
+
+templ Nav(id int) {
+  <nav class="container-fluid">
+    <ul>
+      <li>
+        <a hx-boost="true" href="/" class="contrast"><strong>Macros</strong></a>
+      </li>
+    </ul>
+    <ul>
+        <li>
+        <details role="list" dir="rtl">
+          <summary aria-haspopup="listbox" role="link" class="secondary">Account</summary>
+          <ul role="listbox">
+            <li> Logged in as: {fmt.Sprint(id)}</li>
+            <li><a >Settings</a></li>
+            <li><a hx-boost="true" href="/signout">Logout</a></li>
+          </ul>
+        </details>
+      </li>
+    </ul>
+  </nav>
+}
