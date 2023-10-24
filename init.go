@@ -6,6 +6,7 @@ import (
 	db "myapp/DB"
 	"myapp/auth"
 	"os"
+	"strconv"
 )
 
 // TODO: Convert to flag, not sure how to do w/ fly.io yet.
@@ -16,6 +17,7 @@ var PROD_REDIS = false
 func init() {
 	populateDB := flag.Bool("populateDB", false, "a bool")
 	turso := flag.Bool("turso", false, "a bool")
+	clearDB := flag.Bool("clearDB", false, "a bool")
 	flag.Parse()
 
 	fmt.Println("Populating DB: ", *populateDB)
@@ -35,14 +37,19 @@ func init() {
 	fmt.Println("Starting server:")
 	auth.InitSession(PROD_REDIS)
 	db.CreateOrOpenDatabase(PROD_TURSO)
+	if *clearDB {
+		db.ClearTables()
+	}
 	db.CreateTables()
 
 	if *populateDB {
 		// TODO: clear DB
-		// all, _ := db.CreateUser("All", "all")
-		all := 0
-		// nico, _ := db.CreateUser("Nico", "123")
-		nico := 1
+		all_str, _ := db.CreateUser("All", "all")
+		all64, _ := strconv.ParseInt(all_str, 10, 64)
+		nico_str, _ := db.CreateUser("Nico", "123")
+		nico64, _ := strconv.ParseInt(nico_str, 10, 64)
+		all := int(all64)
+		nico := int(nico64)
 		db.CreateUser("foo", "123")
 
 		banana := db.CreateFood("Banana", .4, 27, 3, 1.3, 118, all)

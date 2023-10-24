@@ -14,6 +14,21 @@ import (
 var Db *sql.DB = nil
 var localDB = "t.db"
 
+func ClearTables() {
+	fmt.Println("Clearing DB:")
+	// sqlite_sequence
+	names := []string{"MealFoods", "TemplateFoods", "Templates", "Meals", "Foods", "Users"}
+	// Db.Exec(`SELECT name from sqlite_master where type="table";`)
+
+	for _, name := range names {
+		fmt.Println("Droping table", name)
+		sql := fmt.Sprintf("DROP TABLE IF EXISTS %s", name)
+		if _, err := Db.Exec(sql); err != nil {
+			panic("Error with Clearing table: " + name + " | " + err.Error())
+		}
+	}
+}
+
 func CreateTables() {
 	if _, err := Db.Exec(userTable); err != nil {
 		panic("Error Exec sql - create user\n" + err.Error())
