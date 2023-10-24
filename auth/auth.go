@@ -1,8 +1,11 @@
 package auth
 
 import (
+	"crypto/md5"
 	"crypto/rand"
+	"io"
 	"os"
+	"strconv"
 
 	"encoding/base64"
 	"fmt"
@@ -44,6 +47,9 @@ func Signup(c echo.Context, login string, pass string) error {
 // ---------------------- Generic --------------------------------
 var prod = false
 
+const userID_tag = "userID"
+const token_tag = "token"
+
 // NOTE: using if/else vs func pointers for now.
 func InitSession(isProd bool) {
 	prod = isProd
@@ -53,12 +59,25 @@ func InitSession(isProd bool) {
 	// NOTE: nothing needed to init Local
 }
 
-func setCookie(c echo.Context, userID int) {
-	if prod {
-		setSessionCookieRedis(c, userID)
-	} else {
-		setSessionCookieLocal(c, userID)
+func setCookie(c echo.Context, userID string) {
+	sessionID, err := generateSessionID()
+	if err != nil {
+		panic(err)
 	}
+
+	if prod {
+		setVarRedis(sessionID, userID_tag, userID)
+	} else {
+		setVarLocal(sessionID, userID_tag, userID)
+	}
+
+	expiration := time.Now().Add(time.Hour * 24)
+	cookie := http.Cookie{
+		Name:    cookieName,
+		Value:   sessionID,
+		Expires: expiration,
+	}
+	c.SetCookie(&cookie)
 }
 
 func ClearCookie(c echo.Context) {
@@ -84,11 +103,61 @@ func ClearCookie(c echo.Context) {
 
 func GetUserFromCookie(c echo.Context) (int, error) {
 	// TODO: Return an object with more userData; ID | UserName | LastLogin ext.
+
+	// TODO: update from int to string or full object
+	var userID_str string
+	var err error
+
 	if prod {
-		return getUserFromCookieSessionRedis(c)
+		userID_str, err = getVarRedis(c, userID_tag)
 	} else {
-		return getUserFromCookieSessionLocal(c)
+		userID_str, err = getVarLocal(c, userID_tag)
 	}
+	userID_int, err := strconv.ParseInt(userID_str, 10, 64)
+	return int(userID_int), err
+}
+
+func GenSetDupToken(c echo.Context) string {
+	// TODO: return error
+	now := time.Now().Unix()
+	h := md5.New()
+	io.WriteString(h, strconv.FormatInt(now, 10))
+	token := fmt.Sprintf("%x", h.Sum(nil))
+	sessionID, _ := getSessionID(c)
+
+	if prod {
+		setVarRedis(sessionID, "token", token)
+	} else {
+		setVarLocal(sessionID, "token", token)
+	}
+	return token
+}
+
+func ValidateDupToken(c echo.Context, token string) bool {
+	if prod {
+		sessionToken, _ := getVarRedis(c, "token")
+		return token == sessionToken
+	} else {
+		sessionToken, _ := getVarLocal(c, "token")
+		return token == sessionToken
+	}
+}
+
+func ClearDupToken(c echo.Context) {
+	if prod {
+		clearVarRedis(c, "token")
+	} else {
+		clearVarLocal(c, "token")
+	}
+}
+
+func getSessionID(c echo.Context) (string, error) {
+	cookie, err := c.Cookie(cookieName)
+
+	if err != nil {
+		return "", fmt.Errorf("No valid cookie")
+	}
+	return cookie.Value, nil
 }
 
 // ----------------------   Redis   --------------------------------
@@ -105,48 +174,39 @@ func initRedis() {
 		panic(err)
 	}
 	rClient = redis.NewClient(opt)
-
-	// err = rClient.Set(ctx, "foo", "userID -> ??", 0).Err()
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// val := rClient.Get(ctx, "foo").Val()
-	// fmt.Println("Redis:", val)
 }
 
-func getUserFromCookieSessionRedis(c echo.Context) (int, error) {
-	cookie, err := c.Cookie(cookieName)
+func setVarRedis(sessionID string, name string, val string) {
+	err := rClient.HSet(ctx, sessionID, name, val).Err()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func clearVarRedis(c echo.Context, name string) {
+	sessionID, err := getSessionID(c)
 	// No cookie
 	if err != nil {
-		return 0, err
+		panic(err)
 	}
-	// val, err := rClient.Get(ctx, cookie.Value).Result()
-	val, err := rClient.Get(ctx, cookie.Value).Int()
-	// Invalid cookie
+
+	_, err = rClient.HDel(ctx, sessionID, name).Result()
 	if err != nil {
-		return 0, fmt.Errorf("Invalid Session ID\n")
+		panic(err)
 	}
-	return val, nil
 }
 
-func setSessionCookieRedis(c echo.Context, userID int) {
-	sessionID, err := generateSessionID()
+func getVarRedis(c echo.Context, name string) (string, error) {
+	sessionID, err := getSessionID(c)
+	// No cookie
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	// TODO: set expire time on Redis
-	err = rClient.Set(ctx, sessionID, userID, 0).Err()
+	str, err := rClient.HGet(ctx, sessionID, name).Result()
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf("No var named %s available in session\n", name)
 	}
-
-	expiration := time.Now().Add(time.Hour * 24)
-	cookie := http.Cookie{
-		Name:    cookieName,
-		Value:   sessionID,
-		Expires: expiration,
-	}
-	c.SetCookie(&cookie)
+	return str, nil
 }
 
 func clearSessionIDRedis(key string) {
@@ -156,38 +216,43 @@ func clearSessionIDRedis(key string) {
 	}
 }
 
-// ---------------------- Sessions --------------------------------
-var sessions = make(map[string]int)
+// ---------------------- Sessions Local --------------------------------
+var sessions = make(map[string]map[string]string)
 
 const cookieName = "sessionID"
 
-func setSessionCookieLocal(c echo.Context, userID int) {
-	sessionID, err := generateSessionID()
-	if err != nil {
-		panic(err)
+func setVarLocal(sessionID string, name string, val string) {
+	if _, exists := sessions[sessionID]; !exists {
+		sessions[sessionID] = make(map[string]string)
 	}
-	sessions[sessionID] = userID
-
-	expiration := time.Now().Add(time.Hour * 24)
-	cookie := http.Cookie{
-		Name:    cookieName,
-		Value:   sessionID,
-		Expires: expiration,
-	}
-	c.SetCookie(&cookie)
+	sessions[sessionID][name] = val
 }
 
-func getUserFromCookieSessionLocal(c echo.Context) (int, error) {
-	cookie, err := c.Cookie(cookieName)
+func clearVarLocal(c echo.Context, name string) {
+	sessionID, err := getSessionID(c)
 	// No cookie
 	if err != nil {
-		return 0, err
+		return
 	}
-	if val, ok := sessions[cookie.Value]; ok {
+
+	if _, exists := sessions[sessionID]; !exists {
+		return
+	}
+	// delete(sessions[sessionID], name)
+	sessions[sessionID][name] = ""
+}
+
+func getVarLocal(c echo.Context, name string) (string, error) {
+	sessionID, err := getSessionID(c)
+	// No cookie
+	if err != nil {
+		return "", err
+	}
+	if val, ok := sessions[sessionID][name]; ok {
 		return val, nil
 	}
 	// Invalid cookie
-	return 0, fmt.Errorf("Invalid Session ID\n")
+	return "", fmt.Errorf("No var named %s available in session\n", name)
 }
 
 func clearSessionIDLocal(key string) {
@@ -204,7 +269,7 @@ func setJWTCookie(w http.ResponseWriter, userID int) {
 	// Not yet implemented
 }
 
-// ----------------------    Util --------------------------------
+// ----------------------    Util ---------------------------------
 
 // generateSessionID creates a secure random session ID
 func generateSessionID() (string, error) {

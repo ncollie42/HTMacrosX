@@ -64,8 +64,8 @@ templ GramEdit(food db.Join) {
   </tr>
 }
 
-templ TemplateOverview(macros []db.MacroOverview) {
-  <figure>
+templ TemplateOverview(macros []db.MacroOverview, token string) {
+  <figure hx-history="false">
     <table>
       <thead>
         <tr>
@@ -82,7 +82,10 @@ templ TemplateOverview(macros []db.MacroOverview) {
       <tbody>
       for _, m := range macros {
         <tr>
-          <td><button hx-post={fmt.Sprint("/template/",m.ID)}>Use</button></td>
+          <td>
+            <button hx-post={fmt.Sprint("/template/",m.ID)}
+            hx-vals={fmt.Sprintf(`{"token": "%s"}`, token)}>Use</button>
+          </td>
           <th scope="row"> {m.Name} </th>
           <td> {fmt.Sprintf("%.1f",m.Macros.Calories) } </td>
           <td> {fmt.Sprintf("%.1f",m.Macros.Fat) } </td>

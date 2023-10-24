@@ -295,7 +295,7 @@ func GramEdit(food db.Join) templ.Component {
 	})
 }
 
-func TemplateOverview(macros []db.MacroOverview) templ.Component {
+func TemplateOverview(macros []db.MacroOverview, token string) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) (err error) {
 		templBuffer, templIsBuffer := w.(*bytes.Buffer)
 		if !templIsBuffer {
@@ -308,7 +308,7 @@ func TemplateOverview(macros []db.MacroOverview) templ.Component {
 			var_19 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, err = templBuffer.WriteString("<figure><table><thead><tr><th scope=\"col\">")
+		_, err = templBuffer.WriteString("<figure hx-history=\"false\"><table><thead><tr><th scope=\"col\">")
 		if err != nil {
 			return err
 		}
@@ -390,6 +390,14 @@ func TemplateOverview(macros []db.MacroOverview) templ.Component {
 				return err
 			}
 			_, err = templBuffer.WriteString(templ.EscapeString(fmt.Sprint("/template/", m.ID)))
+			if err != nil {
+				return err
+			}
+			_, err = templBuffer.WriteString("\" hx-vals=\"")
+			if err != nil {
+				return err
+			}
+			_, err = templBuffer.WriteString(templ.EscapeString(fmt.Sprintf(`{"token": "%s"}`, token)))
 			if err != nil {
 				return err
 			}

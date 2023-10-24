@@ -39,8 +39,10 @@ func init() {
 
 	if *populateDB {
 		// TODO: clear DB
-		all, _ := db.CreateUser("All", "all")
-		nico, _ := db.CreateUser("Nico", "123")
+		// all, _ := db.CreateUser("All", "all")
+		all := 0
+		// nico, _ := db.CreateUser("Nico", "123")
+		nico := 1
 		db.CreateUser("foo", "123")
 
 		banana := db.CreateFood("Banana", .4, 27, 3, 1.3, 118, all)

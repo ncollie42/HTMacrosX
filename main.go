@@ -30,7 +30,7 @@ var resources embed.FS
 func main() {
 	e := echo.New()
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Format: "method=${method}, uri=${uri}, status=${status} latency=${latency_human}\n",
+		Format: "method=${method}, uri=${uri}, status=${status} latency=${latency_human} Error=${error}\n",
 	}))
 
 	e.GET("/", overview, validate)
@@ -78,6 +78,7 @@ func validate(next echo.HandlerFunc) echo.HandlerFunc {
 		// userID, err := 2, error(nil)
 		userID, err := auth.GetUserFromCookie(c)
 		if err != nil {
+			fmt.Println(err.Error())
 			return c.Redirect(http.StatusSeeOther, "/signin")
 		}
 		c.Set("userID", userID)
@@ -151,7 +152,13 @@ func foodSearch(c echo.Context) error {
 func templateToMeal(c echo.Context) error {
 	templateID := c.Param("id")
 	userID := c.Get("userID").(int)
+	token := c.FormValue("token")
+	if ok := auth.ValidateDupToken(c, token); !ok {
+		return fmt.Errorf("Invalid token")
+	}
 	db.TemplateToMeal(templateID, userID)
+
+	auth.ClearDupToken(c)
 
 	c.Response().Header().Set("HX-Location", "/")
 	return c.NoContent(http.StatusOK)
@@ -170,10 +177,11 @@ func findAllTemplates(c echo.Context) error {
 	userID := c.Get("userID").(int)
 	macros := db.GetTemplateEntriess(userID)
 
+	token := auth.GenSetDupToken(c)
 	macrosByID := db.SumMacrosByID(macros)
 
 	nav := view.Nav(userID)
-	overview := view.TemplateOverview(macrosByID)
+	overview := view.TemplateOverview(macrosByID, token)
 	component := view.Full(nav, overview)
 	return component.Render(context.Background(), c.Response().Writer)
 }

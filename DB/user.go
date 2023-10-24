@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"strconv"
 )
 
 // ----------------  User  --------------------------
@@ -20,27 +21,27 @@ func hashPassword(pass string) string {
 	return pass
 }
 
-func CreateUser(userName string, pass string) (int, error) {
+func CreateUser(userName string, pass string) (string, error) {
 	hashedPassword := hashPassword(pass)
 
 	result, err := Db.Exec(`INSERT INTO Users (username, password) VALUES (?,?);`, userName, hashedPassword)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	fmt.Println("Created User: ", userName)
 	ID, err := result.LastInsertId()
 	if err != nil {
-		return 0, err
+		return "", err
 	}
-	return int(ID), nil
+	return strconv.FormatInt(ID, 10), nil
 }
 
-func ValidateUser(userName string, pass string) (int, error) {
+func ValidateUser(userName string, pass string) (string, error) {
 	hashedPassword := hashPassword(pass)
 
 	result := Db.QueryRow("SELECT user_id FROM Users WHERE username = ? AND password = ?", userName, hashedPassword)
-	ID := 0
+	var ID int64
 	err := result.Scan(&ID)
 
-	return ID, err
+	return strconv.FormatInt(ID, 10), err
 }
