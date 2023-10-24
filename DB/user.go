@@ -3,6 +3,8 @@ package database
 import (
 	"fmt"
 	"strconv"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // ----------------  User  --------------------------
@@ -16,9 +18,12 @@ CREATE TABLE IF NOT EXISTS "Users" (
 );
 `
 
-func hashPassword(pass string) string {
-	// TODO: Hashpassword
-	return pass
+func hashPassword(password string) string {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return ""
+	}
+	return string(bytes)
 }
 
 func CreateUser(userName string, pass string) (string, error) {
