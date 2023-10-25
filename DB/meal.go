@@ -16,26 +16,6 @@ CREATE TABLE IF NOT EXISTS "Meals" (
 );
 `
 
-type Meal struct {
-	Name  string
-	ID    string
-	Foods []Join
-}
-
-type Join struct {
-	Macros Macro
-	Name   string
-	JoinID int
-	Grams  float32
-}
-
-type Food struct {
-	Macros Macro
-	Name   string
-	ID     int
-	Grams  float32
-}
-
 func CreateMeal(name string, userID int) int {
 	start := time.Now()
 	defer func() {

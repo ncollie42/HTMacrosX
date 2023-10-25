@@ -57,7 +57,7 @@ templ GramEdit(food db.Join) {
       placeholder={fmt.Sprint(food.Grams,"g")}
       name="grams"
       hx-put={fmt.Sprint(food.JoinID,"/join")}
-      hx-trigger="keyup changed delay:250ms"
+      hx-trigger="change"
       hx-target="closest tr"
       hx-swap="outerHTML"
       /></th>

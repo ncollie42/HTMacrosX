@@ -14,30 +14,44 @@ templ FoodSearch(foods []db.Food) {
 	  hx-trigger="keyup changed delay:500ms, search"
 	  hx-target="#search-results"
     hx-swap="outerHTML"/>
-  <table>
-    <thead>
-      <th scope="col"> Name </th>
-      <th scope="col"> Calories </th>
-      <th scope="col"> Protein </th>
-      <th scope="col"> Fat </th>
-      <th scope="col"> Carb</th>
-    </thead>
-    <tbody id="search-results">
-    for _, food := range foods {
-      <tr>
-        <th scope="row"> {food.Name} </th>
-        <th> {fmt.Sprintf("%.1f",food.Macros.Calories) }</th>
-        <th> {fmt.Sprintf("%.1f",food.Macros.Protein) }</th>
-        <th> {fmt.Sprintf("%.1f",food.Macros.Fat) }</th>
-        <th> {fmt.Sprintf("%.1f",food.Macros.Carb) }</th>
-			  <th>
-          <button hx-post="join" name="foodID" value={fmt.Sprint(food.ID)}>
-            Select 
-          </button>
-        </th>
-      </tr>
-    }
-    </tbody>
-  </table>
+  <div id="search-results">
+  for _, food := range foods {
+    @foodSelect(food)
+  }
+  </div>
   <!-- <button hx-get="/food/new/{mealID}" hx-target="#search-results" hx-swap="afterend"> Create New </button>-->
+}
+
+templ foodSelect(food db.Food) {
+  <button class="outline" 
+    hx-post="join"
+    name="foodID"
+    value={fmt.Sprint(food.ID)}>
+    
+    <strong>{food.Name}</strong>
+    <nav>
+      <ul>
+        <li>{fmt.Sprintf("%.1f",food.Macros.Calories) } </li>
+      </ul>
+        <li>{fmt.Sprintf("%.1f",food.Macros.Fat) } </li>
+      <ul>
+        <li>{fmt.Sprintf("%.1f",food.Macros.Carb) } </li>
+      </ul>
+        <li>{fmt.Sprintf("%.1f",food.Macros.Fiber) } </li>
+      <ul>
+        <li>{fmt.Sprintf("%.1f",food.Macros.Protein) } </li>
+      </ul>
+    </nav>
+    <section style="display : flex">
+      <progress value="100" 
+        class={ProgressCssColor(fat_color), 
+        ProgressCssFlexPercent(int(food.Macros.Fat * 9 / food.Macros.Calories * 100))}></progress>
+      <progress value="100" 
+        class={ProgressCssColor(carb_color), 
+        ProgressCssFlexPercent(int(food.Macros.Carb * 4 / food.Macros.Calories * 100))}></progress>
+      <progress value="100" 
+        class={ProgressCssColor(protein_color), 
+        ProgressCssFlexPercent(int(food.Macros.Protein * 4 / food.Macros.Calories * 100))}></progress>
+    </section>
+  </button>
 }

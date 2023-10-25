@@ -113,11 +113,32 @@ type MacroPerGram struct {
 	FiberPerGram   float32
 }
 
+// TODO: Merge structs in a way that makes sense.
 // NOTE: used for Meal - Food - Template
 type MacroOverview struct {
 	Macros Macro
 	Name   string
 	ID     int
+}
+
+type Meal struct {
+	Name  string
+	ID    string
+	Foods []Join
+}
+
+type Food struct {
+	Macros Macro
+	Name   string
+	ID     int
+	Grams  float32
+}
+
+type Join struct {
+	Macros Macro
+	Name   string
+	JoinID int
+	Grams  float32
 }
 
 func GetEntriessByDate(userID int, dateTime time.Time) []MacroOverview {

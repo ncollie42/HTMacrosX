@@ -36,133 +36,166 @@ func FoodSearch(foods []db.Food) templ.Component {
 		if err != nil {
 			return err
 		}
-		_, err = templBuffer.WriteString("</h1><input type=\"search\" placeholder=\"Search...\" name=\"search\" hx-get=\"food_search\" hx-select=\"#search-results\" hx-trigger=\"keyup changed delay:500ms, search\" hx-target=\"#search-results\" hx-swap=\"outerHTML\"><table><thead><th scope=\"col\">")
-		if err != nil {
-			return err
-		}
-		var_3 := `Name `
-		_, err = templBuffer.WriteString(var_3)
-		if err != nil {
-			return err
-		}
-		_, err = templBuffer.WriteString("</th><th scope=\"col\">")
-		if err != nil {
-			return err
-		}
-		var_4 := `Calories `
-		_, err = templBuffer.WriteString(var_4)
-		if err != nil {
-			return err
-		}
-		_, err = templBuffer.WriteString("</th><th scope=\"col\">")
-		if err != nil {
-			return err
-		}
-		var_5 := `Protein `
-		_, err = templBuffer.WriteString(var_5)
-		if err != nil {
-			return err
-		}
-		_, err = templBuffer.WriteString("</th><th scope=\"col\">")
-		if err != nil {
-			return err
-		}
-		var_6 := `Fat `
-		_, err = templBuffer.WriteString(var_6)
-		if err != nil {
-			return err
-		}
-		_, err = templBuffer.WriteString("</th><th scope=\"col\">")
-		if err != nil {
-			return err
-		}
-		var_7 := `Carb`
-		_, err = templBuffer.WriteString(var_7)
-		if err != nil {
-			return err
-		}
-		_, err = templBuffer.WriteString("</th></thead><tbody id=\"search-results\">")
+		_, err = templBuffer.WriteString("</h1><input type=\"search\" placeholder=\"Search...\" name=\"search\" hx-get=\"food_search\" hx-select=\"#search-results\" hx-trigger=\"keyup changed delay:500ms, search\" hx-target=\"#search-results\" hx-swap=\"outerHTML\"><div id=\"search-results\">")
 		if err != nil {
 			return err
 		}
 		for _, food := range foods {
-			_, err = templBuffer.WriteString("<tr><th scope=\"row\">")
-			if err != nil {
-				return err
-			}
-			var var_8 string = food.Name
-			_, err = templBuffer.WriteString(templ.EscapeString(var_8))
-			if err != nil {
-				return err
-			}
-			_, err = templBuffer.WriteString("</th><th>")
-			if err != nil {
-				return err
-			}
-			var var_9 string = fmt.Sprintf("%.1f", food.Macros.Calories)
-			_, err = templBuffer.WriteString(templ.EscapeString(var_9))
-			if err != nil {
-				return err
-			}
-			_, err = templBuffer.WriteString("</th><th>")
-			if err != nil {
-				return err
-			}
-			var var_10 string = fmt.Sprintf("%.1f", food.Macros.Protein)
-			_, err = templBuffer.WriteString(templ.EscapeString(var_10))
-			if err != nil {
-				return err
-			}
-			_, err = templBuffer.WriteString("</th><th>")
-			if err != nil {
-				return err
-			}
-			var var_11 string = fmt.Sprintf("%.1f", food.Macros.Fat)
-			_, err = templBuffer.WriteString(templ.EscapeString(var_11))
-			if err != nil {
-				return err
-			}
-			_, err = templBuffer.WriteString("</th><th>")
-			if err != nil {
-				return err
-			}
-			var var_12 string = fmt.Sprintf("%.1f", food.Macros.Carb)
-			_, err = templBuffer.WriteString(templ.EscapeString(var_12))
-			if err != nil {
-				return err
-			}
-			_, err = templBuffer.WriteString("</th><th><button hx-post=\"join\" name=\"foodID\" value=\"")
-			if err != nil {
-				return err
-			}
-			_, err = templBuffer.WriteString(templ.EscapeString(fmt.Sprint(food.ID)))
-			if err != nil {
-				return err
-			}
-			_, err = templBuffer.WriteString("\">")
-			if err != nil {
-				return err
-			}
-			var_13 := `Select `
-			_, err = templBuffer.WriteString(var_13)
-			if err != nil {
-				return err
-			}
-			_, err = templBuffer.WriteString("</button></th></tr>")
+			err = foodSelect(food).Render(ctx, templBuffer)
 			if err != nil {
 				return err
 			}
 		}
-		_, err = templBuffer.WriteString("</tbody></table><!--")
+		_, err = templBuffer.WriteString("</div><!--")
 		if err != nil {
 			return err
 		}
-		var_14 := ` <button hx-get="/food/new/{mealID}" hx-target="#search-results" hx-swap="afterend"> Create New </button>`
-		_, err = templBuffer.WriteString(var_14)
+		var_3 := ` <button hx-get="/food/new/{mealID}" hx-target="#search-results" hx-swap="afterend"> Create New </button>`
+		_, err = templBuffer.WriteString(var_3)
 		if err != nil {
 			return err
 		}
 		_, err = templBuffer.WriteString("-->")
+		if err != nil {
+			return err
+		}
+		if !templIsBuffer {
+			_, err = templBuffer.WriteTo(w)
+		}
+		return err
+	})
+}
+
+func foodSelect(food db.Food) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) (err error) {
+		templBuffer, templIsBuffer := w.(*bytes.Buffer)
+		if !templIsBuffer {
+			templBuffer = templ.GetBuffer()
+			defer templ.ReleaseBuffer(templBuffer)
+		}
+		ctx = templ.InitializeContext(ctx)
+		var_4 := templ.GetChildren(ctx)
+		if var_4 == nil {
+			var_4 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		_, err = templBuffer.WriteString("<button class=\"outline\" hx-post=\"join\" name=\"foodID\" value=\"")
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString(templ.EscapeString(fmt.Sprint(food.ID)))
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("\"><strong>")
+		if err != nil {
+			return err
+		}
+		var var_5 string = food.Name
+		_, err = templBuffer.WriteString(templ.EscapeString(var_5))
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</strong><nav><ul><li>")
+		if err != nil {
+			return err
+		}
+		var var_6 string = fmt.Sprintf("%.1f", food.Macros.Calories)
+		_, err = templBuffer.WriteString(templ.EscapeString(var_6))
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</li></ul><li>")
+		if err != nil {
+			return err
+		}
+		var var_7 string = fmt.Sprintf("%.1f", food.Macros.Fat)
+		_, err = templBuffer.WriteString(templ.EscapeString(var_7))
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</li><ul><li>")
+		if err != nil {
+			return err
+		}
+		var var_8 string = fmt.Sprintf("%.1f", food.Macros.Carb)
+		_, err = templBuffer.WriteString(templ.EscapeString(var_8))
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</li></ul><li>")
+		if err != nil {
+			return err
+		}
+		var var_9 string = fmt.Sprintf("%.1f", food.Macros.Fiber)
+		_, err = templBuffer.WriteString(templ.EscapeString(var_9))
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</li><ul><li>")
+		if err != nil {
+			return err
+		}
+		var var_10 string = fmt.Sprintf("%.1f", food.Macros.Protein)
+		_, err = templBuffer.WriteString(templ.EscapeString(var_10))
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</li></ul></nav><section style=\"display : flex\">")
+		if err != nil {
+			return err
+		}
+		var var_11 = []any{ProgressCssColor(fat_color),
+			ProgressCssFlexPercent(int(food.Macros.Fat * 9 / food.Macros.Calories * 100))}
+		err = templ.RenderCSSItems(ctx, templBuffer, var_11...)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("<progress value=\"100\" class=\"")
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString(templ.EscapeString(templ.CSSClasses(var_11).String()))
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("\"></progress>")
+		if err != nil {
+			return err
+		}
+		var var_12 = []any{ProgressCssColor(carb_color),
+			ProgressCssFlexPercent(int(food.Macros.Carb * 4 / food.Macros.Calories * 100))}
+		err = templ.RenderCSSItems(ctx, templBuffer, var_12...)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("<progress value=\"100\" class=\"")
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString(templ.EscapeString(templ.CSSClasses(var_12).String()))
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("\"></progress>")
+		if err != nil {
+			return err
+		}
+		var var_13 = []any{ProgressCssColor(protein_color),
+			ProgressCssFlexPercent(int(food.Macros.Protein * 4 / food.Macros.Calories * 100))}
+		err = templ.RenderCSSItems(ctx, templBuffer, var_13...)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("<progress value=\"100\" class=\"")
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString(templ.EscapeString(templ.CSSClasses(var_13).String()))
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("\"></progress></section></button>")
 		if err != nil {
 			return err
 		}

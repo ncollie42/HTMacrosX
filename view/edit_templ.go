@@ -284,7 +284,7 @@ func GramEdit(food db.Join) templ.Component {
 		if err != nil {
 			return err
 		}
-		_, err = templBuffer.WriteString("\" hx-trigger=\"keyup changed delay:250ms\" hx-target=\"closest tr\" hx-swap=\"outerHTML\"></th></tr>")
+		_, err = templBuffer.WriteString("\" hx-trigger=\"change\" hx-target=\"closest tr\" hx-swap=\"outerHTML\"></th></tr>")
 		if err != nil {
 			return err
 		}
