@@ -165,11 +165,13 @@ func templateToMeal(c echo.Context) error {
 }
 
 func findTemplate(c echo.Context) error {
+	userID := c.Get("userID").(int)
 	templateID := c.Param("id")
 	meals := db.GetTemplateByID(templateID)
 
+	nav := view.Nav(userID)
 	templateEdit := view.MealEdit(meals)
-	component := view.Full(templateEdit)
+	component := view.Full(nav, templateEdit)
 	return component.Render(context.Background(), c.Response().Writer)
 }
 

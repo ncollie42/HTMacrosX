@@ -101,5 +101,14 @@ func init() {
 		db.CreateTemplateJoin(fmt.Sprint(t5), fmt.Sprint(tuna), "128")
 		db.CreateTemplateJoin(fmt.Sprint(t5), fmt.Sprint(lentils), "200")
 		db.CreateTemplateJoin(fmt.Sprint(t5), fmt.Sprint(tomato), "120")
+		t6 := db.CreateTemplate("Breakfast Oats - Lean", nico)
+		db.CreateTemplateJoin(fmt.Sprint(t6), fmt.Sprint(oats), "80")
+		db.CreateTemplateJoin(fmt.Sprint(t6), fmt.Sprint(chia), "5")
+		db.CreateTemplateJoin(fmt.Sprint(t6), fmt.Sprint(hemp), "10")
+		db.CreateTemplateJoin(fmt.Sprint(t6), fmt.Sprint(flax), "15")
+		db.CreateTemplateJoin(fmt.Sprint(t6), fmt.Sprint(raisins), "30")
+		db.CreateTemplateJoin(fmt.Sprint(t6), fmt.Sprint(goji), "15")
+		db.CreateTemplateJoin(fmt.Sprint(t6), fmt.Sprint(yogurt), "255")
+		db.CreateTemplateJoin(fmt.Sprint(t6), fmt.Sprint(blackberry), "40")
 	}
 }
