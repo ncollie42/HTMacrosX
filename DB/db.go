@@ -132,6 +132,7 @@ type Food struct {
 	Name   string
 	ID     int
 	Grams  float32
+	//PreferedServing
 }
 
 type Join struct {
