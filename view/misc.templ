@@ -1,52 +1,216 @@
 package view
 
-import "fmt"
+import (
+ "fmt" 
+	db "myapp/DB"
+)
 
 templ Header() {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
     <title> Macros • Simple</title>
 
-    <link rel="shortcut icon" href="https://picocss.com/favicon.ico" />
-    <link rel="canonical" href="https://picocss.com/examples/sign-in/" />
-
+    <!-- Htmx.js-->
     <script src="/htmx"></script>
-    <!-- Pico.css -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" />
+    <!-- pico.css -->
+    <link rel="stylesheet" href="/pico"></link>
+    <style>
+      .test1{
+        background-color: #d81b60;
+      }
+      .test2{
+        --pico-progress-color: var(--pico-color-green-900);
+      }
+      .bar-calories{
+        --pico-progress-color: #d81b60;
+      }
+      .bar-fat{
+        --pico-progress-color: #fdd835;
+      }
+      .bar-carb{
+        --pico-progress-color: #7cb342;
+      }
+      .bar-fiber{
+        --pico-progress-color: #00acc1;
+      }
+      .bar-protein{
+        --pico-progress-color: #3949ab;
+      }
+      .text-center {
+        text-align: center;
+      }
+    </style>
 }
 
 templ Full(components ...templ.Component) {
     <!DOCTYPE html>
     <html lang="en" data-theme="dark">
         <head>
-            @Header()
+          @Header()
         </head>
-        <body hx-boost="true">
-        for _, c := range components {
-          {! c}
-        }
+        <body class="container" hx-boost="true">
+          for _, c := range components {
+            @c
+          }
         </body>
     </html>
 }
 
 templ Nav(id int) {
-  <nav class="container-fluid">
+  <nav>
     <ul>
       <li>
-        <a hx-boost="true" href="/" class="contrast"><strong>Macros</strong></a>
+        <a hx-boost="true" href="/">
+          <h2>Macros</h2>
+        </a>
       </li>
     </ul>
     <ul>
-        <li>
-        <details role="list" dir="rtl">
-          <summary aria-haspopup="listbox" role="link" class="secondary">Account</summary>
-          <ul role="listbox">
+      <li><a href="#" class="secondary">Services</a></li>
+      <li>
+        <details class="dropdown">
+          <summary role="link" class="secondary">Account</summary>
+          <ul dir="rtl">
             <li> Logged in as: {fmt.Sprint(id)}</li>
-            <li><a >Settings</a></li>
+            <li><a href="#">Update Macros</a></li>
             <li><a hx-boost="true" href="/signout">Logout</a></li>
           </ul>
         </details>
       </li>
     </ul>
   </nav>
+}
+
+// ----------------------------------------------- BUTTON ----------------------
+
+templ mealOverviewButton(m db.MacroOverview) {
+  <article>
+    @buttonNav(m.Name, liDelete(fmt.Sprint("/meal/",m.ID,"/")))
+    @macroGet(m.Macros, fmt.Sprint("/meal/",m.ID,"/"))
+  </article>
+}
+
+templ templateOverviewButton(m db.MacroOverview, idempotentToken string) {
+  <article>
+    @buttonNav(m.Name, liEdit(fmt.Sprint("/template/", m.ID, "/")))
+    @macroPost(m.Macros, fmt.Sprintf(`{"token": "%s"}`, idempotentToken), fmt.Sprint("/template/",m.ID,"/"))
+  </article>
+}
+
+templ GramEdit(food db.Join) {
+  // TODO: Add GramEdit Delete
+  <article>
+    @buttonNav(food.Name, liDelete(fmt.Sprint("join/", food.JoinID)))
+    @macro(food.Macros)
+    <input type="number" name="grams" placeholder={fmt.Sprint(food.Grams,`g`)} aria-label="Number"
+      hx-put={fmt.Sprint(`join/`, food.JoinID)}
+      hx-trigger="change"
+      hx-target="closest article"
+      hx-swap="outerHTML"/>
+  </article>
+}
+
+templ foodSelect(food db.Food) {
+  //TODO: Add Idempotent token for food select
+  <article>
+  	@buttonNav(food.Name)
+    @macroPost(food.Macros, "", fmt.Sprint("join/", food.ID))
+  </article>
+}
+
+//---------------------------------------- Button Components ----------------------------------------
+templ buttonNav(name string, lis ...templ.Component) {
+  //TODO: Take in Options? Edit, Delete?
+  <nav>
+    <ul>
+      <li><strong>{name}</strong></li>
+    </ul>
+    <ul>
+      <li>
+        <details class="dropdown">
+          <summary role="link" class="secondary">
+            Options
+          </summary>
+          <ul dir="rtl">
+            for _, li := range lis{
+              @li
+            }
+          </ul>
+        </details>
+      </li>
+    </ul>
+  </nav>
+}
+
+templ liEdit(path string ){
+  <li>
+    <a href={templ.SafeURL(path)}>Edit</a>
+  </li>
+}
+
+templ liDelete(path string){
+  <li>
+    <a href={templ.SafeURL(path)} 
+      hx-delete={path}
+      hx-target="closest article"
+      hx-swap="outerHTML">Delete</a>
+  </li>
+}
+
+templ macro(m db.Macro) {
+  <div class="container">
+    @macroView(m)
+    @macroBar(m)
+  </div>
+}
+
+templ macroGet(m db.Macro, path string) {
+  <a href={templ.SafeURL(path)} role="button"
+    class="outline container">
+    @macroView(m)
+    @macroBar(m)
+  </a>
+}
+
+templ macroPost(m db.Macro, idempotentToken string,  path string) {
+  <button  
+    class="outline container"
+    hx-post={path}
+    hx-vals={idempotentToken}>
+    @macroView(m)
+    @macroBar(m)
+  </button>
+}
+
+templ macroView(m db.Macro) {
+  <div role="group" class="text-center">
+    <h5>Calories</h5>
+    <h5>Fat</h5>
+    <h5>Carbs</h5>
+    <h5>Fiber</h5>
+    <h5>Protein</h5>
+  </div>
+
+  <div role="group" class="text-center">
+    <h6>{fmt.Sprintf("%.1f",m.Calories) } </h6>
+    <h6>{fmt.Sprintf("%.1f",m.Fat) } </h6>
+    <h6>{fmt.Sprintf("%.1f",m.Carb) } </h6>
+    <h6>{fmt.Sprintf("%.1f",m.Fiber) } </h6>
+    <h6>{fmt.Sprintf("%.1f",m.Protein) } </h6>
+  </div>
+}
+
+templ macroBar(m db.Macro) {
+  <div style="display : flex" class="container-fluid">
+    <progress value="100" 
+      class={flexPercent(int(m.Fat * float32(calories[Fat]) / m.Calories * 100)), barColor[Fat]}>
+    </progress>
+    <progress value="100" 
+      class={flexPercent(int(m.Carb* float32(calories[Carb]) / m.Calories * 100)), barColor[Carb]}>
+    </progress>
+    <progress value="100" 
+      class={flexPercent(int(m.Protein* float32(calories[Protein]) / m.Calories * 100)), barColor[Protein]}>
+    </progress>
+  </div>
 }

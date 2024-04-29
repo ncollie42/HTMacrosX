@@ -1,0 +1,115 @@
+package view
+
+import (
+	db "myapp/DB"
+	"fmt"
+	"time"
+)
+
+type Macro int
+const (
+    Calories Macro = iota // iota starts at 0
+    Fat
+    Carb
+    Fiber
+    Protein
+    Alcohol
+)
+var calories = [6]int{0,9,4,0,4,7}
+var barColor = [6]string{"bar-calories", "bar-fat", "bar-carb", "bar-fiber", "bar-protein"}
+var macrosStr = [6]string{"Calories","Fat","Carbs","Fiber","Protein","Alcohol"}
+func (m Macro) String() string {
+  return macrosStr[m]
+}
+
+templ overview(m Macro, current float32, target float32) {
+  <tr>
+    <th scope="row">{ fmt.Sprint(m)}</th>
+    <td>{fmt.Sprintf("%.f",current)}/{fmt.Sprintf("%.f",target)}K</td>
+    <td>{fmt.Sprintf("%.f",target - current)} left</td>
+    <td>
+      <progress class={"", barColor[m]}
+                value={fmt.Sprint(current / target * 100)} max="100">
+      </progress>
+    </td>
+  </tr>
+}
+
+// <nav class="container-fluid">
+//   <a hx-boost="true" href={templ.SafeURL(fmt.Sprint("/",date.Add(-time.Hour * 24).Unix()))}><strong>Prev</strong></a>
+//   <a hx-boost="true" href="/"><strong>Today</strong></a>
+//   <a hx-boost="true" href={templ.SafeURL(fmt.Sprint("/",date.Add(time.Hour * 24).Unix()))}><strong>Next</strong></a>
+// </nav>
+templ DayOverview(date time.Time, total db.Macro, target db.Macro) {
+  <table>
+    <thead>
+      <tr>
+        <th scope="col"> Macro </th>
+        <th scope="col"> Used </th>
+        <th scope="col"> Leftover</th>
+        <th scope="col"> Progress </th>
+      </tr>
+    </thead>
+    <tbody>
+      @overview(Calories, total.Calories, target.Calories)
+      @overview(Fat, total.Fat, target.Fat)
+      @overview(Carb, total.Carb, target.Carb)
+      @overview(Protein, total.Protein, target.Protein)
+    </tbody>
+  </table>
+}
+
+templ DayQuickview(macros []db.MacroOverview) {
+  <p><b>Quick View: </b></p>
+  for _, m := range macros {
+    @mealOverviewButton(m)
+  }
+  <div role="group">
+    <button class="outline contrast" hx-get="template" hx-target="closest body" hx-push-url="true"> Template </button>
+    <button class="outline contrast" hx-post="meal"> Quick Add </button>
+  </div>
+}
+
+// ---------------------------- TEMPLATE Overview -------------------------------
+
+templ TemplateOverview(macros []db.MacroOverview, idempotentToken string) {
+  for _, m := range macros {
+    @templateOverviewButton(m, idempotentToken)
+  }
+  <div role="group">
+    <button class="outline contrast" hx-post="/template"> Create Template </button>
+  </div>
+}
+
+// ---------------------------- Meal Overview -------------------------------
+
+templ NameEdit(name string) {
+  <input type="text" 
+    placeholder={name}
+    name="name"
+    hx-trigger="keyup changed delay:500ms"
+    hx-put="name"/>
+}
+
+templ MealEdit(meal db.Meal) {
+  @NameEdit(meal.Name)
+  for _, food := range meal.Foods {
+    @GramEdit(food)
+  }
+  <div role="group">
+    <a href="food_search" 
+      role="button"
+      class="outline contrast">Add Food
+    </a>
+  </div>
+}
+
+// templ del() {
+//   <button type="button" 
+//     hx-delete="delete/16"
+//     class=""
+//     >
+  
+//   </button>
+//   <button hx-delete={fmt.Sprint(meal.ID,"/delete")} class="outline"><strong>Delete all</strong></button>
+// }

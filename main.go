@@ -16,8 +16,11 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-//go:embed js/htmx.js
+//go:embed js/htmx.min.js
 var htmxJS []byte
+
+//go:embed css/pico.min.css
+var picoCSS []byte
 
 // go:embed js/*
 var resources embed.FS
@@ -37,30 +40,32 @@ func main() {
 	e.GET("/:date", overview, validate)
 	// TODO: Group Validate + resources Auth
 	e.POST("/meal", createMeal, validate)
-	e.DELETE("/meal/:id/delete", deleteMeal)
-	e.GET("/meal/:id", findMeal, validate)
+	e.DELETE("/meal/:id/", deleteMeal)
+	e.GET("/meal/:id/", findMeal, validate)
 
 	e.GET("/meal/:id/food_search", foodSearch, validate)
 	e.GET("/template/:id/food_search", foodSearch, validate)
 
-	e.POST("/meal/:id/join", createMealJoin)
-	e.DELETE("/meal/:id/join", deleteMealJoin)
-	e.PUT("/meal/:id/join", updateMealJoin)
+	e.POST("/meal/:mID/join/:jID", createMealJoin)
+	e.DELETE("/meal/:mid/join/:id", deleteMealJoin)
+	e.PUT("/meal/:mID/join/:id", updateMealJoin)
 
 	e.PUT("/meal/:id/name", updateMealName)
 	e.PUT("/template/:id/name", updateTemplateName)
 
 	e.GET("/template", findAllTemplates, validate)
 	e.POST("/template", createTemplate, validate)
-	e.GET("/template/:id", findTemplate, validate)
+	e.GET("/template/:id/", findTemplate, validate)
 	e.DELETE("/template/:id/delete", deleteTemplate, validate)
-	e.POST("/template/:id", templateToMeal, validate)
+	e.POST("/template/:id/", templateToMeal, validate)
 
-	e.POST("/template/:id/join", createTemplateJoin)
-	e.DELETE("/template/:id/join", deleteTemplateJoin)
+	e.POST("/template/:tID/join/:jID", createTemplateJoin)
+	e.DELETE("/template/:tID/join/:jID", deleteTemplateJoin)
 	e.PUT("/template/:id/join", updateTemplateJoin)
 
+	e.GET("/favicon.ico", fav)
 	e.GET("/htmx", htmx)
+	e.GET("/pico", pico)
 	e.GET("/signin", signinView)
 	e.POST("/signin", signin)
 	e.GET("/signup", signupView)
@@ -75,8 +80,8 @@ func main() {
 func validate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// NOTE: For Dev
-		// userID, err := 2, error(nil)
-		userID, err := auth.GetUserFromCookie(c)
+		userID, err := 2, error(nil)
+		// userID, err := auth.GetUserFromCookie(c)
 		if err != nil {
 			fmt.Println(err.Error())
 			return c.Redirect(http.StatusSeeOther, "/signin")
@@ -102,8 +107,19 @@ func validate(next echo.HandlerFunc) echo.HandlerFunc {
 
 // ---------- Handlers ---------------------
 
+func fav(c echo.Context) error {
+	return c.NoContent(http.StatusNotFound)
+}
+
 func htmx(c echo.Context) error {
+	c.Response().Header().Set("Content-Type", "application/javascrip")
 	fmt.Fprint(c.Response().Writer, string(htmxJS))
+	return nil
+}
+
+func pico(c echo.Context) error {
+	c.Response().Header().Set("Content-Type", "text/css")
+	fmt.Fprint(c.Response().Writer, string(picoCSS))
 	return nil
 }
 
@@ -128,7 +144,7 @@ func overview(c echo.Context) error {
 
 	nav := view.Nav(userID)
 	overview := view.DayOverview(date, totalMacros, target)
-	quickview := view.DayQuickview2(macrosByID)
+	quickview := view.DayQuickview(macrosByID)
 	component := view.Full(nav, overview, quickview)
 	return component.Render(context.Background(), c.Response().Writer)
 }
@@ -179,7 +195,8 @@ func findAllTemplates(c echo.Context) error {
 	userID := c.Get("userID").(int)
 	macros := db.GetTemplateEntriess(userID)
 
-	token := auth.GenSetDupToken(c)
+	token := auth.GenToken()
+	auth.SetDupToken(c, token)
 	macrosByID := db.SumMacrosByID(macros)
 
 	nav := view.Nav(userID)
@@ -210,16 +227,16 @@ func deleteTemplate(c echo.Context) error {
 
 // --------  Template Join ----------------------------
 func createTemplateJoin(c echo.Context) error {
-	templateID := c.Param("id")
-	foodID := c.FormValue("foodID")
+	templateID := c.Param("tID")
+	foodID := c.Param("jID")
 
 	// TODO: Query for default food.grams to show, for now display base 100g
 	grams := "100"
 
 	db.CreateTemplateJoin(templateID, foodID, grams)
 
-	// TODO: user some HTTP.URL builder, not Sprint
-	c.Response().Header().Set("HX-Location", fmt.Sprint("/template/", templateID))
+	// This will GET the current base URL IE: /template/#/ - Current URL /template/#/foodsearch
+	c.Response().Header().Set("HX-Location", ".")
 	return c.NoContent(http.StatusOK)
 }
 
@@ -233,7 +250,7 @@ func updateTemplateJoin(c echo.Context) error {
 }
 
 func deleteTemplateJoin(c echo.Context) error {
-	id := c.Param("id")
+	id := c.Param("jID")
 
 	db.DeleteTemplateJoin(id)
 	return c.NoContent(http.StatusOK)
@@ -257,16 +274,16 @@ func updateTemplateName(c echo.Context) error {
 
 // --------  Meal Join ----------------------------
 func createMealJoin(c echo.Context) error {
-	mealID := c.Param("id")
-	foodID := c.FormValue("foodID")
+	mealID := c.Param("mID")
+	foodID := c.Param("jID")
 
 	// TODO: Query for default food.grams to show, for now display base 100g
 	grams := "100"
 
 	db.CreateMealJoin(mealID, foodID, grams)
 
-	// TODO: user some HTTP.URL builder, not Sprint
-	c.Response().Header().Set("HX-Location", fmt.Sprint("/meal/", mealID))
+	// This will GET the current base URL IE: /meal/#/ - Current URL /meal/#/foodsearch
+	c.Response().Header().Set("HX-Location", ".")
 	return c.NoContent(http.StatusOK)
 }
 

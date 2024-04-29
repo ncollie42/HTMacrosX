@@ -117,12 +117,10 @@ func GetUserFromCookie(c echo.Context) (int, error) {
 	return int(userID_int), err
 }
 
-func GenSetDupToken(c echo.Context) string {
+func SetDupToken(c echo.Context, token string) string {
+	// To prevent duplicate submitions from double tapping template; set in cache and in button param
+	// TODO: make this a seperate API?
 	// TODO: return error
-	now := time.Now().Unix()
-	h := md5.New()
-	io.WriteString(h, strconv.FormatInt(now, 10))
-	token := fmt.Sprintf("%x", h.Sum(nil))
 	sessionID, _ := getSessionID(c)
 
 	if prod {
@@ -225,6 +223,7 @@ func setVarLocal(sessionID string, name string, val string) {
 	if _, exists := sessions[sessionID]; !exists {
 		sessions[sessionID] = make(map[string]string)
 	}
+	fmt.Println("SessionID:", sessionID)
 	sessions[sessionID][name] = val
 }
 
@@ -279,4 +278,11 @@ func generateSessionID() (string, error) {
 		return "", err
 	}
 	return base64.URLEncoding.EncodeToString(b), nil
+}
+
+func GenToken() string {
+	now := time.Now().Unix()
+	h := md5.New()
+	io.WriteString(h, strconv.FormatInt(now, 10))
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
