@@ -65,7 +65,7 @@ templ DayQuickview(macros []db.MacroOverview) {
     @mealOverviewButton(m)
   }
   <div role="group">
-    <button class="outline contrast" hx-get="template" hx-target="closest body" hx-push-url="true"> Template </button>
+    <button class="outline contrast" hx-get="template/" hx-target="closest body" hx-push-url="true"> Template </button>
     <button class="outline contrast" hx-post="meal"> Quick Add </button>
   </div>
 }
@@ -77,7 +77,7 @@ templ TemplateOverview(macros []db.MacroOverview, idempotentToken string) {
     @templateOverviewButton(m, idempotentToken)
   }
   <div role="group">
-    <button class="outline contrast" hx-post="/template"> Create Template </button>
+    <button class="outline contrast" hx-post="/template/"> Create Template </button>
   </div>
 }
 

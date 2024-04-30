@@ -53,10 +53,10 @@ func main() {
 	e.PUT("/meal/:id/name", updateMealName)
 	e.PUT("/template/:id/name", updateTemplateName)
 
-	e.GET("/template", findAllTemplates, validate)
-	e.POST("/template", createTemplate, validate)
+	e.GET("/template/", findAllTemplates, validate)
+	e.POST("/template/", createTemplate, validate)
 	e.GET("/template/:id/", findTemplate, validate)
-	e.DELETE("/template/:id/delete", deleteTemplate, validate)
+	e.DELETE("/template/:id/", deleteTemplate, validate)
 	e.POST("/template/:id/", templateToMeal, validate)
 
 	e.POST("/template/:tID/join/:jID", createTemplateJoin)
@@ -212,7 +212,7 @@ func createTemplate(c echo.Context) error {
 	time := time.Now().Format("3:04 PM")
 	templateID := db.CreateTemplate(time, userID)
 
-	c.Response().Header().Set("HX-Location", fmt.Sprint("/template/", templateID, "/food_search"))
+	c.Response().Header().Set("HX-Location", fmt.Sprint(templateID, "/food_search"))
 	return c.NoContent(http.StatusOK)
 }
 
@@ -221,7 +221,6 @@ func deleteTemplate(c echo.Context) error {
 
 	db.DeleteTemplate(id)
 
-	c.Response().Header().Set("HX-Location", "/template")
 	return c.NoContent(http.StatusOK)
 }
 

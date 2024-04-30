@@ -220,7 +220,7 @@ func DayQuickview(macros []db.MacroOverview) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div role=\"group\"><button class=\"outline contrast\" hx-get=\"template\" hx-target=\"closest body\" hx-push-url=\"true\">Template </button> <button class=\"outline contrast\" hx-post=\"meal\">Quick Add </button></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div role=\"group\"><button class=\"outline contrast\" hx-get=\"template/\" hx-target=\"closest body\" hx-push-url=\"true\">Template </button> <button class=\"outline contrast\" hx-post=\"meal\">Quick Add </button></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -251,7 +251,7 @@ func TemplateOverview(macros []db.MacroOverview, idempotentToken string) templ.C
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div role=\"group\"><button class=\"outline contrast\" hx-post=\"/template\">Create Template </button></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div role=\"group\"><button class=\"outline contrast\" hx-post=\"/template/\">Create Template </button></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

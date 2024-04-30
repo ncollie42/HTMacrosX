@@ -85,6 +85,7 @@ templ Nav(id int) {
 // ----------------------------------------------- BUTTON ----------------------
 
 templ mealOverviewButton(m db.MacroOverview) {
+  //TODO: Remove /meal/ and use relative w/ only m.ID/
   <article>
     @buttonNav(m.Name, liDelete(fmt.Sprint("/meal/",m.ID,"/")))
     @macroGet(m.Macros, fmt.Sprint("/meal/",m.ID,"/"))
@@ -93,8 +94,8 @@ templ mealOverviewButton(m db.MacroOverview) {
 
 templ templateOverviewButton(m db.MacroOverview, idempotentToken string) {
   <article>
-    @buttonNav(m.Name, liEdit(fmt.Sprint("/template/", m.ID, "/")))
-    @macroPost(m.Macros, fmt.Sprintf(`{"token": "%s"}`, idempotentToken), fmt.Sprint("/template/",m.ID,"/"))
+    @buttonNav(m.Name, liEdit(fmt.Sprint(m.ID, "/")), liDelete(fmt.Sprint(m.ID, "/")))
+    @macroPost(m.Macros, fmt.Sprintf(`{"token": "%s"}`, idempotentToken), fmt.Sprint(m.ID, "/"))
   </article>
 }
 
