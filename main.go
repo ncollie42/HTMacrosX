@@ -80,8 +80,8 @@ func main() {
 func validate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// NOTE: For Dev
-		userID, err := 2, error(nil)
-		// userID, err := auth.GetUserFromCookie(c)
+		// userID, err := 2, error(nil)
+		userID, err := auth.GetUserFromCookie(c)
 		if err != nil {
 			fmt.Println(err.Error())
 			return c.Redirect(http.StatusSeeOther, "/signin")

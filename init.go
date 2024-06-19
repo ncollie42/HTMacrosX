@@ -49,11 +49,15 @@ func init() {
 		all_str, _ := db.CreateUser("All", "all")
 		all64, _ := strconv.ParseInt(all_str, 10, 64)
 		nico_str, _ := db.CreateUser("Nico", "123")
+		alejandro_str, _ := db.CreateUser("Alejandro", "123")
 		nico64, _ := strconv.ParseInt(nico_str, 10, 64)
+		alejandro64, _ := strconv.ParseInt(alejandro_str, 10, 64)
 		all := int(all64)
 		nico := int(nico64)
+		alejandro := int(alejandro64)
 		db.CreateUser("foo", "123")
 
+		//All
 		banana := db.CreateFood("Banana", .4, 27, 3, 1.3, 118, all)
 		oats := db.CreateFood("Oats", 2.5, 23, 4, 6, 35, nico)
 		chia := db.CreateFood("Chia", 1.7, 1.7, 1.7, 1, 5, all)
@@ -62,6 +66,7 @@ func init() {
 		raisins := db.CreateFood("Golden Raisins", 0, 12, .8, .4, 15, all)
 		goji := db.CreateFood("Goji", .5, 9.6, 1.6, 1.6, 15, all)
 		yogurt := db.CreateFood("Greek Yogurt 2%", 3.6, 7, 0, 16, 170, all)
+		yogurtFatFree := db.CreateFood("Greek Yogurt 0%", 0, 7, 0, 18, 170, all)
 		blackberry := db.CreateFood("Blackberry", .2, 3.9, 2.2, .6, 120, all)
 		butter := db.CreateFood("Butter", 11, 0, 0, 0, 14, all)
 		quinoa := db.CreateFood("Quinoa", 12.0, 136.0, 16.0, 20.0, 180.0, all)
@@ -84,6 +89,13 @@ func init() {
 		BrazilNuts := db.CreateFood("Brazil Nuts", 19, 4, 2, 4, 30, all)
 		Walnuts := db.CreateFood("Walnuts", 18, 4, 2, 4, 28, all)
 		sunflower := db.CreateFood("Sunflower Lecithin", 5, .5, 0, 0, 10, all)
+		kefir := db.CreateFood("Kefir", 2, 8, 0, 8, 240, all)
+		//Alejandro
+		pasta := db.CreateFood("Pasta", .5, 40, 2, 7, 56, all)
+		BBSauce := db.CreateFood("BB Sauce", 0, 5, 0, 0, 32, all)
+		granollaV := db.CreateFood("Granolla V", 6, 23, 2, 3, 35, all)
+		granollaC := db.CreateFood("Granolla C", 6, 18, 2, 2, 30, all)
+		honey := db.CreateFood("Honey", 0, 18, 0, 0, 21, all)
 
 		// m1ID := db.CreateMeal("m1", nico)
 		// db.CreateMealJoin(fmt.Sprint(m1ID), fmt.Sprint(banana), "20.5")
@@ -96,7 +108,7 @@ func init() {
 		// db.CreateMealJoin(fmt.Sprint(m4ID), fmt.Sprint(oats), "101.3")
 		fmt.Println(banana, oats, chia, hemp, flax, raisins, goji, yogurt, blackberry,
 			butter, quinoa, pinkLentils, chicken, olives, tuna, tomato, Huel, Pbar, coconut,
-			blackLentils, broccoli, cauliflower, shiitake, oliveOil, protein, chocolate)
+			blackLentils, broccoli, cauliflower, shiitake, oliveOil, protein, chocolate, kefir)
 		t2 := db.CreateTemplate("Coffee", nico)
 		db.CreateTemplateJoin(fmt.Sprint(t2), fmt.Sprint(butter), "10")
 		// t3 := db.CreateTemplate("Breakfast Oats", nico)
@@ -166,8 +178,19 @@ func init() {
 		db.CreateTemplateJoin(fmt.Sprint(t12), fmt.Sprint(flax), "15")
 		db.CreateTemplateJoin(fmt.Sprint(t12), fmt.Sprint(raisins), "30")
 		db.CreateTemplateJoin(fmt.Sprint(t12), fmt.Sprint(goji), "15")
-		db.CreateTemplateJoin(fmt.Sprint(t12), fmt.Sprint(yogurt), "255")
+		db.CreateTemplateJoin(fmt.Sprint(t12), fmt.Sprint(yogurtFatFree), "255")
 		db.CreateTemplateJoin(fmt.Sprint(t12), fmt.Sprint(blackberry), "70")
 
+		a1 := db.CreateTemplate("pasta", alejandro)
+		db.CreateTemplateJoin(fmt.Sprint(a1), fmt.Sprint(pasta), "156")
+		db.CreateTemplateJoin(fmt.Sprint(a1), fmt.Sprint(BBSauce), "106")
+		db.CreateTemplateJoin(fmt.Sprint(a1), fmt.Sprint(butter), "23.3")
+		db.CreateTemplateJoin(fmt.Sprint(a1), fmt.Sprint(chicken), "378")
+
+		a2 := db.CreateTemplate("Yogurt Bowl", alejandro)
+		db.CreateTemplateJoin(fmt.Sprint(a2), fmt.Sprint(yogurtFatFree), "300")
+		db.CreateTemplateJoin(fmt.Sprint(a2), fmt.Sprint(granollaV), "100")
+		db.CreateTemplateJoin(fmt.Sprint(a2), fmt.Sprint(granollaC), "50")
+		db.CreateTemplateJoin(fmt.Sprint(a2), fmt.Sprint(honey), "10")
 	}
 }
