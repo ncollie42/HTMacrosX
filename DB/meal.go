@@ -1,87 +1,88 @@
 package database
 
 import (
-	"log"
+	"fmt"
+	"strconv"
 	"time"
 )
 
-const mealTable string = `
-CREATE TABLE IF NOT EXISTS "Meals" (
-	"meal_id"	INTEGER NOT NULL UNIQUE,
-	"user_id"	INTEGER NOT NULL,
-	"meal_name"	TEXT NOT NULL DEFAULT 'snack',
-	"meal_date"	date DEFAULT CURRENT_DATE NOT NULL,
-	PRIMARY KEY("meal_id" AUTOINCREMENT),
-	FOREIGN KEY("user_id") REFERENCES "Users"("user_id")
-);
-`
-
 func CreateMeal(name string, userID int) int {
-	start := time.Now()
-	defer func() {
-		log.Println("Create Meal:", time.Since(start))
-	}()
-	today := time.Now().Format("2006-01-02")
-	result, err := Db.Exec(`INSERT INTO Meals(meal_name, user_id, meal_date) VALUES(?, ?, ?);`, name, userID, today)
-	if err != nil {
-		panic(err.Error())
-	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		panic(err.Error())
-	}
+	mu.Lock()
+	defer mu.Unlock()
 
-	return int(id)
+	today := time.Now().Format("2006-01-02")
+	id := nextMealID
+	nextMealID++
+	meals[id] = &MealRecord{
+		ID:       id,
+		UserID:   userID,
+		Name:     name,
+		MealDate: today,
+	}
+	return id
 }
 
 func DeleteMeal(mealID string) {
-	// NOTE: you can't delete multiple things with a single query
-	_, err := Db.Exec(`
-	BEGIN TRANSACTION;
+	mu.Lock()
+	defer mu.Unlock()
 
-	-- First delete the related records in the MealFoods table
-	DELETE FROM MealFoods WHERE meal_id = ?;
+	id, _ := strconv.Atoi(mealID)
 
-	-- TIhen delete the meal itself
-	DELETE FROM Meals WHERE meal_id = ?;
-
-	COMMIT;`, mealID, mealID)
-	if err != nil {
-		panic(err.Error())
+	// Delete associated joins
+	for jid, mj := range mealJoins {
+		if mj.MealID == id {
+			delete(mealJoins, jid)
+		}
 	}
+	delete(meals, id)
 }
 
 func GetMealByID(mealID string) Meal {
-	result, err := Db.Query(
-		`SELECT f.food_name, f.fat_per_gram, f.protein_per_gram, f.carbs_per_gram, 
-		f.fiber_per_gram, mf.grams, mf.join_id, m.meal_name FROM Foods f
-		JOIN MealFoods mf ON f.food_id = mf.food_id
-		JOIN Meals m ON mf.meal_id = m.meal_id
-		WHERE mf.meal_id = ?`, mealID)
-	if err != nil {
-		panic(err.Error())
-	}
-	defer result.Close()
+	mu.Lock()
+	defer mu.Unlock()
 
+	id, _ := strconv.Atoi(mealID)
 	var model Meal
 	model.ID = mealID
-	for result.Next() {
-		var m MacroPerGram
-		var j Join
-		result.Scan(&j.Name, &m.FatPerGram, &m.ProteinPerGram, &m.CarbPerGram, &m.FiberPerGram, &j.Grams, &j.JoinID, &model.Name)
-		j.Macros = macrosByGrams(m, j.Grams)
-		model.Foods = append(model.Foods, j)
-	}
 
-	if err = result.Err(); err != nil {
-		panic(err.Error())
+	meal, ok := meals[id]
+	if !ok {
+		return model
+	}
+	model.Name = meal.Name
+
+	for _, mj := range mealJoins {
+		if mj.MealID != id {
+			continue
+		}
+		food, ok := foods[mj.FoodID]
+		if !ok {
+			continue
+		}
+		mpg := MacroPerGram{
+			FatPerGram:     food.FatPerGram,
+			ProteinPerGram: food.ProteinPerGram,
+			CarbPerGram:    food.CarbPerGram,
+			FiberPerGram:   food.FiberPerGram,
+		}
+		j := Join{
+			Name:   food.Name,
+			JoinID: mj.ID,
+			Grams:  mj.Grams,
+			Macros: macrosByGrams(mpg, mj.Grams),
+		}
+		model.Foods = append(model.Foods, j)
 	}
 	return model
 }
 
 func UpdateMealName(mealID string, name string) {
-	_, err := Db.Exec(`UPDATE Meals SET meal_name = ? WHERE meal_id = ?`, name, mealID)
-	if err != nil {
-		panic(err.Error())
+	mu.Lock()
+	defer mu.Unlock()
+
+	id, _ := strconv.Atoi(mealID)
+	if meal, ok := meals[id]; ok {
+		meal.Name = name
 	}
+	fmt.Println("Updated Meal Name:", mealID, name)
 }

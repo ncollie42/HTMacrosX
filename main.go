@@ -45,6 +45,7 @@ func main() {
 
 	e.GET("/meal/:id/food_search", foodSearch, validate)
 	e.GET("/template/:id/food_search", foodSearch, validate)
+	e.POST("/food", createFood, validate)
 
 	e.POST("/meal/:mID/join/:jID", createMealJoin)
 	e.DELETE("/meal/:mid/join/:id", deleteMealJoin)
@@ -68,9 +69,10 @@ func main() {
 	e.GET("/pico", pico)
 	e.GET("/signin", signinView)
 	e.POST("/signin", signin)
-	e.GET("/signup", signupView)
-	e.POST("/signup", signup)
 	e.GET("/signout", signout)
+
+	e.GET("/settings", settings, validate)
+	e.PUT("/settings", updateSettings, validate)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
@@ -112,7 +114,7 @@ func fav(c echo.Context) error {
 }
 
 func htmx(c echo.Context) error {
-	c.Response().Header().Set("Content-Type", "application/javascrip")
+	c.Response().Header().Set("Content-Type", "application/javascript")
 	fmt.Fprint(c.Response().Writer, string(htmxJS))
 	return nil
 }
@@ -126,14 +128,7 @@ func pico(c echo.Context) error {
 func overview(c echo.Context) error {
 	userID := c.Get("userID").(int)
 
-	// Target macros
-	target := db.Macro{
-		Calories: 1751.6,
-		Fat:      44.8,
-		Carb:     247.1,
-		Fiber:    32.0,
-		Protein:  90.0,
-	}
+	target := db.GetUserTargets(userID)
 
 	timeStr := c.Param("date")
 	date := strconvTime(timeStr)
@@ -161,6 +156,22 @@ func foodSearch(c echo.Context) error {
 	nav := view.Nav(userID)
 	searchResult := view.FoodSearch(foods)
 	component := view.Full(nav, searchResult)
+	return component.Render(context.Background(), c.Response().Writer)
+}
+
+func createFood(c echo.Context) error {
+	userID := c.Get("userID").(int)
+	name := c.FormValue("name")
+	fat, _ := strconv.ParseFloat(c.FormValue("fat"), 64)
+	carb, _ := strconv.ParseFloat(c.FormValue("carb"), 64)
+	fiber, _ := strconv.ParseFloat(c.FormValue("fiber"), 64)
+	protein, _ := strconv.ParseFloat(c.FormValue("protein"), 64)
+	grams, _ := strconv.ParseFloat(c.FormValue("grams"), 64)
+
+	db.CreateFood(name, fat, carb, fiber, protein, grams, userID)
+
+	foods := db.FoodSearch("", userID)
+	component := view.FoodSearchResults(foods)
 	return component.Render(context.Background(), c.Response().Writer)
 }
 
@@ -317,19 +328,36 @@ func signin(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func signup(c echo.Context) error {
-	login := c.FormValue("login")
-	password := c.FormValue("password")
-	err := auth.Signup(c, login, password)
+func settings(c echo.Context) error {
+	userID := c.Get("userID").(int)
+	targets := db.GetUserTargets(userID)
 
-	if err != nil {
-		fmt.Println("User name is already taken", login)
-		component := view.SignError("Invalid log in or password")
-		return component.Render(context.Background(), c.Response().Writer)
+	nav := view.Nav(userID)
+	settingsForm := view.Settings(targets)
+	component := view.Full(nav, settingsForm)
+	return component.Render(context.Background(), c.Response().Writer)
+}
+
+func updateSettings(c echo.Context) error {
+	userID := c.Get("userID").(int)
+
+	cal, _ := strconv.ParseFloat(c.FormValue("calories"), 32)
+	fat, _ := strconv.ParseFloat(c.FormValue("fat"), 32)
+	carb, _ := strconv.ParseFloat(c.FormValue("carb"), 32)
+	fiber, _ := strconv.ParseFloat(c.FormValue("fiber"), 32)
+	protein, _ := strconv.ParseFloat(c.FormValue("protein"), 32)
+
+	targets := db.Macro{
+		Calories: float32(cal),
+		Fat:      float32(fat),
+		Carb:     float32(carb),
+		Fiber:    float32(fiber),
+		Protein:  float32(protein),
 	}
+	db.UpdateUserTargets(userID, targets)
 
-	c.Response().Header().Set("HX-Location", "/")
-	return c.NoContent(http.StatusOK)
+	component := view.Settings(targets)
+	return component.Render(context.Background(), c.Response().Writer)
 }
 
 func signout(c echo.Context) error {
@@ -341,12 +369,6 @@ func signout(c echo.Context) error {
 func signinView(c echo.Context) error {
 	signin := view.Signin()
 	component := view.Full(signin)
-	return component.Render(context.Background(), c.Response().Writer)
-}
-
-func signupView(c echo.Context) error {
-	signup := view.Signup()
-	component := view.Full(signup)
 	return component.Render(context.Background(), c.Response().Writer)
 }
 

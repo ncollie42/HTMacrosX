@@ -60,31 +60,7 @@ func Signin() templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<main class=\"container\"><article class=\"grid\"><section><hgroup><h1>Sign in</h1><p>A minimalist macro tracker</p></hgroup><form hx-post=\"/signin\" hx-target=\"#onError\"><input type=\"text\" name=\"login\" placeholder=\"Login\" aria-label=\"Login\" autocomplete=\"nickname\" required> <input type=\"password\" name=\"password\" placeholder=\"Password\" aria-label=\"Password\" autocomplete=\"current-password\" required><fieldset><label for=\"remember\"><input type=\"checkbox\" role=\"switch\" id=\"remember\" name=\"remember\"> Remember me</label></fieldset><button class=\"contrast\">Login</button></form><nav class=\"container-fluid\"><div><a>Forgot Your Password?</a></div><div><a hx-boost=\"true\" href=\"/signup\">Need an Account?</a></div></nav><div id=\"onError\"></div></section><div></div><!-- Room for img --></article></main>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if !templ_7745c5c3_IsBuffer {
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteTo(templ_7745c5c3_W)
-		}
-		return templ_7745c5c3_Err
-	})
-}
-
-func Signup() templ.Component {
-	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
-		if !templ_7745c5c3_IsBuffer {
-			templ_7745c5c3_Buffer = templ.GetBuffer()
-			defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var4 == nil {
-			templ_7745c5c3_Var4 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<main class=\"container\"><article class=\"grid\"><section><hgroup><h1>Sign up for an Account</h1><p>A minimalist macro tracker</p></hgroup><form hx-post=\"/signup\" hx-target=\"#onError\"><input type=\"text\" name=\"login\" placeholder=\"Login\" aria-label=\"Login\" autocomplete=\"nickname\" required> <input type=\"password\" name=\"password\" placeholder=\"Password\" aria-label=\"Password\" autocomplete=\"current-password\" required> <button class=\"contrast\">Create My Account</button></form><nav class=\"container-fluid\"><div><a>Forgot Your Password?</a></div><div><a hx-boost=\"true\" href=\"/signin\">Have an Account</a></div></nav><div id=\"onError\"></div></section><div></div><!-- Room for img --></article></main>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<main class=\"container\"><article class=\"auth-card\"><hgroup class=\"text-center\"><h1><span style=\"color:var(--macro-cal);\">HT</span>MacrosX</h1><p>A minimalist macro tracker</p></hgroup><form hx-post=\"/signin\" hx-target=\"#onError\"><input type=\"text\" name=\"login\" placeholder=\"Login\" aria-label=\"Login\" autocomplete=\"nickname\" required> <input type=\"password\" name=\"password\" placeholder=\"Password\" aria-label=\"Password\" autocomplete=\"current-password\" required><fieldset><label for=\"remember\"><input type=\"checkbox\" role=\"switch\" id=\"remember\" name=\"remember\"> Remember me</label></fieldset><button class=\"contrast\">Login</button></form><nav class=\"container-fluid\"><div><a>Forgot Your Password?</a></div></nav><div id=\"onError\"></div></article></main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

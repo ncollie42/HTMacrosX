@@ -8,7 +8,7 @@ import (
 
 type Macro int
 const (
-    Calories Macro = iota // iota starts at 0
+    Calories Macro = iota
     Fat
     Carb
     Fiber
@@ -22,45 +22,39 @@ func (m Macro) String() string {
   return macrosStr[m]
 }
 
-templ overview(m Macro, current float32, target float32) {
-  <tr>
-    <th scope="row">{ fmt.Sprint(m)}</th>
-    <td>{fmt.Sprintf("%.f",current)}/{fmt.Sprintf("%.f",target)}K</td>
-    <td>{fmt.Sprintf("%.f",target - current)} left</td>
-    <td>
-      <progress class={"", barColor[m]}
-                value={fmt.Sprint(current / target * 100)} max="100">
-      </progress>
-    </td>
-  </tr>
+templ DateNav(date time.Time) {
+  <div class="date-nav">
+    <a hx-boost="true" href={templ.SafeURL(fmt.Sprint("/",date.Add(-time.Hour * 24).Unix()))} role="button" class="outline secondary">Prev</a>
+    <a hx-boost="true" href="/" role="button" class="outline secondary current">Today</a>
+    <a hx-boost="true" href={templ.SafeURL(fmt.Sprint("/",date.Add(time.Hour * 24).Unix()))} role="button" class="outline secondary">Next</a>
+  </div>
 }
 
-// <nav class="container-fluid">
-//   <a hx-boost="true" href={templ.SafeURL(fmt.Sprint("/",date.Add(-time.Hour * 24).Unix()))}><strong>Prev</strong></a>
-//   <a hx-boost="true" href="/"><strong>Today</strong></a>
-//   <a hx-boost="true" href={templ.SafeURL(fmt.Sprint("/",date.Add(time.Hour * 24).Unix()))}><strong>Next</strong></a>
-// </nav>
+templ dashCard(label string, current float32, target float32, colorClass string, wide bool) {
+  <div class={templ.KV("dash-card", true), templ.KV("dash-card-wide", wide)}>
+    <p class="label">{label}</p>
+    <p class={"value", colorClass}>{fmt.Sprintf("%.0f", current)}</p>
+    <progress class={"dash-progress", colorClass} value={fmt.Sprint(current / target * 100)} max="100"></progress>
+    <p class="sub">{fmt.Sprintf("%.0f", target - current)} left</p>
+  </div>
+}
+
 templ DayOverview(date time.Time, total db.Macro, target db.Macro) {
-  <table>
-    <thead>
-      <tr>
-        <th scope="col"> Macro </th>
-        <th scope="col"> Used </th>
-        <th scope="col"> Leftover</th>
-        <th scope="col"> Progress </th>
-      </tr>
-    </thead>
-    <tbody>
-      @overview(Calories, total.Calories, target.Calories)
-      @overview(Fat, total.Fat, target.Fat)
-      @overview(Carb, total.Carb, target.Carb)
-      @overview(Protein, total.Protein, target.Protein)
-    </tbody>
-  </table>
+  @DateNav(date)
+  <div class="dash-grid">
+    @dashCard("Calories", total.Calories, target.Calories, "c-cal", true)
+    @dashCard("Fat", total.Fat, target.Fat, "c-fat", false)
+    @dashCard("Carbs", total.Carb, target.Carb, "c-carb", false)
+    @dashCard("Fiber", total.Fiber, target.Fiber, "c-fiber", false)
+    @dashCard("Protein", total.Protein, target.Protein, "c-protein", false)
+  </div>
 }
 
 templ DayQuickview(macros []db.MacroOverview) {
-  <p><b>Quick View: </b></p>
+  <div class="section-rule">
+    <h4>Today's Meals</h4>
+    <hr/>
+  </div>
   for _, m := range macros {
     @mealOverviewButton(m)
   }
@@ -84,7 +78,7 @@ templ TemplateOverview(macros []db.MacroOverview, idempotentToken string) {
 // ---------------------------- Meal Overview -------------------------------
 
 templ NameEdit(name string) {
-  <input type="text" 
+  <input type="text"
     placeholder={name}
     name="name"
     hx-trigger="keyup changed delay:500ms"
@@ -97,19 +91,9 @@ templ MealEdit(meal db.Meal) {
     @GramEdit(food)
   }
   <div role="group">
-    <a href="food_search" 
+    <a href="food_search"
       role="button"
       class="outline contrast">Add Food
     </a>
   </div>
 }
-
-// templ del() {
-//   <button type="button" 
-//     hx-delete="delete/16"
-//     class=""
-//     >
-  
-//   </button>
-//   <button hx-delete={fmt.Sprint(meal.ID,"/delete")} class="outline"><strong>Delete all</strong></button>
-// }

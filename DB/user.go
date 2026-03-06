@@ -7,17 +7,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// ----------------  User  --------------------------
-const userTable string = `
-CREATE TABLE IF NOT EXISTS "Users" (
-	"user_id"	INTEGER UNIQUE,
-	"username"	VARCHAR(255) NOT NULL UNIQUE,
-	"password"	VARCHAR(255) NOT NULL,
-	"date_create"	DATETIME DEFAULT CURRENT_TIMESTAMP,
-	PRIMARY KEY("user_id" AUTOINCREMENT)
-);
-`
-
 func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -25,45 +14,72 @@ func hashPassword(password string) (string, error) {
 	}
 	return string(bytes), nil
 }
+
 func validateHashPassword(hashedPassword string, password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
+
+var defaultTargets = Macro{Calories: 1751.6, Fat: 44.8, Carb: 247.1, Fiber: 32.0, Protein: 90.0}
 
 func CreateUser(userName string, pass string) (string, error) {
 	hashedPassword, err := hashPassword(pass)
-
 	if err != nil {
 		return "", err
 	}
 
-	result, err := Db.Exec(`INSERT INTO Users (username, password) VALUES (?,?);`, userName, hashedPassword)
-	if err != nil {
-		return "", err
+	mu.Lock()
+	defer mu.Unlock()
+
+	// Check for duplicate username
+	for _, u := range users {
+		if u.Username == userName {
+			return "", fmt.Errorf("username already taken")
+		}
+	}
+
+	id := nextUserID
+	nextUserID++
+	users[id] = &UserRecord{
+		ID:             id,
+		Username:       userName,
+		HashedPassword: hashedPassword,
+		Targets:        defaultTargets,
 	}
 	fmt.Println("Created User: ", userName)
-	ID, err := result.LastInsertId()
-	if err != nil {
-		return "", err
+	return strconv.Itoa(id), nil
+}
+
+func GetUserTargets(userID int) Macro {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if u, ok := users[userID]; ok {
+		return u.Targets
 	}
-	return strconv.FormatInt(ID, 10), nil
+	return defaultTargets
+}
+
+func UpdateUserTargets(userID int, targets Macro) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if u, ok := users[userID]; ok {
+		u.Targets = targets
+	}
 }
 
 func ValidateUser(userName string, pass string) (string, error) {
-	result := Db.QueryRow("SELECT user_id, password FROM Users WHERE username = ?", userName)
+	mu.Lock()
+	defer mu.Unlock()
 
-	var ID int64
-	var hash string
-	err := result.Scan(&ID, &hash)
-	if err != nil {
-		return "", err
+	for _, u := range users {
+		if u.Username == userName {
+			if !validateHashPassword(u.HashedPassword, pass) {
+				return "", fmt.Errorf("Invalid username or password")
+			}
+			return strconv.Itoa(u.ID), nil
+		}
 	}
-
-	if !validateHashPassword(hash, pass) {
-		return "", fmt.Errorf("Invalid username or password")
-	}
-	return strconv.FormatInt(ID, 10), err
+	return "", fmt.Errorf("Invalid username or password")
 }

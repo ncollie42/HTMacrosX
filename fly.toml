@@ -7,8 +7,6 @@ app = "purple-cherry-7894"
 primary_region = "lax"
 
 [build]
-  builder = "paketobuildpacks/builder:base"
-  buildpacks = ["gcr.io/paketo-buildpacks/go"]
 
 [env]
   PORT = "8080"

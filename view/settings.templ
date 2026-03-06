@@ -1,0 +1,33 @@
+package view
+
+import (
+	"fmt"
+	db "myapp/DB"
+)
+
+templ Settings(targets db.Macro) {
+  <h3>Macro Targets</h3>
+  <form id="settings-form" hx-put="/settings" hx-target="#settings-form" hx-swap="outerHTML">
+    <label>
+      Calories
+      <input type="number" name="calories" step="0.1" value={fmt.Sprintf("%.1f", targets.Calories)}/>
+    </label>
+    <label>
+      Fat (g)
+      <input type="number" name="fat" step="0.1" value={fmt.Sprintf("%.1f", targets.Fat)}/>
+    </label>
+    <label>
+      Carbs (g)
+      <input type="number" name="carb" step="0.1" value={fmt.Sprintf("%.1f", targets.Carb)}/>
+    </label>
+    <label>
+      Fiber (g)
+      <input type="number" name="fiber" step="0.1" value={fmt.Sprintf("%.1f", targets.Fiber)}/>
+    </label>
+    <label>
+      Protein (g)
+      <input type="number" name="protein" step="0.1" value={fmt.Sprintf("%.1f", targets.Protein)}/>
+    </label>
+    <button type="submit" class="contrast">Save Targets</button>
+  </form>
+}

@@ -5,7 +5,7 @@ import (
 )
 
 templ FoodSearch(foods []db.Food) {
-  <h1> Food in base 100g </h1>
+  <h3>Add Food <small>per 100g</small></h3>
   <input type="search" placeholder="Search..."
     name="search"
 	  hx-get="food_search"
@@ -13,10 +13,49 @@ templ FoodSearch(foods []db.Food) {
 	  hx-trigger="keyup changed delay:500ms, search"
 	  hx-target="#search-results"
     hx-swap="outerHTML"/>
+  @AddFoodForm()
   <div id="search-results">
   for _, food := range foods {
     @foodSelect(food)
   }
   </div>
-  <!-- <button hx-get="/food/new/{mealID}" hx-target="#search-results" hx-swap="afterend"> Create New </button>-->
+}
+
+templ FoodSearchResults(foods []db.Food) {
+  <div id="search-results">
+  for _, food := range foods {
+    @foodSelect(food)
+  }
+  </div>
+}
+
+templ AddFoodForm() {
+  <details>
+    <summary role="button" class="outline">Create Custom Food</summary>
+    <form hx-post="/food" hx-target="#search-results" hx-swap="outerHTML">
+      <label>Name
+        <input type="text" name="name" required/>
+      </label>
+      <div class="grid">
+        <label>Fat (g)
+          <input type="number" name="fat" step="0.1" value="0" required/>
+        </label>
+        <label>Carbs (g)
+          <input type="number" name="carb" step="0.1" value="0" required/>
+        </label>
+        <label>Fiber (g)
+          <input type="number" name="fiber" step="0.1" value="0" required/>
+        </label>
+      </div>
+      <div class="grid">
+        <label>Protein (g)
+          <input type="number" name="protein" step="0.1" value="0" required/>
+        </label>
+        <label>Serving size (g)
+          <input type="number" name="grams" step="0.1" value="100" required/>
+        </label>
+      </div>
+      <button type="submit">Create Food</button>
+    </form>
+  </details>
 }

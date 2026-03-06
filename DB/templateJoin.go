@@ -2,60 +2,64 @@ package database
 
 import (
 	"fmt"
+	"strconv"
 )
 
-const templateJoinTable string = `
-CREATE TABLE IF NOT EXISTS "TemplateFoods" (
-    "join_id"	INTEGER NOT NULL UNIQUE,
-    "template_id"	INTEGER NOT NULL,
-    "food_id"	INTEGER NOT NULL,
-    "grams"		FLOAT NOT NULL,
-    PRIMARY KEY("join_id" AUTOINCREMENT),
-    FOREIGN KEY("template_id") REFERENCES "Templates"("template_id"),
-    FOREIGN KEY("food_id") REFERENCES "Foods"("food_id")
-);
-`
-
 func CreateTemplateJoin(templateID string, foodID string, grams string) {
-	result, err := Db.Exec(
-		`INSERT INTO TemplateFoods(template_id, food_id, grams)
-		VALUES(?,?,?);`, templateID, foodID, grams)
-	if err != nil {
-		panic(err.Error())
-	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		panic(err.Error())
+	mu.Lock()
+	defer mu.Unlock()
+
+	tid, _ := strconv.Atoi(templateID)
+	fid, _ := strconv.Atoi(foodID)
+	g, _ := strconv.ParseFloat(grams, 32)
+
+	id := nextTemplateJoinID
+	nextTemplateJoinID++
+	templateJoins[id] = &TemplateJoinRecord{
+		ID:         id,
+		TemplateID: tid,
+		FoodID:     fid,
+		Grams:      float32(g),
 	}
 	fmt.Println("Created Template Join: ", id)
 }
 
 func DeleteTemplateJoin(joinID string) {
-	_, err := Db.Exec(`DELETE FROM TemplateFoods WHERE join_id = ?;`, joinID)
-	if err != nil {
-		panic(err.Error())
-	}
+	mu.Lock()
+	defer mu.Unlock()
+
+	jid, _ := strconv.Atoi(joinID)
+	delete(templateJoins, jid)
 }
 
 func UpdateTemplateJoin(joinID string, gramStr string) Join {
-	_, err := Db.Exec(`UPDATE TemplateFoods SET grams = ? WHERE join_id = ?`, gramStr, joinID)
-	if err != nil {
-		panic(err.Error())
+	mu.Lock()
+	defer mu.Unlock()
+
+	jid, _ := strconv.Atoi(joinID)
+	g, _ := strconv.ParseFloat(gramStr, 32)
+
+	tj, ok := templateJoins[jid]
+	if !ok {
+		return Join{}
+	}
+	tj.Grams = float32(g)
+
+	food, ok := foods[tj.FoodID]
+	if !ok {
+		return Join{}
 	}
 
-	result := Db.QueryRow(`
-		SELECT f.food_name, f.fat_per_gram, f.protein_per_gram, f.carbs_per_gram,
-		 f.fiber_per_gram, t.grams, t.join_id FROM Foods f
- 		JOIN TemplateFoods t ON f.food_id = t.food_id
- 		WHERE t.join_id = ?`, joinID)
-
-	var m MacroPerGram
-	var j Join
-	result.Scan(&j.Name, &m.FatPerGram, &m.ProteinPerGram, &m.CarbPerGram, &m.FiberPerGram, &j.Grams, &j.JoinID)
-	j.Macros = macrosByGrams(m, j.Grams)
-	if err = result.Err(); err != nil {
-		panic(err.Error())
+	mpg := MacroPerGram{
+		FatPerGram:     food.FatPerGram,
+		ProteinPerGram: food.ProteinPerGram,
+		CarbPerGram:    food.CarbPerGram,
+		FiberPerGram:   food.FiberPerGram,
 	}
-
-	return j
+	return Join{
+		Name:   food.Name,
+		JoinID: tj.ID,
+		Grams:  tj.Grams,
+		Macros: macrosByGrams(mpg, tj.Grams),
+	}
 }

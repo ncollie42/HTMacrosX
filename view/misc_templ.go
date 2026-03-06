@@ -28,7 +28,7 @@ func Header() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"color-scheme\" content=\"light dark\"><title>Macros • Simple</title><!-- Htmx.js--><script src=\"/htmx\"></script><!-- pico.css --><link rel=\"stylesheet\" href=\"/pico\"><style>\n      .test1{\n        background-color: #d81b60;\n      }\n      .test2{\n        --pico-progress-color: var(--pico-color-green-900);\n      }\n      .bar-calories{\n        --pico-progress-color: #d81b60;\n      }\n      .bar-fat{\n        --pico-progress-color: #fdd835;\n      }\n      .bar-carb{\n        --pico-progress-color: #7cb342;\n      }\n      .bar-fiber{\n        --pico-progress-color: #00acc1;\n      }\n      .bar-protein{\n        --pico-progress-color: #3949ab;\n      }\n      .text-center {\n        text-align: center;\n      }\n    </style>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"color-scheme\" content=\"light dark\"><title>Macros - Simple</title><!-- Htmx.js--><script src=\"/htmx\"></script><!-- pico.css --><link rel=\"stylesheet\" href=\"/pico\"><style>\n      :root {\n        --macro-cal: #d81b60;\n        --macro-fat: #fdd835;\n        --macro-carb: #7cb342;\n        --macro-fiber: #00acc1;\n        --macro-protein: #3949ab;\n        --surface-1: rgba(255,255,255,0.04);\n        --surface-border: rgba(255,255,255,0.08);\n        --text-secondary: rgba(255,255,255,0.7);\n        --text-muted: rgba(255,255,255,0.45);\n      }\n      .text-center { text-align: center; }\n\n      /* Dashboard grid */\n      .dash-grid {\n        display: grid;\n        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));\n        gap: 1rem;\n        margin-bottom: 1.5rem;\n      }\n      .dash-card {\n        background: var(--surface-1);\n        border: 1px solid var(--surface-border);\n        border-radius: 0.75rem;\n        padding: 1rem;\n        text-align: center;\n      }\n      .dash-card .label { font-size: 0.8rem; color: var(--text-muted); margin: 0; }\n      .dash-card .value { font-size: 1.8rem; font-weight: 700; margin: 0.25rem 0; }\n      .dash-card .sub { font-size: 0.75rem; color: var(--text-secondary); margin: 0; }\n      .dash-card-wide { grid-column: 1 / -1; }\n\n      /* Calorie headline */\n      .macro-cal-line {\n        font-size: 1.1rem;\n        font-weight: 600;\n        color: var(--macro-cal);\n        padding: 0.15rem 0;\n      }\n      .macro-cal-line span::before {\n        content: \"\";\n        display: inline-block;\n        width: 8px; height: 8px;\n        border-radius: 50%;\n        margin-right: 4px;\n        vertical-align: middle;\n        background: var(--macro-cal);\n      }\n\n      /* Compact macro inline */\n      .macro-inline {\n        display: flex;\n        flex-wrap: wrap;\n        gap: 0.5rem 1rem;\n        font-size: 0.85rem;\n        padding: 0.25rem 0;\n        color: var(--text-secondary);\n      }\n      .macro-inline span::before {\n        content: \"\";\n        display: inline-block;\n        width: 8px; height: 8px;\n        border-radius: 50%;\n        margin-right: 4px;\n        vertical-align: middle;\n      }\n      .macro-inline .mc::before { background: var(--macro-cal); }\n      .macro-inline .mf::before { background: var(--macro-fat); }\n      .macro-inline .mca::before { background: var(--macro-carb); }\n      .macro-inline .mfi::before { background: var(--macro-fiber); }\n      .macro-inline .mp::before { background: var(--macro-protein); }\n\n      /* Macro bar */\n      .macro-bar {\n        display: flex;\n        height: 4px;\n        border-radius: 2px;\n        overflow: hidden;\n        margin-top: 0.5rem;\n      }\n      .macro-bar div { min-width: 4px; }\n      .macro-bar .bf { background: var(--macro-fat); }\n      .macro-bar .bc { background: var(--macro-carb); }\n      .macro-bar .bp { background: var(--macro-protein); }\n\n      /* Section rule */\n      .section-rule {\n        display: flex;\n        align-items: center;\n        gap: 1rem;\n        margin: 1.5rem 0 1rem;\n      }\n      .section-rule h4 { margin: 0; white-space: nowrap; }\n      .section-rule hr { flex: 1; border: none; border-top: 1px solid var(--surface-border); margin: 0; }\n\n      /* Article refinements */\n      article {\n        border-radius: 0.75rem;\n        transition: border-color 0.2s;\n      }\n      article:hover {\n        border-color: var(--text-muted);\n      }\n\n      /* Date nav */\n      .date-nav {\n        display: flex;\n        justify-content: center;\n        align-items: center;\n        gap: 0.5rem;\n        margin-bottom: 1.5rem;\n      }\n      .date-nav a {\n        padding: 0.4rem 1rem;\n        border-radius: 2rem;\n        font-size: 0.85rem;\n        text-decoration: none;\n      }\n      .date-nav .current {\n        font-weight: 600;\n        font-size: 1rem;\n      }\n\n      /* Card header row */\n      .card-header {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        gap: 0.5rem;\n        margin-bottom: 0.5rem;\n      }\n      .card-header strong { flex: 1; }\n      .card-header input[type=\"number\"] {\n        width: 100px;\n        margin: 0;\n        padding: 0.3rem 0.5rem;\n        font-size: 0.85rem;\n      }\n\n      /* Dashboard progress thin */\n      .dash-progress {\n        height: 4px;\n        border-radius: 2px;\n        margin-top: 0.5rem;\n      }\n\n      /* Color utility classes */\n      .c-cal { color: var(--macro-cal); --pico-progress-color: var(--macro-cal); }\n      .c-fat { color: var(--macro-fat); --pico-progress-color: var(--macro-fat); }\n      .c-carb { color: var(--macro-carb); --pico-progress-color: var(--macro-carb); }\n      .c-fiber { color: var(--macro-fiber); --pico-progress-color: var(--macro-fiber); }\n      .c-protein { color: var(--macro-protein); --pico-progress-color: var(--macro-protein); }\n\n      /* Touch-friendly dropdown button */\n      .opt-btn {\n        padding: 0.5rem 0.75rem;\n        font-size: 0.85rem;\n        margin: 0;\n        min-height: 40px;\n        min-width: 40px;\n        display: flex;\n        align-items: center;\n        justify-content: center;\n      }\n\n      /* Touch-friendly macro buttons */\n      a[role=\"button\"].container,\n      button.outline.container {\n        min-height: 48px;\n        padding: 0.5rem 1rem;\n      }\n\n      /* Prevent iOS input zoom */\n      input[type=\"search\"],\n      input[type=\"text\"],\n      input[type=\"password\"],\n      input[type=\"number\"],\n      select {\n        font-size: 1rem;\n      }\n\n      /* Auth card */\n      .auth-card {\n        max-width: 420px;\n        margin: 0 auto;\n        padding-top: 10vh;\n      }\n\n      @media (max-width: 500px) {\n        .dash-grid {\n          grid-template-columns: repeat(2, 1fr);\n          gap: 0.5rem;\n          margin-bottom: 1rem;\n        }\n        .dash-card {\n          padding: 0.5rem;\n        }\n        .dash-card .value { font-size: 1.3rem; }\n        .dash-card .label { font-size: 0.7rem; }\n        .dash-card .sub { font-size: 0.65rem; }\n        .dash-card-wide {\n          grid-column: 1 / -1;\n          padding: 0.5rem 1rem;\n        }\n        .dash-card-wide .value { font-size: 1.5rem; }\n        .card-header {\n          flex-wrap: wrap;\n        }\n        .card-header strong {\n          flex-basis: 100%;\n        }\n        .macro-inline {\n          gap: 0.25rem 0.75rem;\n          font-size: 0.8rem;\n        }\n        .date-nav a {\n          padding: 0.6rem 1.2rem;\n          font-size: 0.8rem;\n        }\n        .auth-card {\n          max-width: 100%;\n          padding-top: 5vh;\n        }\n      }\n    </style>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -94,20 +94,7 @@ func Nav(id int) templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<nav><ul><li><a hx-boost=\"true\" href=\"/\"><h2>Macros</h2></a></li></ul><ul><li><a href=\"#\" class=\"secondary\">Services</a></li><li><details class=\"dropdown\"><summary role=\"link\" class=\"secondary\">Account</summary><ul dir=\"rtl\"><li>Logged in as: ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(id))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 75, Col: 46}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</li><li><a href=\"#\">Update Macros</a></li><li><a hx-boost=\"true\" href=\"/signout\">Logout</a></li></ul></details></li></ul></nav>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<nav><ul><li><a hx-boost=\"true\" href=\"/\"><h2><span style=\"color:var(--macro-cal);\">HT</span>MacrosX</h2></a></li></ul><ul><li><details class=\"dropdown\"><summary role=\"link\" class=\"secondary\">Account</summary><ul dir=\"rtl\"><li><a hx-boost=\"true\" href=\"/settings\">Update Macros</a></li><li><a hx-boost=\"true\" href=\"/signout\">Logout</a></li></ul></details></li></ul></nav>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -127,9 +114,9 @@ func mealOverviewButton(m db.MacroOverview) templ.Component {
 			defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var5 == nil {
-			templ_7745c5c3_Var5 = templ.NopComponent
+		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var4 == nil {
+			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<article>")
@@ -163,9 +150,9 @@ func templateOverviewButton(m db.MacroOverview, idempotentToken string) templ.Co
 			defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var6 == nil {
-			templ_7745c5c3_Var6 = templ.NopComponent
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<article>")
@@ -199,50 +186,71 @@ func GramEdit(food db.Join) templ.Component {
 			defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var7 == nil {
-			templ_7745c5c3_Var7 = templ.NopComponent
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<article>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<article><div class=\"card-header\"><strong>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = buttonNav(food.Name, liDelete(fmt.Sprint("join/", food.JoinID))).Render(ctx, templ_7745c5c3_Buffer)
+		var templ_7745c5c3_Var7 string
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(food.Name)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 302, Col: 24}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = macro(food.Macros).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<input type=\"number\" name=\"grams\" placeholder=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</strong> <input type=\"number\" name=\"grams\" placeholder=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(food.Grams, `g`))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 107, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 303, Col: 79}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" aria-label=\"Number\" hx-put=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" aria-label=\"Grams\" hx-put=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(`join/`, food.JoinID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 108, Col: 46}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 304, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"change\" hx-target=\"closest article\" hx-swap=\"outerHTML\"></article>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"change\" hx-target=\"closest article\" hx-swap=\"outerHTML\"> <details class=\"dropdown\"><summary role=\"link\" class=\"secondary outline opt-btn\">...</summary><ul dir=\"rtl\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = liDelete(fmt.Sprint("join/", food.JoinID)).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</ul></details></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = macroViewCompact(food.Macros).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = macroBar(food.Macros).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</article>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -303,30 +311,40 @@ func buttonNav(name string, lis ...templ.Component) templ.Component {
 			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<nav><ul><li><strong>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"card-header\"><strong>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 128, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 332, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</strong></li></ul><ul><li><details class=\"dropdown\"><summary role=\"link\" class=\"secondary\">Options</summary><ul dir=\"rtl\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</strong> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		for _, li := range lis {
-			templ_7745c5c3_Err = li.Render(ctx, templ_7745c5c3_Buffer)
+		if len(lis) > 0 {
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<details class=\"dropdown\"><summary role=\"link\" class=\"secondary outline opt-btn\">...</summary><ul dir=\"rtl\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			for _, li := range lis {
+				templ_7745c5c3_Err = li.Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</ul></details>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</ul></details></li></ul></nav>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -399,7 +417,7 @@ func liDelete(path string) templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(path)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 156, Col: 21}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 357, Col: 21}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -433,7 +451,7 @@ func macro(m db.Macro) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = macroView(m).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = macroViewCompact(m).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -478,7 +496,7 @@ func macroGet(m db.Macro, path string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = macroView(m).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = macroViewCompact(m).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -517,7 +535,7 @@ func macroPost(m db.Macro, idempotentToken string, path string) templ.Component 
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(path)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 180, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 381, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -530,7 +548,7 @@ func macroPost(m db.Macro, idempotentToken string, path string) templ.Component 
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(idempotentToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 181, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 382, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -540,7 +558,7 @@ func macroPost(m db.Macro, idempotentToken string, path string) templ.Component 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = macroView(m).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = macroViewCompact(m).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -559,7 +577,7 @@ func macroPost(m db.Macro, idempotentToken string, path string) templ.Component 
 	})
 }
 
-func macroView(m db.Macro) templ.Component {
+func macroViewCompact(m db.Macro) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -572,72 +590,72 @@ func macroView(m db.Macro) templ.Component {
 			templ_7745c5c3_Var24 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div role=\"group\" class=\"text-center\"><h5>Calories</h5><h5>Fat</h5><h5>Carbs</h5><h5>Fiber</h5><h5>Protein</h5></div><div role=\"group\" class=\"text-center\"><h6>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"macro-cal-line\"><span class=\"mc\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var25 string
-		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", m.Calories))
+		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", m.Calories))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 197, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 390, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h6><h6>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" cal</span></div><div class=\"macro-inline\"><span class=\"mf\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", m.Fat))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 198, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 393, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h6><h6>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("g F</span> <span class=\"mca\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", m.Carb))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 199, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 394, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h6><h6>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("g C</span> <span class=\"mfi\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", m.Fiber))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 200, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 395, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h6><h6>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("g Fi</span> <span class=\"mp\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", m.Protein))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 201, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 396, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h6></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("g P</span></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -661,73 +679,79 @@ func macroBar(m db.Macro) templ.Component {
 			templ_7745c5c3_Var30 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div style=\"display : flex\" class=\"container-fluid\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"macro-bar\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var31 = []any{flexPercent(int(m.Fat * float32(calories[Fat]) / m.Calories * 100)), barColor[Fat]}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var31...)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		if m.Calories > 0 {
+			var templ_7745c5c3_Var31 = []any{flexPercent(int(m.Fat * float32(calories[Fat]) / m.Calories * 100)), "bf"}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var31...)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var32 string
+			templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var31).String())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 1, Col: 0}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var33 = []any{flexPercent(int(m.Carb * float32(calories[Carb]) / m.Calories * 100)), "bc"}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var33...)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var34 string
+			templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var33).String())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 1, Col: 0}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var35 = []any{flexPercent(int(m.Protein * float32(calories[Protein]) / m.Calories * 100)), "bp"}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var35...)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var36 string
+			templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var35).String())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 1, Col: 0}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<progress value=\"100\" class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var32 string
-		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var31).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></progress> ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var33 = []any{flexPercent(int(m.Carb * float32(calories[Carb]) / m.Calories * 100)), barColor[Carb]}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var33...)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<progress value=\"100\" class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var34 string
-		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var33).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></progress> ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var35 = []any{flexPercent(int(m.Protein * float32(calories[Protein]) / m.Calories * 100)), barColor[Protein]}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var35...)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<progress value=\"100\" class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var36 string
-		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var35).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></progress></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
