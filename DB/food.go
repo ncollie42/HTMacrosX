@@ -7,6 +7,10 @@ import (
 )
 
 func CreateFood(name string, fat float64, carb float64, fiber float64, protein float64, grams float64, userID int) int {
+	return CreateFoodWithBarcode(name, fat, carb, fiber, protein, grams, userID, "")
+}
+
+func CreateFoodWithBarcode(name string, fat float64, carb float64, fiber float64, protein float64, grams float64, userID int, barcode string) int {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -21,9 +25,22 @@ func CreateFood(name string, fat float64, carb float64, fiber float64, protein f
 		FiberPerGram:   float32(fiber / grams),
 		Grams:          float32(grams),
 		CreatorUserID:  userID,
+		Barcode:        barcode,
 	}
 	fmt.Println("Created Food: ", name)
 	return id
+}
+
+func FindFoodByBarcode(barcode string) *FoodRecord {
+	mu.Lock()
+	defer mu.Unlock()
+
+	for _, f := range foods {
+		if f.Barcode == barcode {
+			return f
+		}
+	}
+	return nil
 }
 
 func FoodSearch(name string, userID int) []Food {

@@ -16,7 +16,6 @@ const (
     Alcohol
 )
 var calories = [6]int{0,9,4,0,4,7}
-var barColor = [6]string{"bar-calories", "bar-fat", "bar-carb", "bar-fiber", "bar-protein"}
 var macrosStr = [6]string{"Calories","Fat","Carbs","Fiber","Protein","Alcohol"}
 func (m Macro) String() string {
   return macrosStr[m]
@@ -58,10 +57,39 @@ templ DayQuickview(macros []db.MacroOverview) {
   for _, m := range macros {
     @mealOverviewButton(m)
   }
-  <div role="group">
-    <button class="outline contrast" hx-get="template/" hx-target="closest body" hx-push-url="true"> Template </button>
-    <button class="outline contrast" hx-post="meal"> Quick Add </button>
-  </div>
+  <div class="bottom-nav-spacer"></div>
+}
+
+templ BottomNav() {
+  <nav class="bottom-nav">
+    <a href="/template/" class="bottom-nav-tab" hx-boost="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 2h18v20H3z"></path>
+        <path d="M7 7h10"></path>
+        <path d="M7 12h10"></path>
+        <path d="M7 17h6"></path>
+      </svg>
+      <span>Meal</span>
+    </a>
+    <a href="/scan" class="bottom-nav-tab" hx-boost="false">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+        <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+        <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+        <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+        <line x1="7" y1="12" x2="17" y2="12"></line>
+      </svg>
+      <span>Scan</span>
+    </a>
+    <button class="bottom-nav-tab" hx-post="/meal">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="16"></line>
+        <line x1="8" y1="12" x2="16" y2="12"></line>
+      </svg>
+      <span>Ingredients</span>
+    </button>
+  </nav>
 }
 
 // ---------------------------- TEMPLATE Overview -------------------------------
@@ -79,7 +107,7 @@ templ TemplateOverview(macros []db.MacroOverview, idempotentToken string) {
 
 templ NameEdit(name string) {
   <input type="text"
-    placeholder={name}
+    value={name}
     name="name"
     hx-trigger="keyup changed delay:500ms"
     hx-put="name"/>
@@ -90,10 +118,28 @@ templ MealEdit(meal db.Meal) {
   for _, food := range meal.Foods {
     @GramEdit(food)
   }
-  <div role="group">
-    <a href="food_search"
-      role="button"
-      class="outline contrast">Add Food
+  <div class="bottom-nav-spacer"></div>
+}
+
+templ MealEditNav() {
+  <nav class="bottom-nav">
+    <a href="/scan" class="bottom-nav-tab" hx-boost="false">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+        <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+        <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+        <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+        <line x1="7" y1="12" x2="17" y2="12"></line>
+      </svg>
+      <span>Scan</span>
     </a>
-  </div>
+    <a href="food_search" class="bottom-nav-tab" hx-boost="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="16"></line>
+        <line x1="8" y1="12" x2="16" y2="12"></line>
+      </svg>
+      <span>Ingredients</span>
+    </a>
+  </nav>
 }

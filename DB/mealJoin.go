@@ -12,9 +12,9 @@ func CreateMealJoin(mealID string, foodID string, grams string) {
 	fid, _ := strconv.Atoi(foodID)
 	g, _ := strconv.ParseFloat(grams, 32)
 
-	id := nextMealJoinID
-	nextMealJoinID++
-	mealJoins[id] = &MealJoinRecord{
+	id := nextJoinID
+	nextJoinID++
+	joins[id] = &JoinRecord{
 		ID:     id,
 		MealID: mid,
 		FoodID: fid,
@@ -29,13 +29,13 @@ func UpdateMealJoin(joinID string, gramStr string) Join {
 	jid, _ := strconv.Atoi(joinID)
 	g, _ := strconv.ParseFloat(gramStr, 32)
 
-	mj, ok := mealJoins[jid]
+	j, ok := joins[jid]
 	if !ok {
 		return Join{}
 	}
-	mj.Grams = float32(g)
+	j.Grams = float32(g)
 
-	food, ok := foods[mj.FoodID]
+	food, ok := foods[j.FoodID]
 	if !ok {
 		return Join{}
 	}
@@ -48,9 +48,9 @@ func UpdateMealJoin(joinID string, gramStr string) Join {
 	}
 	return Join{
 		Name:   food.Name,
-		JoinID: mj.ID,
-		Grams:  mj.Grams,
-		Macros: macrosByGrams(mpg, mj.Grams),
+		JoinID: j.ID,
+		Grams:  j.Grams,
+		Macros: macrosByGrams(mpg, j.Grams),
 	}
 }
 
@@ -59,5 +59,5 @@ func DeleteMealJoin(joinID string) {
 	defer mu.Unlock()
 
 	jid, _ := strconv.Atoi(joinID)
-	delete(mealJoins, jid)
+	delete(joins, jid)
 }

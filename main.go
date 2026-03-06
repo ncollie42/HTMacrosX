@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"fmt"
+	"io"
 	db "myapp/DB"
 	"myapp/view"
 	"net/http"
@@ -21,6 +23,9 @@ var htmxJS []byte
 
 //go:embed css/pico.min.css
 var picoCSS []byte
+
+//go:embed js/html5-qrcode.min.js
+var html5QrcodeJS []byte
 
 // go:embed js/*
 var resources embed.FS
@@ -64,9 +69,13 @@ func main() {
 	e.DELETE("/template/:tID/join/:jID", deleteTemplateJoin)
 	e.PUT("/template/:id/join", updateTemplateJoin)
 
+	e.GET("/scan", scanView, validate)
+	e.POST("/scan/:barcode", scanBarcode, validate)
+
 	e.GET("/favicon.ico", fav)
 	e.GET("/htmx", htmx)
 	e.GET("/pico", pico)
+	e.GET("/html5qrcode", html5qrcode)
 	e.GET("/signin", signinView)
 	e.POST("/signin", signin)
 	e.GET("/signout", signout)
@@ -125,6 +134,81 @@ func pico(c echo.Context) error {
 	return nil
 }
 
+func html5qrcode(c echo.Context) error {
+	c.Response().Header().Set("Content-Type", "application/javascript")
+	fmt.Fprint(c.Response().Writer, string(html5QrcodeJS))
+	return nil
+}
+
+func scanView(c echo.Context) error {
+	userID := c.Get("userID").(int)
+	nav := view.Nav(userID)
+	scan := view.ScanPage()
+	component := view.Full(nav, scan)
+	return component.Render(context.Background(), c.Response().Writer)
+}
+
+func scanBarcode(c echo.Context) error {
+	userID := c.Get("userID").(int)
+	barcode := c.Param("barcode")
+
+	// Check cache first
+	existing := db.FindFoodByBarcode(barcode)
+	var foodID int
+	if existing != nil {
+		foodID = existing.ID
+	} else {
+		// Fetch from Open Food Facts
+		resp, err := http.Get("https://world.openfoodfacts.org/api/v2/product/" + barcode + ".json")
+		if err != nil {
+			return c.JSON(http.StatusBadGateway, map[string]string{"error": "Failed to fetch product"})
+		}
+		defer resp.Body.Close()
+
+		body, _ := io.ReadAll(resp.Body)
+		var result struct {
+			Status  int `json:"status"`
+			Product struct {
+				ProductName string `json:"product_name"`
+				Nutriments  struct {
+					Fat100g   float64 `json:"fat_100g"`
+					Carbs100g float64 `json:"carbohydrates_100g"`
+					Fiber100g float64 `json:"fiber_100g"`
+					Prot100g  float64 `json:"proteins_100g"`
+				} `json:"nutriments"`
+			} `json:"product"`
+		}
+		if err := json.Unmarshal(body, &result); err != nil || result.Status != 1 {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Product not found"})
+		}
+
+		p := result.Product
+		name := p.ProductName
+		if name == "" {
+			name = "Unknown (" + barcode + ")"
+		}
+
+		foodID = db.CreateFoodWithBarcode(
+			name,
+			p.Nutriments.Fat100g,
+			p.Nutriments.Carbs100g,
+			p.Nutriments.Fiber100g,
+			p.Nutriments.Prot100g,
+			100,
+			userID,
+			barcode,
+		)
+	}
+
+	// Create meal and add the food
+	mealTime := time.Now().Format("3:04 PM")
+	mealID := db.CreateMeal(mealTime, userID, false)
+	db.CreateMealJoin(strconv.Itoa(mealID), strconv.Itoa(foodID), "100")
+
+	c.Response().Header().Set("HX-Location", fmt.Sprint("/meal/", mealID, "/"))
+	return c.NoContent(http.StatusOK)
+}
+
 func overview(c echo.Context) error {
 	userID := c.Get("userID").(int)
 
@@ -140,7 +224,8 @@ func overview(c echo.Context) error {
 	nav := view.Nav(userID)
 	overview := view.DayOverview(date, totalMacros, target)
 	quickview := view.DayQuickview(macrosByID)
-	component := view.Full(nav, overview, quickview)
+	bottomNav := view.BottomNav()
+	component := view.Full(nav, overview, quickview, bottomNav)
 	return component.Render(context.Background(), c.Response().Writer)
 }
 
@@ -194,17 +279,18 @@ func templateToMeal(c echo.Context) error {
 func findTemplate(c echo.Context) error {
 	userID := c.Get("userID").(int)
 	templateID := c.Param("id")
-	meals := db.GetTemplateByID(templateID)
+	meals := db.GetMealByID(templateID)
 
 	nav := view.Nav(userID)
 	templateEdit := view.MealEdit(meals)
-	component := view.Full(nav, templateEdit)
+	mealNav := view.MealEditNav()
+	component := view.Full(nav, templateEdit, mealNav)
 	return component.Render(context.Background(), c.Response().Writer)
 }
 
 func findAllTemplates(c echo.Context) error {
 	userID := c.Get("userID").(int)
-	macros := db.GetTemplateEntriess(userID)
+	macros := db.GetPresetsEntries(userID)
 
 	token := auth.GenToken()
 	auth.SetDupToken(c, token)
@@ -221,16 +307,16 @@ func createTemplate(c echo.Context) error {
 	userID := c.Get("userID").(int)
 
 	time := time.Now().Format("3:04 PM")
-	templateID := db.CreateTemplate(time, userID)
+	templateID := db.CreateMeal(time, userID, true)
 
-	c.Response().Header().Set("HX-Location", fmt.Sprint(templateID, "/food_search"))
+	c.Response().Header().Set("HX-Location", fmt.Sprint("/template/", templateID, "/food_search"))
 	return c.NoContent(http.StatusOK)
 }
 
 func deleteTemplate(c echo.Context) error {
 	id := c.Param("id")
 
-	db.DeleteTemplate(id)
+	db.DeleteMeal(id)
 
 	return c.NoContent(http.StatusOK)
 }
@@ -243,7 +329,7 @@ func createTemplateJoin(c echo.Context) error {
 	// TODO: Query for default food.grams to show, for now display base 100g
 	grams := "100"
 
-	db.CreateTemplateJoin(templateID, foodID, grams)
+	db.CreateMealJoin(templateID, foodID, grams)
 
 	// This will GET the current base URL IE: /template/#/ - Current URL /template/#/foodsearch
 	c.Response().Header().Set("HX-Location", ".")
@@ -253,7 +339,7 @@ func createTemplateJoin(c echo.Context) error {
 func updateTemplateJoin(c echo.Context) error {
 	id := c.Param("id")
 	grams := c.FormValue("grams")
-	updatedFood := db.UpdateTemplateJoin(id, grams)
+	updatedFood := db.UpdateMealJoin(id, grams)
 
 	component := view.GramEdit(updatedFood)
 	return component.Render(context.Background(), c.Response().Writer)
@@ -262,7 +348,7 @@ func updateTemplateJoin(c echo.Context) error {
 func deleteTemplateJoin(c echo.Context) error {
 	id := c.Param("jID")
 
-	db.DeleteTemplateJoin(id)
+	db.DeleteMealJoin(id)
 	return c.NoContent(http.StatusOK)
 }
 
@@ -278,7 +364,7 @@ func updateMealName(c echo.Context) error {
 func updateTemplateName(c echo.Context) error {
 	id := c.Param("id")
 	name := c.FormValue("name")
-	db.UpdateTemplateName(id, name)
+	db.UpdateMealName(id, name)
 	return nil
 }
 
@@ -381,7 +467,8 @@ func findMeal(c echo.Context) error {
 
 	nav := view.Nav(userID)
 	mealEdit := view.MealEdit(meals)
-	component := view.Full(nav, mealEdit)
+	mealNav := view.MealEditNav()
+	component := view.Full(nav, mealEdit, mealNav)
 	return component.Render(context.Background(), c.Response().Writer)
 }
 
@@ -390,7 +477,7 @@ func createMeal(c echo.Context) error {
 	userID := c.Get("userID").(int)
 
 	time := time.Now().Format("3:04 PM")
-	mealID := db.CreateMeal(time, userID)
+	mealID := db.CreateMeal(time, userID, false)
 
 	c.Response().Header().Set("HX-Location", fmt.Sprint("/meal/", mealID, "/food_search"))
 	return c.NoContent(http.StatusOK)

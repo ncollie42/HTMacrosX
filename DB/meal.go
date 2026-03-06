@@ -6,11 +6,14 @@ import (
 	"time"
 )
 
-func CreateMeal(name string, userID int) int {
+func CreateMeal(name string, userID int, isPreset bool) int {
 	mu.Lock()
 	defer mu.Unlock()
 
-	today := time.Now().Format("2006-01-02")
+	today := ""
+	if !isPreset {
+		today = time.Now().Format("2006-01-02")
+	}
 	id := nextMealID
 	nextMealID++
 	meals[id] = &MealRecord{
@@ -18,6 +21,7 @@ func CreateMeal(name string, userID int) int {
 		UserID:   userID,
 		Name:     name,
 		MealDate: today,
+		IsPreset: isPreset,
 	}
 	return id
 }
@@ -29,9 +33,9 @@ func DeleteMeal(mealID string) {
 	id, _ := strconv.Atoi(mealID)
 
 	// Delete associated joins
-	for jid, mj := range mealJoins {
-		if mj.MealID == id {
-			delete(mealJoins, jid)
+	for jid, j := range joins {
+		if j.MealID == id {
+			delete(joins, jid)
 		}
 	}
 	delete(meals, id)
@@ -51,11 +55,11 @@ func GetMealByID(mealID string) Meal {
 	}
 	model.Name = meal.Name
 
-	for _, mj := range mealJoins {
-		if mj.MealID != id {
+	for _, j := range joins {
+		if j.MealID != id {
 			continue
 		}
-		food, ok := foods[mj.FoodID]
+		food, ok := foods[j.FoodID]
 		if !ok {
 			continue
 		}
@@ -65,13 +69,13 @@ func GetMealByID(mealID string) Meal {
 			CarbPerGram:    food.CarbPerGram,
 			FiberPerGram:   food.FiberPerGram,
 		}
-		j := Join{
+		jn := Join{
 			Name:   food.Name,
-			JoinID: mj.ID,
-			Grams:  mj.Grams,
-			Macros: macrosByGrams(mpg, mj.Grams),
+			JoinID: j.ID,
+			Grams:  j.Grams,
+			Macros: macrosByGrams(mpg, j.Grams),
 		}
-		model.Foods = append(model.Foods, j)
+		model.Foods = append(model.Foods, jn)
 	}
 	return model
 }
@@ -85,4 +89,57 @@ func UpdateMealName(mealID string, name string) {
 		meal.Name = name
 	}
 	fmt.Println("Updated Meal Name:", mealID, name)
+}
+
+func GetPresetsEntries(userID int) []MacroOverview {
+	mu.Lock()
+	defer mu.Unlock()
+
+	var results []MacroOverview
+	for _, j := range joins {
+		meal, mealOk := meals[j.MealID]
+		food, foodOk := foods[j.FoodID]
+		if !mealOk || !foodOk || !meal.IsPreset || meal.UserID != userID {
+			continue
+		}
+		mpg := MacroPerGram{
+			FatPerGram:     food.FatPerGram,
+			ProteinPerGram: food.ProteinPerGram,
+			CarbPerGram:    food.CarbPerGram,
+			FiberPerGram:   food.FiberPerGram,
+		}
+		results = append(results, MacroOverview{
+			Macros: macrosByGrams(mpg, j.Grams),
+			Name:   meal.Name,
+			ID:     meal.ID,
+		})
+	}
+	return results
+}
+
+func TemplateToMeal(templateID string, userID int) int {
+	id, _ := strconv.Atoi(templateID)
+
+	mu.Lock()
+	var presetName string
+	type item struct {
+		FoodID int
+		Grams  float32
+	}
+	var items []item
+	if p, ok := meals[id]; ok {
+		presetName = p.Name
+		for _, j := range joins {
+			if j.MealID == id {
+				items = append(items, item{j.FoodID, j.Grams})
+			}
+		}
+	}
+	mu.Unlock()
+
+	mealID := CreateMeal(presetName, userID, false)
+	for _, f := range items {
+		CreateMealJoin(strconv.Itoa(mealID), strconv.Itoa(f.FoodID), fmt.Sprint(f.Grams))
+	}
+	return mealID
 }

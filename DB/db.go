@@ -11,17 +11,13 @@ var mu sync.Mutex
 var nextUserID = 1
 var nextFoodID = 1
 var nextMealID = 1
-var nextMealJoinID = 1
-var nextTemplateID = 1
-var nextTemplateJoinID = 1
+var nextJoinID = 1
 
 // In-memory stores
 var users = map[int]*UserRecord{}
 var foods = map[int]*FoodRecord{}
 var meals = map[int]*MealRecord{}
-var mealJoins = map[int]*MealJoinRecord{}
-var templates = map[int]*TemplateRecord{}
-var templateJoins = map[int]*TemplateJoinRecord{}
+var joins = map[int]*JoinRecord{}
 
 type UserRecord struct {
 	ID             int
@@ -39,6 +35,7 @@ type FoodRecord struct {
 	FiberPerGram   float32
 	Grams          float32
 	CreatorUserID  int
+	Barcode        string
 }
 
 type MealRecord struct {
@@ -46,26 +43,14 @@ type MealRecord struct {
 	UserID   int
 	Name     string
 	MealDate string
+	IsPreset bool
 }
 
-type MealJoinRecord struct {
+type JoinRecord struct {
 	ID     int
 	MealID int
 	FoodID int
 	Grams  float32
-}
-
-type TemplateRecord struct {
-	ID     int
-	UserID int
-	Name   string
-}
-
-type TemplateJoinRecord struct {
-	ID         int
-	TemplateID int
-	FoodID     int
-	Grams      float32
 }
 
 // ----------------------------------------------
@@ -121,10 +106,13 @@ func GetEntriessByDate(userID int, dateTime time.Time) []MacroOverview {
 	defer mu.Unlock()
 
 	var results []MacroOverview
-	for _, mj := range mealJoins {
-		meal, mealOk := meals[mj.MealID]
-		food, foodOk := foods[mj.FoodID]
+	for _, j := range joins {
+		meal, mealOk := meals[j.MealID]
+		food, foodOk := foods[j.FoodID]
 		if !mealOk || !foodOk {
+			continue
+		}
+		if meal.IsPreset {
 			continue
 		}
 		if meal.UserID != userID || meal.MealDate != date {
@@ -137,7 +125,7 @@ func GetEntriessByDate(userID int, dateTime time.Time) []MacroOverview {
 			FiberPerGram:   food.FiberPerGram,
 		}
 		results = append(results, MacroOverview{
-			Macros: macrosByGrams(mpg, mj.Grams),
+			Macros: macrosByGrams(mpg, j.Grams),
 			Name:   meal.Name,
 			ID:     meal.ID,
 		})
@@ -176,17 +164,22 @@ func SumMacros(macros []MacroOverview) Macro {
 
 func SumMacrosByID(macros []MacroOverview) []MacroOverview {
 	dict := map[int][]MacroOverview{}
+	var order []int
 	for _, m := range macros {
+		if _, seen := dict[m.ID]; !seen {
+			order = append(order, m.ID)
+		}
 		dict[m.ID] = append(dict[m.ID], m)
 	}
 
 	var newMacros []MacroOverview
-	for id, m := range dict {
-		var newMacro MacroOverview
-		newMacro.Macros = SumMacros(m)
-		newMacro.ID = id
-		newMacro.Name = dict[id][0].Name
-		newMacros = append(newMacros, newMacro)
+	for _, id := range order {
+		m := dict[id]
+		newMacros = append(newMacros, MacroOverview{
+			Macros: SumMacros(m),
+			ID:     id,
+			Name:   m[0].Name,
+		})
 	}
 	return newMacros
 }
