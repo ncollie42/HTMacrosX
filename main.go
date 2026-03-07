@@ -48,6 +48,8 @@ const ctxUserID = "userID"
 
 var httpClient = &http.Client{Timeout: 10 * time.Second}
 
+var errProductNotFound = errors.New("product not found")
+
 // GET       -> SELECT
 // POST      -> INSERT -> New
 // PUT|PATCH -> UPDATE -> Edit
@@ -189,68 +191,82 @@ func scanView(c echo.Context) error {
 	return component.Render(context.Background(), c.Response().Writer)
 }
 
-func scanBarcode(c echo.Context) error {
-	userID := c.Get(ctxUserID).(int)
-	barcode := c.Param("barcode")
+type openFoodFactsProduct struct {
+	Name    string
+	Fat     float64
+	Carb    float64
+	Fiber   float64
+	Protein float64
+}
 
-	// Check cache first
-	existing := db.FindFoodByBarcode(barcode)
-	var foodID int
-	if existing != nil {
-		foodID = existing.ID
-	} else {
-		// Fetch from Open Food Facts
-		resp, err := httpClient.Get("https://world.openfoodfacts.org/api/v2/product/" + barcode + ".json")
-		if err != nil {
-			return c.JSON(http.StatusBadGateway, map[string]string{"error": "Failed to fetch product"})
-		}
-		defer resp.Body.Close()
+func fetchOpenFoodFacts(barcode string) (openFoodFactsProduct, error) {
+	resp, err := httpClient.Get("https://world.openfoodfacts.org/api/v2/product/" + barcode + ".json")
+	if err != nil {
+		return openFoodFactsProduct{}, fmt.Errorf("fetch failed: %w", err)
+	}
+	defer resp.Body.Close()
 
-		body, _ := io.ReadAll(resp.Body)
-		var result struct {
-			Status  int `json:"status"`
-			Product struct {
-				ProductName string `json:"product_name"`
-				Nutriments  struct {
-					Fat100g   float64 `json:"fat_100g"`
-					Carbs100g float64 `json:"carbohydrates_100g"`
-					Fiber100g float64 `json:"fiber_100g"`
-					Prot100g  float64 `json:"proteins_100g"`
-				} `json:"nutriments"`
-			} `json:"product"`
-		}
-		if err := json.Unmarshal(body, &result); err != nil || result.Status != 1 {
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "Product not found"})
-		}
-
-		p := result.Product
-		name := p.ProductName
-		if name == "" {
-			name = "Unknown (" + barcode + ")"
-		}
-
-		var err2 error
-		foodID, err2 = db.CreateFoodWithBarcode(
-			name,
-			p.Nutriments.Fat100g,
-			p.Nutriments.Carbs100g,
-			p.Nutriments.Fiber100g,
-			p.Nutriments.Prot100g,
-			100,
-			userID,
-			barcode,
-		)
-		if err2 != nil {
-			return c.NoContent(http.StatusInternalServerError)
-		}
+	if resp.StatusCode != http.StatusOK {
+		return openFoodFactsProduct{}, fmt.Errorf("API returned %d", resp.StatusCode)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return openFoodFactsProduct{}, fmt.Errorf("failed to read response: %w", err)
+	}
+	var result struct {
+		Status  int `json:"status"`
+		Product struct {
+			ProductName string `json:"product_name"`
+			Nutriments  struct {
+				Fat100g   float64 `json:"fat_100g"`
+				Carbs100g float64 `json:"carbohydrates_100g"`
+				Fiber100g float64 `json:"fiber_100g"`
+				Prot100g  float64 `json:"proteins_100g"`
+			} `json:"nutriments"`
+		} `json:"product"`
+	}
+	if err := json.Unmarshal(body, &result); err != nil || result.Status != 1 {
+		return openFoodFactsProduct{}, errProductNotFound
 	}
 
-	// Use existing meal or create a new one
+	p := result.Product
+	name := p.ProductName
+	if name == "" {
+		name = "Unknown (" + barcode + ")"
+	}
+	return openFoodFactsProduct{
+		Name:    name,
+		Fat:     p.Nutriments.Fat100g,
+		Carb:    p.Nutriments.Carbs100g,
+		Fiber:   p.Nutriments.Fiber100g,
+		Protein: p.Nutriments.Prot100g,
+	}, nil
+}
+
+func resolveBarcodedFood(barcode string, userID int) (int, error) {
+	if f := db.FindFoodByBarcode(barcode); f != nil {
+		return f.ID, nil
+	}
+	p, err := fetchOpenFoodFacts(barcode)
+	if err != nil {
+		return 0, err
+	}
+	return db.CreateFoodWithBarcode(p.Name, p.Fat, p.Carb, p.Fiber, p.Protein, 100, userID, barcode)
+}
+
+func scanBarcode(c echo.Context) error {
+	userID := c.Get(ctxUserID).(int)
+	foodID, err := resolveBarcodedFood(c.Param("barcode"), userID)
+	if err != nil {
+		if errors.Is(err, errProductNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Product not found"})
+		}
+		return c.JSON(http.StatusBadGateway, map[string]string{"error": "Failed to fetch product"})
+	}
+
 	mealID, _ := strconv.Atoi(c.QueryParam("meal"))
 	if mealID == 0 {
-		mealTime := time.Now().Format("3:04 PM")
-		var err error
-		mealID, err = db.CreateMeal(mealTime, userID, false)
+		mealID, err = db.CreateMeal(time.Now().Format("3:04 PM"), userID, false)
 		if err != nil {
 			return c.NoContent(http.StatusInternalServerError)
 		}

@@ -258,9 +258,9 @@ templ macroViewCompact(m db.Macro) {
 templ macroBar(m db.Macro) {
   <div class="macro-bar">
     if m.Calories > 0 {
-      <div class={flexPercent(int(m.Fat * float32(calories[Fat]) / m.Calories * 100)), "bf"}></div>
-      <div class={flexPercent(int(m.Carb * float32(calories[Carb]) / m.Calories * 100)), "bc"}></div>
-      <div class={flexPercent(int(m.Protein * float32(calories[Protein]) / m.Calories * 100)), "bp"}></div>
+      <div class={flexPercent(int(m.Fat * float32(kcalPerGram[Fat]) / m.Calories * 100)), "bf"}></div>
+      <div class={flexPercent(int(m.Carb * float32(kcalPerGram[Carb]) / m.Calories * 100)), "bc"}></div>
+      <div class={flexPercent(int(m.Protein * float32(kcalPerGram[Protein]) / m.Calories * 100)), "bp"}></div>
     }
   </div>
 }

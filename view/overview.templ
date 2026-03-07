@@ -18,15 +18,15 @@ func sumMealItems(items []db.MealItem) db.Macro {
 	return m
 }
 
-type Macro int
+type Nutrient int
 const (
-    Calories Macro = iota
+    Calories Nutrient = iota
     Fat
     Carb
     Fiber
     Protein
 )
-var calories = [5]int{0,9,4,0,4}
+var kcalPerGram = [5]int{0,9,4,0,4}
 
 func progressClass(colorClass string) string {
   switch colorClass {

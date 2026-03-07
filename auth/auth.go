@@ -45,9 +45,13 @@ func setCookie(c echo.Context, userID int) error {
 	}
 
 	cookie := http.Cookie{
-		Name:    cookieName,
-		Value:   sessionID,
-		Expires: expiration,
+		Name:     cookieName,
+		Value:    sessionID,
+		Expires:  expiration,
+		HttpOnly: true,
+		Secure:   c.Request().TLS != nil,
+		SameSite: http.SameSiteLaxMode,
+		Path:     "/",
 	}
 	c.SetCookie(&cookie)
 	return nil

@@ -872,7 +872,7 @@ func macroBar(m db.Macro) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if m.Calories > 0 {
-			var templ_7745c5c3_Var35 = []any{flexPercent(int(m.Fat * float32(calories[Fat]) / m.Calories * 100)), "bf"}
+			var templ_7745c5c3_Var35 = []any{flexPercent(int(m.Fat * float32(kcalPerGram[Fat]) / m.Calories * 100)), "bf"}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var35...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -894,7 +894,7 @@ func macroBar(m db.Macro) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var37 = []any{flexPercent(int(m.Carb * float32(calories[Carb]) / m.Calories * 100)), "bc"}
+			var templ_7745c5c3_Var37 = []any{flexPercent(int(m.Carb * float32(kcalPerGram[Carb]) / m.Calories * 100)), "bc"}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var37...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -916,7 +916,7 @@ func macroBar(m db.Macro) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var39 = []any{flexPercent(int(m.Protein * float32(calories[Protein]) / m.Calories * 100)), "bp"}
+			var templ_7745c5c3_Var39 = []any{flexPercent(int(m.Protein * float32(kcalPerGram[Protein]) / m.Calories * 100)), "bp"}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var39...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
