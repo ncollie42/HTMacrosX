@@ -417,6 +417,11 @@ func findMealOrTemplate(c echo.Context) error {
 		return handleDBErr(c, err)
 	}
 
+	currentURL := c.Request().Header.Get("HX-Current-URL")
+	if strings.Contains(currentURL, "/food_search") {
+		c.Response().Header().Set("HX-Replace-Url", c.Request().URL.Path)
+	}
+
 	var backURL, title string
 	if isTemplate(c) {
 		backURL = "/template/"

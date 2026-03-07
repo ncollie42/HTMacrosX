@@ -37,7 +37,7 @@ templ scanScript() {
         xhr.onload = function() {
           var loc = xhr.getResponseHeader("HX-Location");
           if (loc) {
-            window.location.href = loc;
+            window.location.replace(loc);
           } else if (xhr.status >= 400) {
             statusEl.textContent = "Product not found. Try another barcode.";
             scanning = true;
