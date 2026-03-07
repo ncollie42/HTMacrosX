@@ -10,6 +10,18 @@ templ Header() {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Macros</title>
 
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#282a36" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-icon" href="/icon" />
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      }
+    </script>
+
     <!-- Htmx.js-->
     <script src="/htmx"></script>
     <meta name="htmx-config" content='{"historyCacheSize": 0}'>
@@ -168,13 +180,7 @@ templ foodSelect(food db.Food) {
   <div class="card bg-base-200 shadow-sm mb-3">
     <div class="card-body p-4 gap-2">
       @buttonNav(food.Name, liDelete(fmt.Sprint("/food/", food.ID)))
-      <button
-        class="w-full text-left hover:border-base-content/20 border border-transparent transition-all rounded-box"
-        hx-post={fmt.Sprint("join/", food.ID)}
-        hx-include="[name='search']">
-        @macroViewCompact(food.Macros)
-        @macroBar(food.Macros)
-      </button>
+      @macroPost(food.Macros, "", fmt.Sprint("join/", food.ID))
     </div>
   </div>
 }

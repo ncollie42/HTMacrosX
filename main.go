@@ -10,7 +10,6 @@ import (
 	db "myapp/DB"
 	"myapp/view"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -29,6 +28,15 @@ var daisyCSS []byte
 
 //go:embed js/html5-qrcode.min.js
 var html5QrcodeJS []byte
+
+//go:embed pwa/manifest.json
+var manifestJSON []byte
+
+//go:embed pwa/sw.js
+var swJS []byte
+
+//go:embed icons/icon.svg
+var iconSVG []byte
 
 var presets = map[string]db.Macro{
 	"1750": {Calories: 1750, Fat: 50, Carb: 195, Fiber: 28, Protein: 130},
@@ -86,6 +94,9 @@ func main() {
 	e.GET("/htmx", htmx)
 	e.GET("/daisy", daisy)
 	e.GET("/html5qrcode", html5qrcode)
+	e.GET("/manifest.json", manifest)
+	e.GET("/sw.js", sw)
+	e.GET("/icon", icon)
 	e.GET("/signin", signinView)
 	e.POST("/signin", signin)
 	e.GET("/signup", signupView)
@@ -144,6 +155,28 @@ func daisy(c echo.Context) error {
 func html5qrcode(c echo.Context) error {
 	c.Response().Header().Set("Content-Type", "application/javascript")
 	_, err := c.Response().Writer.Write(html5QrcodeJS)
+	return err
+}
+
+func manifest(c echo.Context) error {
+	c.Response().Header().Set("Content-Type", "application/manifest+json")
+	c.Response().Header().Set("Cache-Control", "public, max-age=86400")
+	_, err := c.Response().Writer.Write(manifestJSON)
+	return err
+}
+
+func sw(c echo.Context) error {
+	c.Response().Header().Set("Content-Type", "application/javascript")
+	c.Response().Header().Set("Cache-Control", "no-cache")
+	c.Response().Header().Set("Service-Worker-Allowed", "/")
+	_, err := c.Response().Writer.Write(swJS)
+	return err
+}
+
+func icon(c echo.Context) error {
+	c.Response().Header().Set("Content-Type", "image/svg+xml")
+	c.Response().Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	_, err := c.Response().Writer.Write(iconSVG)
 	return err
 }
 
@@ -260,13 +293,7 @@ func foodSearch(c echo.Context) error {
 	foods := db.FoodSearch(search, userID)
 
 	id, _ := strconv.Atoi(c.Param("id"))
-	var backURL string
-	if isTemplate(c) {
-		backURL = fmt.Sprint("/template/", id, "/")
-	} else {
-		backURL = fmt.Sprint("/meal/", id, "/")
-	}
-	nav := view.NavBack(userID, backURL, "Add Food")
+	nav := view.NavBack(userID, editPath(c, id), "Add Food")
 	searchResult := view.FoodSearch(foods)
 	component := view.Full(nav, searchResult)
 	return component.Render(context.Background(), c.Response().Writer)
@@ -402,11 +429,7 @@ func addFood(c echo.Context) error {
 	if err := db.CreateMealItem(mealID, foodID, 100, userID); err != nil {
 		return handleDBErr(c, err)
 	}
-	loc := "food_search"
-	if search := c.FormValue("search"); search != "" {
-		loc += "?search=" + url.QueryEscape(search)
-	}
-	c.Response().Header().Set("HX-Location", loc)
+	c.Response().Header().Set("HX-Location", editPath(c, mealID))
 	return c.NoContent(http.StatusOK)
 }
 
@@ -643,6 +666,13 @@ func deleteMeal(c echo.Context) error {
 
 func isTemplate(c echo.Context) bool {
 	return strings.HasPrefix(c.Path(), "/template")
+}
+
+func editPath(c echo.Context, id int) string {
+	if isTemplate(c) {
+		return fmt.Sprintf("/template/%d/", id)
+	}
+	return fmt.Sprintf("/meal/%d/", id)
 }
 
 func strconvTime(num string) time.Time {
