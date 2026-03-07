@@ -1,6 +1,9 @@
 t.db
 t.db-shm
 t.db-wal
+app.db
+app.db-shm
+app.db-wal
 env
 myapp
 .DS_Store

@@ -12,6 +12,8 @@ var sqlDB *sql.DB
 
 var ErrNotOwned = fmt.Errorf("resource not found or not owned by user")
 
+const SystemUserID = 1
+
 const schema = `
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

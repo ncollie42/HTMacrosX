@@ -44,10 +44,10 @@ func FoodSearch(name string, userID int) []Food {
 	rows, err := sqlDB.Query(
 		`SELECT id, name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams
 		FROM foods
-		WHERE (creator_user_id = 1 OR creator_user_id = ?)
+		WHERE (creator_user_id = ? OR creator_user_id = ?)
 		  AND (? = '' OR LOWER(name) LIKE ?)
 		ORDER BY name`,
-		userID, name, likePattern,
+		SystemUserID, userID, name, likePattern,
 	)
 	if err != nil {
 		return nil
