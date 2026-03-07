@@ -15,6 +15,15 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+func Signup(c echo.Context, login string, pass string) error {
+	userID, err := db.CreateUser(login, pass)
+	if err != nil {
+		return err
+	}
+	setCookie(c, userID)
+	return nil
+}
+
 func Signin(c echo.Context, login string, pass string) error {
 	userID, err := db.ValidateUser(login, pass)
 	if err != nil {

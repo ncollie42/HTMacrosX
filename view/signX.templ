@@ -1,7 +1,81 @@
 package view
 
+import (
+	"fmt"
+	db "myapp/DB"
+)
+
 templ SignError(msg string) {
     <div id="onError" class="alert alert-error text-sm">{msg}</div>
+}
+
+templ Signup() {
+  <div class="max-w-sm mx-auto px-4 pt-[10vh]">
+    <div class="card bg-base-200 shadow-xl">
+      <div class="card-body gap-4">
+        <div class="text-center">
+          <h1 class="text-3xl font-bold mb-1">
+            Macros
+          </h1>
+          <p class="text-sm text-base-content/50">Create your account</p>
+        </div>
+        <form hx-post="/signup" hx-target="#onError" class="flex flex-col gap-3">
+          <input type="text" name="login" placeholder="Username" class="input input-bordered w-full" autocomplete="username" required/>
+          <input type="password" name="password" placeholder="Password" class="input input-bordered w-full" autocomplete="new-password" required/>
+          <input type="password" name="confirm" placeholder="Confirm Password" class="input input-bordered w-full" autocomplete="new-password" required/>
+          <button class="btn btn-primary w-full mt-1">Create Account</button>
+        </form>
+        <div class="text-center">
+          <a href="/signin" class="link link-hover text-sm text-base-content/40">Already have an account? Sign in</a>
+        </div>
+        <div id="onError"></div>
+      </div>
+    </div>
+  </div>
+}
+
+templ Onboarding(targets db.Macro) {
+  <div class="max-w-sm mx-auto px-4 pt-[10vh]">
+    <div class="card bg-base-200 shadow-xl">
+      <div class="card-body gap-4">
+        <div class="text-center">
+          <h1 class="text-3xl font-bold mb-1">Set Your Targets</h1>
+          <p class="text-sm text-base-content/50">Pick a preset or customize your own</p>
+        </div>
+        @OnboardingForm(targets)
+        <div class="flex gap-2">
+          <button class="btn btn-outline btn-xs flex-1" hx-get="/onboarding?preset=1750" hx-target="#macro-form" hx-swap="outerHTML">1750</button>
+          <button class="btn btn-outline btn-xs flex-1" hx-get="/onboarding?preset=2000" hx-target="#macro-form" hx-swap="outerHTML">2000</button>
+          <button class="btn btn-outline btn-xs flex-1" hx-get="/onboarding?preset=2250" hx-target="#macro-form" hx-swap="outerHTML">2250</button>
+        </div>
+        <div class="text-center">
+          <a href="/" class="link link-hover text-sm text-base-content/40">Skip for now</a>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+templ OnboardingForm(targets db.Macro) {
+  <form id="macro-form" hx-post="/onboarding" class="flex flex-col gap-3">
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Protein (g)</legend>
+      <input type="number" name="protein" step="1" value={fmt.Sprintf("%.0f", targets.Protein)} class="input w-full"/>
+    </fieldset>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Fat (g)</legend>
+      <input type="number" name="fat" step="1" value={fmt.Sprintf("%.0f", targets.Fat)} class="input w-full"/>
+    </fieldset>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Carbs (g)</legend>
+      <input type="number" name="carb" step="1" value={fmt.Sprintf("%.0f", targets.Carb)} class="input w-full"/>
+    </fieldset>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Fiber (g)</legend>
+      <input type="number" name="fiber" step="1" value={fmt.Sprintf("%.0f", targets.Fiber)} class="input w-full"/>
+    </fieldset>
+    <button type="submit" class="btn btn-primary w-full">Save & Continue</button>
+  </form>
 }
 
 templ Signin() {
@@ -10,7 +84,7 @@ templ Signin() {
       <div class="card-body gap-4">
         <div class="text-center">
           <h1 class="text-3xl font-bold mb-1">
-            <span style="color:var(--macro-cal)">HT</span>MacrosX
+            Macros
           </h1>
           <p class="text-sm text-base-content/50">A minimalist macro tracker</p>
         </div>
@@ -24,7 +98,7 @@ templ Signin() {
           <button class="btn btn-primary w-full mt-1">Login</button>
         </form>
         <div class="text-center">
-          <a class="link link-hover text-sm text-base-content/40">Forgot Your Password?</a>
+          <a href="/signup" class="link link-hover text-sm text-base-content/40">Don't have an account? Sign up</a>
         </div>
         <div id="onError"></div>
       </div>

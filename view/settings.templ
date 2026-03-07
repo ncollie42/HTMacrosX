@@ -6,28 +6,77 @@ import (
 )
 
 templ Settings(targets db.Macro) {
-  <div class="text-lg font-semibold mb-4">Macro Targets</div>
-  <form id="settings-form" hx-put="/settings" hx-target="#settings-form" hx-swap="outerHTML">
-    <fieldset class="fieldset mb-2">
-      <legend class="fieldset-legend">Calories</legend>
-      <input type="number" name="calories" step="0.1" value={fmt.Sprintf("%.1f", targets.Calories)} class="input w-full"/>
-    </fieldset>
-    <fieldset class="fieldset mb-2">
-      <legend class="fieldset-legend">Fat (g)</legend>
-      <input type="number" name="fat" step="0.1" value={fmt.Sprintf("%.1f", targets.Fat)} class="input w-full"/>
-    </fieldset>
-    <fieldset class="fieldset mb-2">
-      <legend class="fieldset-legend">Carbs (g)</legend>
-      <input type="number" name="carb" step="0.1" value={fmt.Sprintf("%.1f", targets.Carb)} class="input w-full"/>
-    </fieldset>
-    <fieldset class="fieldset mb-2">
-      <legend class="fieldset-legend">Fiber (g)</legend>
-      <input type="number" name="fiber" step="0.1" value={fmt.Sprintf("%.1f", targets.Fiber)} class="input w-full"/>
-    </fieldset>
-    <fieldset class="fieldset mb-2">
-      <legend class="fieldset-legend">Protein (g)</legend>
-      <input type="number" name="protein" step="0.1" value={fmt.Sprintf("%.1f", targets.Protein)} class="input w-full"/>
-    </fieldset>
-    <button type="submit" class="btn btn-primary w-full mt-2">Save Targets</button>
-  </form>
+  <div id="settings-form">
+    <div class="text-lg font-semibold mb-4">Macro Targets</div>
+    <div class="card bg-base-200 shadow-sm mb-4">
+      <div class="card-body p-4 gap-2">
+        <div class="text-sm font-bold mt-0.5" style="color:var(--macro-cal)">
+          <span class="mc" id="pv-cal">{fmt.Sprintf("%.0f", targets.Calories)} cal</span>
+        </div>
+        <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
+          <span class="mf" id="pv-fat">{fmt.Sprintf("%.1f", targets.Fat)}g F</span>
+          <span class="mca" id="pv-carb">{fmt.Sprintf("%.1f", targets.Carb)}g C</span>
+          <span class="mfi" id="pv-fiber">{fmt.Sprintf("%.1f", targets.Fiber)}g Fi</span>
+          <span class="mp" id="pv-protein">{fmt.Sprintf("%.1f", targets.Protein)}g P</span>
+        </div>
+        <div class="macro-bar" id="pv-bar">
+          if targets.Calories > 0 {
+            <div style={fmt.Sprintf("flex:%d", int(targets.Fat*9/targets.Calories*100))} class="bf"></div>
+            <div style={fmt.Sprintf("flex:%d", int(targets.Carb*4/targets.Calories*100))} class="bc"></div>
+            <div style={fmt.Sprintf("flex:%d", int(targets.Protein*4/targets.Calories*100))} class="bp"></div>
+          }
+        </div>
+      </div>
+    </div>
+    <form hx-put="/settings" hx-target="#settings-form" hx-swap="outerHTML">
+      <fieldset class="fieldset mb-2">
+        <legend class="fieldset-legend">Fat (g)</legend>
+        <input type="number" name="fat" step="0.1" value={fmt.Sprintf("%.1f", targets.Fat)} class="input w-full"/>
+      </fieldset>
+      <fieldset class="fieldset mb-2">
+        <legend class="fieldset-legend">Carbs (g)</legend>
+        <input type="number" name="carb" step="0.1" value={fmt.Sprintf("%.1f", targets.Carb)} class="input w-full"/>
+      </fieldset>
+      <fieldset class="fieldset mb-2">
+        <legend class="fieldset-legend">Fiber (g)</legend>
+        <input type="number" name="fiber" step="0.1" value={fmt.Sprintf("%.1f", targets.Fiber)} class="input w-full"/>
+      </fieldset>
+      <fieldset class="fieldset mb-2">
+        <legend class="fieldset-legend">Protein (g)</legend>
+        <input type="number" name="protein" step="0.1" value={fmt.Sprintf("%.1f", targets.Protein)} class="input w-full"/>
+      </fieldset>
+      <button type="submit" class="btn btn-primary w-full mt-2">Save Targets</button>
+    </form>
+    <div class="flex gap-3 mt-4">
+      <button class="btn btn-outline btn-sm flex-1" hx-get="/settings?preset=1750" hx-target="#settings-form" hx-swap="outerHTML">1750</button>
+      <button class="btn btn-outline btn-sm flex-1" hx-get="/settings?preset=2000" hx-target="#settings-form" hx-swap="outerHTML">2000</button>
+      <button class="btn btn-outline btn-sm flex-1" hx-get="/settings?preset=2250" hx-target="#settings-form" hx-swap="outerHTML">2250</button>
+    </div>
+    <script>
+      (function(){
+        var f=document.querySelector('#settings-form form');
+        if(!f)return;
+        function u(){
+          var fat=parseFloat(f.fat.value)||0;
+          var carb=parseFloat(f.carb.value)||0;
+          var fiber=parseFloat(f.fiber.value)||0;
+          var prot=parseFloat(f.protein.value)||0;
+          var cal=fat*9+carb*4+prot*4;
+          document.getElementById('pv-cal').textContent=Math.round(cal)+' cal';
+          document.getElementById('pv-fat').textContent=fat.toFixed(1)+'g F';
+          document.getElementById('pv-carb').textContent=carb.toFixed(1)+'g C';
+          document.getElementById('pv-fiber').textContent=fiber.toFixed(1)+'g Fi';
+          document.getElementById('pv-protein').textContent=prot.toFixed(1)+'g P';
+          var bar=document.getElementById('pv-bar');
+          if(cal>0){
+            var fp=Math.round(fat*9/cal*100);
+            var cp=Math.round(carb*4/cal*100);
+            var pp=Math.round(prot*4/cal*100);
+            bar.innerHTML='<div style="flex:'+fp+'" class="bf"></div><div style="flex:'+cp+'" class="bc"></div><div style="flex:'+pp+'" class="bp"></div>';
+          }else{bar.innerHTML='';}
+        }
+        f.addEventListener('input',u);
+      })();
+    </script>
+  </div>
 }

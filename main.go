@@ -27,6 +27,12 @@ var daisyCSS []byte
 //go:embed js/html5-qrcode.min.js
 var html5QrcodeJS []byte
 
+var presets = map[string]db.Macro{
+	"1750": {Calories: 1750, Fat: 50, Carb: 195, Fiber: 28, Protein: 130},
+	"2000": {Calories: 2000, Fat: 60, Carb: 220, Fiber: 30, Protein: 145},
+	"2250": {Calories: 2250, Fat: 65, Carb: 250, Fiber: 32, Protein: 165},
+}
+
 // GET       -> SELECT
 // POST      -> INSERT -> New
 // PUT|PATCH -> UPDATE -> Edit
@@ -75,7 +81,12 @@ func main() {
 	e.GET("/html5qrcode", html5qrcode)
 	e.GET("/signin", signinView)
 	e.POST("/signin", signin)
+	e.GET("/signup", signupView)
+	e.POST("/signup", signup)
 	e.GET("/signout", signout)
+
+	e.GET("/onboarding", onboardingView, validate)
+	e.POST("/onboarding", saveOnboarding, validate)
 
 	e.GET("/settings", settings, validate)
 	e.PUT("/settings", updateSettings, validate)
@@ -381,19 +392,23 @@ func createMealJoin(c echo.Context) error {
 }
 
 func updateMealJoin(c echo.Context) error {
+	mealID := c.Param("mID")
 	id := c.Param("id")
 	grams := c.FormValue("grams")
 	updatedFood := db.UpdateMealJoin(id, grams)
+	meal := db.GetMealByID(mealID)
 
-	component := view.GramEdit(updatedFood)
-	return component.Render(context.Background(), c.Response().Writer)
+	view.GramEdit(updatedFood).Render(context.Background(), c.Response().Writer)
+	return view.MealTotalsOOB(meal.Foods).Render(context.Background(), c.Response().Writer)
 }
 
 func deleteMealJoin(c echo.Context) error {
+	mealID := c.Param("mid")
 	id := c.Param("id")
 
 	db.DeleteMealJoin(id)
-	return c.NoContent(http.StatusOK)
+	meal := db.GetMealByID(mealID)
+	return view.MealTotalsOOB(meal.Foods).Render(context.Background(), c.Response().Writer)
 }
 
 // --------  Sign in / up -------------------------
@@ -415,6 +430,16 @@ func settings(c echo.Context) error {
 	userID := c.Get("userID").(int)
 	targets := db.GetUserTargets(userID)
 
+	if p := c.QueryParam("preset"); p != "" {
+		if preset, ok := presets[p]; ok {
+			targets = preset
+		}
+	}
+
+	if c.Request().Header.Get("HX-Request") != "" {
+		return view.Settings(targets).Render(context.Background(), c.Response().Writer)
+	}
+
 	nav := view.Nav(userID)
 	settingsForm := view.Settings(targets)
 	component := view.Full(nav, settingsForm)
@@ -424,14 +449,13 @@ func settings(c echo.Context) error {
 func updateSettings(c echo.Context) error {
 	userID := c.Get("userID").(int)
 
-	cal, _ := strconv.ParseFloat(c.FormValue("calories"), 32)
 	fat, _ := strconv.ParseFloat(c.FormValue("fat"), 32)
 	carb, _ := strconv.ParseFloat(c.FormValue("carb"), 32)
 	fiber, _ := strconv.ParseFloat(c.FormValue("fiber"), 32)
 	protein, _ := strconv.ParseFloat(c.FormValue("protein"), 32)
 
 	targets := db.Macro{
-		Calories: float32(cal),
+		Calories: float32(fat*9 + carb*4 + protein*4),
 		Fat:      float32(fat),
 		Carb:     float32(carb),
 		Fiber:    float32(fiber),
@@ -443,9 +467,71 @@ func updateSettings(c echo.Context) error {
 	return component.Render(context.Background(), c.Response().Writer)
 }
 
+func onboardingView(c echo.Context) error {
+	targets := presets["2000"]
+	if p := c.QueryParam("preset"); p != "" {
+		if preset, ok := presets[p]; ok {
+			targets = preset
+		}
+	}
+
+	if c.Request().Header.Get("HX-Request") != "" {
+		return view.OnboardingForm(targets).Render(context.Background(), c.Response().Writer)
+	}
+
+	component := view.Full(view.Onboarding(targets))
+	return component.Render(context.Background(), c.Response().Writer)
+}
+
+func saveOnboarding(c echo.Context) error {
+	userID := c.Get("userID").(int)
+
+	fat, _ := strconv.ParseFloat(c.FormValue("fat"), 32)
+	carb, _ := strconv.ParseFloat(c.FormValue("carb"), 32)
+	fiber, _ := strconv.ParseFloat(c.FormValue("fiber"), 32)
+	protein, _ := strconv.ParseFloat(c.FormValue("protein"), 32)
+
+	targets := db.Macro{
+		Calories: float32(fat*9 + carb*4 + protein*4),
+		Fat:      float32(fat),
+		Carb:     float32(carb),
+		Fiber:    float32(fiber),
+		Protein:  float32(protein),
+	}
+	db.UpdateUserTargets(userID, targets)
+
+	c.Response().Header().Set("HX-Location", "/")
+	return c.NoContent(http.StatusOK)
+}
+
 func signout(c echo.Context) error {
 	auth.ClearCookie(c)
 	c.Response().Header().Set("HX-Location", "/signin")
+	return c.NoContent(http.StatusOK)
+}
+
+func signupView(c echo.Context) error {
+	component := view.Full(view.Signup())
+	return component.Render(context.Background(), c.Response().Writer)
+}
+
+func signup(c echo.Context) error {
+	login := c.FormValue("login")
+	password := c.FormValue("password")
+	confirm := c.FormValue("confirm")
+
+	if password != confirm {
+		component := view.SignError("Passwords do not match")
+		return component.Render(context.Background(), c.Response().Writer)
+	}
+
+	err := auth.Signup(c, login, password)
+	if err != nil {
+		component := view.SignError(err.Error())
+		return component.Render(context.Background(), c.Response().Writer)
+	}
+
+	c.Response().Header().Set("HX-Location", "/onboarding")
 	return c.NoContent(http.StatusOK)
 }
 
