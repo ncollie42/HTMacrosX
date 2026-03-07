@@ -41,14 +41,14 @@ CREATE TABLE IF NOT EXISTS meals (
     is_preset INTEGER NOT NULL DEFAULT 0
 );
 
-CREATE TABLE IF NOT EXISTS joins (
+CREATE TABLE IF NOT EXISTS meal_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     meal_id INTEGER NOT NULL,
     food_id INTEGER NOT NULL,
     grams REAL NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_joins_meal_id ON joins(meal_id);
+CREATE INDEX IF NOT EXISTS idx_meal_items_meal_id ON meal_items(meal_id);
 CREATE INDEX IF NOT EXISTS idx_meals_user_date ON meals(user_id, meal_date);
 CREATE INDEX IF NOT EXISTS idx_foods_barcode ON foods(barcode);
 CREATE INDEX IF NOT EXISTS idx_foods_creator ON foods(creator_user_id);
@@ -61,6 +61,9 @@ func Open(path string) {
 		panic(err)
 	}
 	sqlDB.SetMaxOpenConns(1)
+	// Migrate: rename old "joins" table to "meal_items" if it exists
+	sqlDB.Exec(`ALTER TABLE joins RENAME TO meal_items`)
+	sqlDB.Exec(`DROP INDEX IF EXISTS idx_joins_meal_id`)
 	if _, err = sqlDB.Exec(schema); err != nil {
 		panic(err)
 	}
@@ -75,8 +78,8 @@ func makeMPG(ppg, fpg, cpg, fibpg float64) MacroPerGram {
 	}
 }
 
-func scanMacroOverviewRows(rows *sql.Rows) []MacroOverview {
-	var results []MacroOverview
+func scanMealSummaryRows(rows *sql.Rows) []MealSummary {
+	var results []MealSummary
 	for rows.Next() {
 		var grams, ppg, fpg, cpg, fibpg float64
 		var name string
@@ -84,7 +87,7 @@ func scanMacroOverviewRows(rows *sql.Rows) []MacroOverview {
 		if err := rows.Scan(&grams, &name, &id, &ppg, &fpg, &cpg, &fibpg); err != nil {
 			continue
 		}
-		results = append(results, MacroOverview{
+		results = append(results, MealSummary{
 			Macros: macrosByGrams(makeMPG(ppg, fpg, cpg, fibpg), float32(grams)),
 			Name:   name,
 			ID:     id,
@@ -97,6 +100,10 @@ func scanMacroOverviewRows(rows *sql.Rows) []MacroOverview {
 const ProteinKcalPerGram = 4
 const FatKcalPerGram = 9
 const CarbKcalPerGram = 4
+
+func CaloriesFromGrams(fat, carb, protein float64) float32 {
+	return float32(fat*FatKcalPerGram + carb*CarbKcalPerGram + protein*ProteinKcalPerGram)
+}
 
 type Macro struct {
 	Calories float32
@@ -113,7 +120,7 @@ type MacroPerGram struct {
 	FiberPerGram   float32
 }
 
-type MacroOverview struct {
+type MealSummary struct {
 	Macros Macro
 	Name   string
 	ID     int
@@ -122,7 +129,7 @@ type MacroOverview struct {
 type Meal struct {
 	Name  string
 	ID    string
-	Foods []Join
+	Items []MealItem
 }
 
 type Food struct {
@@ -132,10 +139,10 @@ type Food struct {
 	Grams  float32
 }
 
-type Join struct {
+type MealItem struct {
 	Macros Macro
 	Name   string
-	JoinID int
+	ItemID int
 	Grams  float32
 }
 
@@ -166,18 +173,18 @@ type MealRecord struct {
 	IsPreset bool
 }
 
-type JoinRecord struct {
+type MealItemRecord struct {
 	ID     int
 	MealID int
 	FoodID int
 	Grams  float32
 }
 
-func GetEntriessByDate(userID int, dateTime time.Time) []MacroOverview {
+func GetMealItemsByDate(userID int, dateTime time.Time) []MealSummary {
 	date := dateTime.Format("2006-01-02")
 	rows, err := sqlDB.Query(`
 		SELECT j.grams, m.name, m.id, f.protein_per_gram, f.fat_per_gram, f.carb_per_gram, f.fiber_per_gram
-		FROM joins j
+		FROM meal_items j
 		JOIN meals m ON m.id = j.meal_id
 		JOIN foods f ON f.id = j.food_id
 		WHERE m.user_id = ? AND m.meal_date = ? AND m.is_preset = 0
@@ -186,7 +193,7 @@ func GetEntriessByDate(userID int, dateTime time.Time) []MacroOverview {
 		return nil
 	}
 	defer rows.Close()
-	return scanMacroOverviewRows(rows)
+	return scanMealSummaryRows(rows)
 }
 
 func macrosByGrams(macro MacroPerGram, grams float32) Macro {
@@ -206,7 +213,7 @@ func macrosByGrams(macro MacroPerGram, grams float32) Macro {
 	}
 }
 
-func SumMacros(macros []MacroOverview) Macro {
+func SumMacros(macros []MealSummary) Macro {
 	var macro Macro
 	for _, m := range macros {
 		macro.Calories += m.Macros.Calories
@@ -218,8 +225,8 @@ func SumMacros(macros []MacroOverview) Macro {
 	return macro
 }
 
-func SumMacrosByID(macros []MacroOverview) []MacroOverview {
-	dict := map[int][]MacroOverview{}
+func SumMacrosByID(macros []MealSummary) []MealSummary {
+	dict := map[int][]MealSummary{}
 	var order []int
 	for _, m := range macros {
 		if _, seen := dict[m.ID]; !seen {
@@ -228,10 +235,10 @@ func SumMacrosByID(macros []MacroOverview) []MacroOverview {
 		dict[m.ID] = append(dict[m.ID], m)
 	}
 
-	var newMacros []MacroOverview
+	var newMacros []MealSummary
 	for _, id := range order {
 		m := dict[id]
-		newMacros = append(newMacros, MacroOverview{
+		newMacros = append(newMacros, MealSummary{
 			Macros: SumMacros(m),
 			ID:     id,
 			Name:   m[0].Name,

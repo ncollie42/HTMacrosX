@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-func sumJoinMacros(foods []db.Join) db.Macro {
+func sumMealItems(items []db.MealItem) db.Macro {
 	var m db.Macro
-	for _, f := range foods {
-		m.Calories += f.Macros.Calories
-		m.Protein += f.Macros.Protein
-		m.Fat += f.Macros.Fat
-		m.Carb += f.Macros.Carb
-		m.Fiber += f.Macros.Fiber
+	for _, item := range items {
+		m.Calories += item.Macros.Calories
+		m.Protein += item.Macros.Protein
+		m.Fat += item.Macros.Fat
+		m.Carb += item.Macros.Carb
+		m.Fiber += item.Macros.Fiber
 	}
 	return m
 }
@@ -73,7 +73,7 @@ templ DayOverview(date time.Time, total db.Macro, target db.Macro) {
   </div>
 }
 
-templ DayQuickview(macros []db.MacroOverview) {
+templ DayQuickview(macros []db.MealSummary) {
   <div class="divider text-xs text-base-content/50 font-semibold tracking-widest uppercase my-4">Today's Meals</div>
   for _, m := range macros {
     @mealOverviewButton(m)
@@ -115,7 +115,7 @@ templ BottomNav() {
 
 // ---------------------------- TEMPLATE Overview -------------------------------
 
-templ TemplateOverview(macros []db.MacroOverview, idempotentToken string) {
+templ TemplateOverview(macros []db.MealSummary, idempotentToken string) {
   for _, m := range macros {
     @templateOverviewButton(m, idempotentToken)
   }
@@ -135,43 +135,43 @@ templ NameEdit(name string) {
     hx-put="name"/>
 }
 
-templ mealTotalsContent(foods []db.Join) {
-  if len(foods) > 0 {
+templ mealTotalsContent(totals db.Macro) {
+  if totals.Calories > 0 {
     <div class="card bg-base-200 shadow-sm mb-4">
       <div class="card-body p-4 gap-2">
         <div class="flex items-center justify-between">
           <span class="text-xs font-semibold tracking-widest uppercase opacity-60">Meal Totals</span>
-          <span class="text-xl font-bold mc">{fmt.Sprintf("%.0f", sumJoinMacros(foods).Calories)} <span class="text-sm font-normal">cal</span></span>
+          <span class="text-xl font-bold mc">{fmt.Sprintf("%.0f", totals.Calories)} <span class="text-sm font-normal">cal</span></span>
         </div>
-        @macroBar(sumJoinMacros(foods))
+        @macroBar(totals)
         <div class="flex flex-wrap gap-x-4 gap-y-0.5 text-xs mt-1">
-          <span class="mp">P {fmt.Sprintf("%.0f", sumJoinMacros(foods).Protein)}g</span>
-          <span class="mf">F {fmt.Sprintf("%.0f", sumJoinMacros(foods).Fat)}g</span>
-          <span class="mca">C {fmt.Sprintf("%.0f", sumJoinMacros(foods).Carb)}g</span>
-          <span class="mfi">Fib {fmt.Sprintf("%.0f", sumJoinMacros(foods).Fiber)}g</span>
+          <span class="mp">P {fmt.Sprintf("%.0f", totals.Protein)}g</span>
+          <span class="mf">F {fmt.Sprintf("%.0f", totals.Fat)}g</span>
+          <span class="mca">C {fmt.Sprintf("%.0f", totals.Carb)}g</span>
+          <span class="mfi">Fib {fmt.Sprintf("%.0f", totals.Fiber)}g</span>
         </div>
       </div>
     </div>
   }
 }
 
-templ MealTotals(foods []db.Join) {
+templ MealTotals(items []db.MealItem) {
   <div id="meal-totals">
-    @mealTotalsContent(foods)
+    @mealTotalsContent(sumMealItems(items))
   </div>
 }
 
-templ MealTotalsOOB(foods []db.Join) {
+templ MealTotalsOOB(items []db.MealItem) {
   <div id="meal-totals" hx-swap-oob="true">
-    @mealTotalsContent(foods)
+    @mealTotalsContent(sumMealItems(items))
   </div>
 }
 
 templ MealEdit(meal db.Meal) {
   @NameEdit(meal.Name)
-  @MealTotals(meal.Foods)
-  for _, food := range meal.Foods {
-    @GramEdit(food)
+  @MealTotals(meal.Items)
+  for _, item := range meal.Items {
+    @GramEdit(item)
   }
   <div class="pb-28"></div>
 }

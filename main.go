@@ -46,31 +46,30 @@ func main() {
 
 	e.GET("/", overview, validate)
 	e.GET("/:date", overview, validate)
-	// TODO: Group Validate + resources Auth
-	e.POST("/meal", createMeal, validate)
-	e.DELETE("/meal/:id/", deleteMeal)
-	e.GET("/meal/:id/", findMeal, validate)
 
+	e.POST("/meal", createMeal, validate)
+	e.DELETE("/meal/:id/", deleteMeal, validate)
+	e.GET("/meal/:id/", findMealOrTemplate, validate)
 	e.GET("/meal/:id/food_search", foodSearch, validate)
-	e.GET("/template/:id/food_search", foodSearch, validate)
 	e.POST("/food", createFood, validate)
 
-	e.POST("/meal/:mID/join/:jID", createMealJoin)
-	e.DELETE("/meal/:mid/join/:id", deleteMealJoin)
-	e.PUT("/meal/:mID/join/:id", updateMealJoin)
-
-	e.PUT("/meal/:id/name", updateMealName)
-	e.PUT("/template/:id/name", updateTemplateName)
+	// Shared meal/template handlers
+	e.POST("/meal/:id/join/:foodID", addFood, validate)
+	e.DELETE("/meal/:id/join/:joinID", removeFood, validate)
+	e.PUT("/meal/:id/join/:joinID", updateGrams, validate)
+	e.PUT("/meal/:id/name", updateName, validate)
 
 	e.GET("/template/", findAllTemplates, validate)
 	e.POST("/template/", createTemplate, validate)
-	e.GET("/template/:id/", findTemplate, validate)
+	e.GET("/template/:id/", findMealOrTemplate, validate)
+	e.GET("/template/:id/food_search", foodSearch, validate)
 	e.DELETE("/template/:id/", deleteTemplate, validate)
 	e.POST("/template/:id/", templateToMeal, validate)
 
-	e.POST("/template/:tID/join/:jID", createTemplateJoin)
-	e.DELETE("/template/:tID/join/:jID", deleteTemplateJoin)
-	e.PUT("/template/:id/join", updateTemplateJoin)
+	e.POST("/template/:id/join/:foodID", addFood, validate)
+	e.DELETE("/template/:id/join/:joinID", removeFood, validate)
+	e.PUT("/template/:id/join/:joinID", updateGrams, validate)
+	e.PUT("/template/:id/name", updateName, validate)
 
 	e.GET("/scan", scanView, validate)
 	e.POST("/scan/:barcode", scanBarcode, validate)
@@ -211,7 +210,7 @@ func scanBarcode(c echo.Context) error {
 	// Create meal and add the food
 	mealTime := time.Now().Format("3:04 PM")
 	mealID := db.CreateMeal(mealTime, userID, false)
-	db.CreateMealJoin(strconv.Itoa(mealID), strconv.Itoa(foodID), "100")
+	db.CreateMealItem(strconv.Itoa(mealID), strconv.Itoa(foodID), "100")
 
 	c.Response().Header().Set("HX-Location", fmt.Sprint("/meal/", mealID, "/"))
 	return c.NoContent(http.StatusOK)
@@ -224,7 +223,7 @@ func overview(c echo.Context) error {
 
 	timeStr := c.Param("date")
 	date := strconvTime(timeStr)
-	macros := db.GetEntriessByDate(userID, date)
+	macros := db.GetMealItemsByDate(userID, date)
 
 	totalMacros := db.SumMacros(macros)
 	macrosByID := db.SumMacrosByID(macros)
@@ -284,21 +283,9 @@ func templateToMeal(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func findTemplate(c echo.Context) error {
-	userID := c.Get("userID").(int)
-	templateID := c.Param("id")
-	meals := db.GetMealByID(templateID)
-
-	nav := view.Nav(userID)
-	templateEdit := view.MealEdit(meals)
-	mealNav := view.MealEditNav()
-	component := view.Full(nav, templateEdit, mealNav)
-	return component.Render(context.Background(), c.Response().Writer)
-}
-
 func findAllTemplates(c echo.Context) error {
 	userID := c.Get("userID").(int)
-	macros := db.GetPresetsEntries(userID)
+	macros := db.GetTemplates(userID)
 
 	token := auth.GenToken()
 	auth.SetDupToken(c, token)
@@ -311,7 +298,6 @@ func findAllTemplates(c echo.Context) error {
 }
 
 func createTemplate(c echo.Context) error {
-	// NOTE: this will create a empty meal entries, will probably want a way to clean it up in the future.
 	userID := c.Get("userID").(int)
 
 	time := time.Now().Format("3:04 PM")
@@ -323,92 +309,62 @@ func createTemplate(c echo.Context) error {
 
 func deleteTemplate(c echo.Context) error {
 	id := c.Param("id")
-
 	db.DeleteMeal(id)
-
 	return c.NoContent(http.StatusOK)
 }
 
-// --------  Template Join ----------------------------
-func createTemplateJoin(c echo.Context) error {
-	templateID := c.Param("tID")
-	foodID := c.Param("jID")
-
-	// TODO: Query for default food.grams to show, for now display base 100g
-	grams := "100"
-
-	db.CreateMealJoin(templateID, foodID, grams)
-
-	// This will GET the current base URL IE: /template/#/ - Current URL /template/#/foodsearch
-	c.Response().Header().Set("HX-Location", ".")
-	return c.NoContent(http.StatusOK)
-}
-
-func updateTemplateJoin(c echo.Context) error {
+// --------  Shared Meal/Template Handlers ----------------------------
+func findMealOrTemplate(c echo.Context) error {
+	userID := c.Get("userID").(int)
 	id := c.Param("id")
-	grams := c.FormValue("grams")
-	updatedFood := db.UpdateMealJoin(id, grams)
+	meal := db.GetMealByID(id)
 
-	component := view.GramEdit(updatedFood)
+	nav := view.Nav(userID)
+	mealEdit := view.MealEdit(meal)
+	mealNav := view.MealEditNav()
+	component := view.Full(nav, mealEdit, mealNav)
 	return component.Render(context.Background(), c.Response().Writer)
 }
 
-func deleteTemplateJoin(c echo.Context) error {
-	id := c.Param("jID")
-
-	db.DeleteMealJoin(id)
-	return c.NoContent(http.StatusOK)
-}
-
-// --------  Meal Name ----------------------------
-func updateMealName(c echo.Context) error {
-	id := c.Param("id")
-	name := c.FormValue("name")
-	db.UpdateMealName(id, name)
-	return nil
-}
-
-// --------  Template Name ----------------------------
-func updateTemplateName(c echo.Context) error {
-	id := c.Param("id")
-	name := c.FormValue("name")
-	db.UpdateMealName(id, name)
-	return nil
-}
-
-// --------  Meal Join ----------------------------
-func createMealJoin(c echo.Context) error {
-	mealID := c.Param("mID")
-	foodID := c.Param("jID")
-
-	// TODO: Query for default food.grams to show, for now display base 100g
-	grams := "100"
-
-	db.CreateMealJoin(mealID, foodID, grams)
-
-	// This will GET the current base URL IE: /meal/#/ - Current URL /meal/#/foodsearch
+func addFood(c echo.Context) error {
+	mealID := c.Param("id")
+	foodID := c.Param("foodID")
+	db.CreateMealItem(mealID, foodID, "100")
 	c.Response().Header().Set("HX-Location", ".")
 	return c.NoContent(http.StatusOK)
 }
 
-func updateMealJoin(c echo.Context) error {
-	mealID := c.Param("mID")
-	id := c.Param("id")
-	grams := c.FormValue("grams")
-	updatedFood := db.UpdateMealJoin(id, grams)
+func removeFood(c echo.Context) error {
+	mealID := c.Param("id")
+	joinID := c.Param("joinID")
+	db.DeleteMealItem(joinID)
 	meal := db.GetMealByID(mealID)
-
-	view.GramEdit(updatedFood).Render(context.Background(), c.Response().Writer)
-	return view.MealTotalsOOB(meal.Foods).Render(context.Background(), c.Response().Writer)
+	return view.MealTotalsOOB(meal.Items).Render(context.Background(), c.Response().Writer)
 }
 
-func deleteMealJoin(c echo.Context) error {
-	mealID := c.Param("mid")
-	id := c.Param("id")
-
-	db.DeleteMealJoin(id)
+func updateGrams(c echo.Context) error {
+	mealID := c.Param("id")
+	joinID := c.Param("joinID")
+	grams := c.FormValue("grams")
+	db.UpdateMealItem(joinID, grams)
 	meal := db.GetMealByID(mealID)
-	return view.MealTotalsOOB(meal.Foods).Render(context.Background(), c.Response().Writer)
+	jid, _ := strconv.Atoi(joinID)
+	for _, item := range meal.Items {
+		if item.ItemID == jid {
+			if err := view.GramEdit(item).Render(context.Background(), c.Response().Writer); err != nil {
+				return err
+			}
+			break
+		}
+	}
+	return view.MealTotalsOOB(meal.Items).Render(context.Background(), c.Response().Writer)
+}
+
+func updateName(c echo.Context) error {
+	id := c.Param("id")
+	name := c.FormValue("name")
+	db.UpdateMealName(id, name)
+	return nil
 }
 
 // --------  Sign in / up -------------------------
@@ -455,7 +411,7 @@ func updateSettings(c echo.Context) error {
 	protein, _ := strconv.ParseFloat(c.FormValue("protein"), 32)
 
 	targets := db.Macro{
-		Calories: float32(fat*9 + carb*4 + protein*4),
+		Calories: db.CaloriesFromGrams(fat, carb, protein),
 		Fat:      float32(fat),
 		Carb:     float32(carb),
 		Fiber:    float32(fiber),
@@ -492,7 +448,7 @@ func saveOnboarding(c echo.Context) error {
 	protein, _ := strconv.ParseFloat(c.FormValue("protein"), 32)
 
 	targets := db.Macro{
-		Calories: float32(fat*9 + carb*4 + protein*4),
+		Calories: db.CaloriesFromGrams(fat, carb, protein),
 		Fat:      float32(fat),
 		Carb:     float32(carb),
 		Fiber:    float32(fiber),
@@ -542,19 +498,6 @@ func signinView(c echo.Context) error {
 }
 
 // --------  Meals --------------------------------
-func findMeal(c echo.Context) error {
-	userID := c.Get("userID").(int)
-	id := c.Param("id")
-
-	meals := db.GetMealByID(id)
-
-	nav := view.Nav(userID)
-	mealEdit := view.MealEdit(meals)
-	mealNav := view.MealEditNav()
-	component := view.Full(nav, mealEdit, mealNav)
-	return component.Render(context.Background(), c.Response().Writer)
-}
-
 func createMeal(c echo.Context) error {
 	// NOTE: this will create a empty meal entries, will probably want a way to clean it up in the future.
 	userID := c.Get("userID").(int)

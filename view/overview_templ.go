@@ -14,14 +14,14 @@ import (
 	"time"
 )
 
-func sumJoinMacros(foods []db.Join) db.Macro {
+func sumMealItems(items []db.MealItem) db.Macro {
 	var m db.Macro
-	for _, f := range foods {
-		m.Calories += f.Macros.Calories
-		m.Protein += f.Macros.Protein
-		m.Fat += f.Macros.Fat
-		m.Carb += f.Macros.Carb
-		m.Fiber += f.Macros.Fiber
+	for _, item := range items {
+		m.Calories += item.Macros.Calories
+		m.Protein += item.Macros.Protein
+		m.Fat += item.Macros.Fat
+		m.Carb += item.Macros.Carb
+		m.Fiber += item.Macros.Fiber
 	}
 	return m
 }
@@ -310,7 +310,7 @@ func DayOverview(date time.Time, total db.Macro, target db.Macro) templ.Componen
 	})
 }
 
-func DayQuickview(macros []db.MacroOverview) templ.Component {
+func DayQuickview(macros []db.MealSummary) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -379,7 +379,7 @@ func BottomNav() templ.Component {
 }
 
 // ---------------------------- TEMPLATE Overview -------------------------------
-func TemplateOverview(macros []db.MacroOverview, idempotentToken string) templ.Component {
+func TemplateOverview(macros []db.MealSummary, idempotentToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -457,7 +457,7 @@ func NameEdit(name string) templ.Component {
 	})
 }
 
-func mealTotalsContent(foods []db.Join) templ.Component {
+func mealTotalsContent(totals db.Macro) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -478,15 +478,15 @@ func mealTotalsContent(foods []db.Join) templ.Component {
 			templ_7745c5c3_Var21 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		if len(foods) > 0 {
+		if totals.Calories > 0 {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<div class=\"card bg-base-200 shadow-sm mb-4\"><div class=\"card-body p-4 gap-2\"><div class=\"flex items-center justify-between\"><span class=\"text-xs font-semibold tracking-widest uppercase opacity-60\">Meal Totals</span> <span class=\"text-xl font-bold mc\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var22 string
-			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", sumJoinMacros(foods).Calories))
+			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", totals.Calories))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/overview.templ`, Line: 144, Col: 96}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/overview.templ`, Line: 144, Col: 82}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -496,7 +496,7 @@ func mealTotalsContent(foods []db.Join) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = macroBar(sumJoinMacros(foods)).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = macroBar(totals).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -505,9 +505,9 @@ func mealTotalsContent(foods []db.Join) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var23 string
-			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", sumJoinMacros(foods).Protein))
+			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", totals.Protein))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/overview.templ`, Line: 148, Col: 79}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/overview.templ`, Line: 148, Col: 65}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 			if templ_7745c5c3_Err != nil {
@@ -518,9 +518,9 @@ func mealTotalsContent(foods []db.Join) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var24 string
-			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", sumJoinMacros(foods).Fat))
+			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", totals.Fat))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/overview.templ`, Line: 149, Col: 75}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/overview.templ`, Line: 149, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -531,9 +531,9 @@ func mealTotalsContent(foods []db.Join) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var25 string
-			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", sumJoinMacros(foods).Carb))
+			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", totals.Carb))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/overview.templ`, Line: 150, Col: 77}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/overview.templ`, Line: 150, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -544,9 +544,9 @@ func mealTotalsContent(foods []db.Join) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var26 string
-			templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", sumJoinMacros(foods).Fiber))
+			templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", totals.Fiber))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/overview.templ`, Line: 151, Col: 80}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/overview.templ`, Line: 151, Col: 66}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 			if templ_7745c5c3_Err != nil {
@@ -561,7 +561,7 @@ func mealTotalsContent(foods []db.Join) templ.Component {
 	})
 }
 
-func MealTotals(foods []db.Join) templ.Component {
+func MealTotals(items []db.MealItem) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -586,7 +586,7 @@ func MealTotals(foods []db.Join) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = mealTotalsContent(foods).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = mealTotalsContent(sumMealItems(items)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -598,7 +598,7 @@ func MealTotals(foods []db.Join) templ.Component {
 	})
 }
 
-func MealTotalsOOB(foods []db.Join) templ.Component {
+func MealTotalsOOB(items []db.MealItem) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -623,7 +623,7 @@ func MealTotalsOOB(foods []db.Join) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = mealTotalsContent(foods).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = mealTotalsContent(sumMealItems(items)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -660,12 +660,12 @@ func MealEdit(meal db.Meal) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = MealTotals(meal.Foods).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = MealTotals(meal.Items).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		for _, food := range meal.Foods {
-			templ_7745c5c3_Err = GramEdit(food).Render(ctx, templ_7745c5c3_Buffer)
+		for _, item := range meal.Items {
+			templ_7745c5c3_Err = GramEdit(item).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

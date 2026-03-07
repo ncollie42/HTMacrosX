@@ -119,7 +119,7 @@ func Nav(id int) templ.Component {
 }
 
 // ----------------------------------------------- BUTTON ----------------------
-func mealOverviewButton(m db.MacroOverview) templ.Component {
+func mealOverviewButton(m db.MealSummary) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -160,7 +160,7 @@ func mealOverviewButton(m db.MacroOverview) templ.Component {
 	})
 }
 
-func templateOverviewButton(m db.MacroOverview, idempotentToken string) templ.Component {
+func templateOverviewButton(m db.MealSummary, idempotentToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -201,7 +201,7 @@ func templateOverviewButton(m db.MacroOverview, idempotentToken string) templ.Co
 	})
 }
 
-func GramEdit(food db.Join) templ.Component {
+func GramEdit(item db.MealItem) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -227,7 +227,7 @@ func GramEdit(food db.Join) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(food.Name)
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 110, Col: 41}
 		}
@@ -240,7 +240,7 @@ func GramEdit(food db.Join) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(food.Grams, `g`))
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(item.Grams, `g`))
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 112, Col: 83}
 		}
@@ -253,7 +253,7 @@ func GramEdit(food db.Join) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(`join/`, food.JoinID))
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(`join/`, item.ItemID))
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 114, Col: 52}
 		}
@@ -265,7 +265,7 @@ func GramEdit(food db.Join) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = liDelete(fmt.Sprint("join/", food.JoinID)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = liDelete(fmt.Sprint("join/", item.ItemID)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -273,11 +273,11 @@ func GramEdit(food db.Join) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = macroViewCompact(food.Macros).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = macroViewCompact(item.Macros).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = macroBar(food.Macros).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = macroBar(item.Macros).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

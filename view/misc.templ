@@ -85,7 +85,7 @@ templ Nav(id int) {
 
 // ----------------------------------------------- BUTTON ----------------------
 
-templ mealOverviewButton(m db.MacroOverview) {
+templ mealOverviewButton(m db.MealSummary) {
   <div class="card bg-base-200 shadow-sm mb-3">
     <div class="card-body p-4 gap-2">
       @buttonNav(m.Name, liDelete(fmt.Sprint("/meal/",m.ID,"/")))
@@ -94,7 +94,7 @@ templ mealOverviewButton(m db.MacroOverview) {
   </div>
 }
 
-templ templateOverviewButton(m db.MacroOverview, idempotentToken string) {
+templ templateOverviewButton(m db.MealSummary, idempotentToken string) {
   <div class="card bg-base-200 shadow-sm mb-3">
     <div class="card-body p-4 gap-2">
       @buttonNav(m.Name, liEdit(fmt.Sprint(m.ID, "/")), liDelete(fmt.Sprint(m.ID, "/")))
@@ -103,15 +103,15 @@ templ templateOverviewButton(m db.MacroOverview, idempotentToken string) {
   </div>
 }
 
-templ GramEdit(food db.Join) {
+templ GramEdit(item db.MealItem) {
   <div class="card bg-base-200 shadow-sm mb-3">
     <div class="card-body p-4 gap-2">
       <div class="flex items-center justify-between gap-2">
-        <strong class="flex-1">{food.Name}</strong>
+        <strong class="flex-1">{item.Name}</strong>
         <div class="join">
-          <input type="number" name="grams" placeholder={fmt.Sprint(food.Grams,`g`)} aria-label="Grams"
+          <input type="number" name="grams" placeholder={fmt.Sprint(item.Grams,`g`)} aria-label="Grams"
             class="input input-bordered input-sm join-item w-16 text-center"
-            hx-put={fmt.Sprint(`join/`, food.JoinID)}
+            hx-put={fmt.Sprint(`join/`, item.ItemID)}
             hx-trigger="change"
             hx-target="closest .card"
             hx-swap="outerHTML"/>
@@ -120,12 +120,12 @@ templ GramEdit(food db.Join) {
         <div class="dropdown dropdown-end">
           <div tabindex="0" role="button" class="btn btn-ghost btn-xs">···</div>
           <ul tabindex="0" class="dropdown-content menu menu-xs bg-base-100 rounded-box w-28 p-1 shadow z-10">
-            @liDelete(fmt.Sprint("join/", food.JoinID))
+            @liDelete(fmt.Sprint("join/", item.ItemID))
           </ul>
         </div>
       </div>
-      @macroViewCompact(food.Macros)
-      @macroBar(food.Macros)
+      @macroViewCompact(item.Macros)
+      @macroBar(item.Macros)
     </div>
   </div>
 }

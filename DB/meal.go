@@ -33,7 +33,7 @@ func DeleteMeal(mealID string) {
 	if err != nil {
 		return
 	}
-	tx.Exec(`DELETE FROM joins WHERE meal_id = ?`, id)
+	tx.Exec(`DELETE FROM meal_items WHERE meal_id = ?`, id)
 	tx.Exec(`DELETE FROM meals WHERE id = ?`, id)
 	tx.Commit()
 }
@@ -46,7 +46,7 @@ func GetMealByID(mealID string) Meal {
 	rows, err := sqlDB.Query(`
 		SELECT m.name, j.id, j.grams, f.name, f.protein_per_gram, f.fat_per_gram, f.carb_per_gram, f.fiber_per_gram
 		FROM meals m
-		LEFT JOIN joins j ON j.meal_id = m.id
+		LEFT JOIN meal_items j ON j.meal_id = m.id
 		LEFT JOIN foods f ON f.id = j.food_id
 		WHERE m.id = ?
 	`, id)
@@ -67,9 +67,9 @@ func GetMealByID(mealID string) Meal {
 		if jid == nil {
 			continue // meal has no foods yet
 		}
-		model.Foods = append(model.Foods, Join{
+		model.Items = append(model.Items, MealItem{
 			Name:   *fname,
-			JoinID: *jid,
+			ItemID: *jid,
 			Grams:  float32(*grams),
 			Macros: macrosByGrams(makeMPG(*ppg, *fpg, *cpg, *fibpg), float32(*grams)),
 		})
@@ -83,10 +83,10 @@ func UpdateMealName(mealID string, name string) {
 	fmt.Println("Updated Meal Name:", mealID, name)
 }
 
-func GetPresetsEntries(userID int) []MacroOverview {
+func GetTemplates(userID int) []MealSummary {
 	rows, err := sqlDB.Query(`
 		SELECT j.grams, m.name, m.id, f.protein_per_gram, f.fat_per_gram, f.carb_per_gram, f.fiber_per_gram
-		FROM joins j
+		FROM meal_items j
 		JOIN meals m ON m.id = j.meal_id
 		JOIN foods f ON f.id = j.food_id
 		WHERE m.user_id = ? AND m.is_preset = 1
@@ -95,7 +95,7 @@ func GetPresetsEntries(userID int) []MacroOverview {
 		return nil
 	}
 	defer rows.Close()
-	return scanMacroOverviewRows(rows)
+	return scanMealSummaryRows(rows)
 }
 
 func TemplateToMeal(templateID string, userID int) int {
@@ -112,7 +112,7 @@ func TemplateToMeal(templateID string, userID int) int {
 		return 0
 	}
 
-	rows, err := tx.Query(`SELECT food_id, grams FROM joins WHERE meal_id = ?`, tid)
+	rows, err := tx.Query(`SELECT food_id, grams FROM meal_items WHERE meal_id = ?`, tid)
 	if err != nil {
 		tx.Rollback()
 		return 0
@@ -143,7 +143,7 @@ func TemplateToMeal(templateID string, userID int) int {
 	mealID, _ := res.LastInsertId()
 
 	for _, it := range items {
-		tx.Exec(`INSERT INTO joins (meal_id, food_id, grams) VALUES (?, ?, ?)`, mealID, it.FoodID, it.Grams)
+		tx.Exec(`INSERT INTO meal_items (meal_id, food_id, grams) VALUES (?, ?, ?)`, mealID, it.FoodID, it.Grams)
 	}
 
 	if err := tx.Commit(); err != nil {
