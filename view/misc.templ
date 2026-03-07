@@ -81,7 +81,7 @@ templ accountDropdown() {
     </div>
     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-200 rounded-box w-40 p-2 shadow-lg z-10">
       <li><a hx-boost="true" href="/settings">Update Macros</a></li>
-      <li><a hx-boost="true" href="/signout">Logout</a></li>
+      <li><button hx-post="/signout">Logout</button></li>
     </ul>
   </div>
 }
@@ -143,7 +143,7 @@ templ GramEdit(item db.MealItem) {
       <div class="flex items-center justify-between gap-2">
         <strong class="flex-1">{item.Name}</strong>
         <div class="join">
-          <input type="number" name="grams" placeholder={fmt.Sprint(item.Grams,`g`)} aria-label="Grams"
+          <input type="number" name="grams" value={fmt.Sprintf("%.0f", item.Grams)} aria-label="Grams"
             class="input input-bordered input-sm join-item w-16 text-center"
             hx-put={fmt.Sprint(`join/`, item.ItemID)}
             hx-trigger="change"
@@ -168,7 +168,13 @@ templ foodSelect(food db.Food) {
   <div class="card bg-base-200 shadow-sm mb-3">
     <div class="card-body p-4 gap-2">
       @buttonNav(food.Name, liDelete(fmt.Sprint("/food/", food.ID)))
-      @macroPost(food.Macros, "", fmt.Sprint("join/", food.ID))
+      <button
+        class="w-full text-left hover:border-base-content/20 border border-transparent transition-all rounded-box"
+        hx-post={fmt.Sprint("join/", food.ID)}
+        hx-include="[name='search']">
+        @macroViewCompact(food.Macros)
+        @macroBar(food.Macros)
+      </button>
     </div>
   </div>
 }
@@ -201,7 +207,8 @@ templ liDelete(path string){
     <a href={templ.SafeURL(path)}
       hx-delete={path}
       hx-target="closest .card"
-      hx-swap="outerHTML">Delete</a>
+      hx-swap="outerHTML"
+      hx-confirm="Delete this item?">Delete</a>
   </li>
 }
 

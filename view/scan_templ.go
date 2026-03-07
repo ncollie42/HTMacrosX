@@ -8,7 +8,9 @@ package view
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-func ScanPage() templ.Component {
+import "strconv"
+
+func ScanPage(mealID int) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -29,7 +31,53 @@ func ScanPage() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"scan-page\"><div id=\"reader\" style=\"width:100%;border-radius:0.75rem;overflow:hidden;\"></div><p id=\"scan-status\" style=\"text-align:center;margin-top:1rem;\" class=\"text-base-content/60\">Starting camera...</p></div><script src=\"/html5qrcode\"></script><script>\n    (function() {\n      const html5QrCode = new Html5Qrcode(\"reader\");\n      const statusEl = document.getElementById(\"scan-status\");\n      let scanning = true;\n\n      html5QrCode.start(\n        { facingMode: \"environment\" },\n        { fps: 10, qrbox: { width: 250, height: 150 } },\n        function(decodedText) {\n          if (!scanning) return;\n          scanning = false;\n          statusEl.textContent = \"Found: \" + decodedText + \" — looking up...\";\n          html5QrCode.stop().catch(() => {});\n\n          const xhr = new XMLHttpRequest();\n          xhr.open(\"POST\", \"/scan/\" + encodeURIComponent(decodedText));\n          xhr.setRequestHeader(\"HX-Request\", \"true\");\n          xhr.onload = function() {\n            const loc = xhr.getResponseHeader(\"HX-Location\");\n            if (loc) {\n              window.location.href = loc;\n            } else if (xhr.status >= 400) {\n              statusEl.textContent = \"Product not found. Try another barcode.\";\n              scanning = true;\n              html5QrCode.start(\n                { facingMode: \"environment\" },\n                { fps: 10, qrbox: { width: 250, height: 150 } },\n                function() {},\n                function() {}\n              ).catch(() => {});\n            }\n          };\n          xhr.onerror = function() {\n            statusEl.textContent = \"Network error. Please try again.\";\n            scanning = true;\n          };\n          xhr.send();\n        },\n        function() {}\n      ).then(function() {\n        statusEl.textContent = \"Point camera at a barcode\";\n      }).catch(function(err) {\n        statusEl.textContent = \"Camera error: \" + err;\n      });\n    })();\n  </script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"scan-page\" data-meal=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var2 string
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(mealID))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/scan.templ`, Line: 6, Col: 53}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"><div id=\"reader\" style=\"width:100%;border-radius:0.75rem;overflow:hidden;\"></div><p id=\"scan-status\" style=\"text-align:center;margin-top:1rem;\" class=\"text-base-content/60\">Starting camera...</p></div><script src=\"/html5qrcode\"></script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = scanScript().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func scanScript() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var3 == nil {
+			templ_7745c5c3_Var3 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<script type=\"text/javascript\">\n    (function() {\n      var html5QrCode = new Html5Qrcode(\"reader\");\n      var statusEl = document.getElementById(\"scan-status\");\n      var mealID = document.getElementById(\"scan-page\").getAttribute(\"data-meal\");\n      if (mealID === \"0\") mealID = \"\";\n      var scanning = true;\n      var camConfig = { facingMode: \"environment\" };\n      var scanConfig = { fps: 10, qrbox: { width: 250, height: 150 } };\n\n      function onScanSuccess(decodedText) {\n        if (!scanning) return;\n        scanning = false;\n        statusEl.textContent = \"Found: \" + decodedText + \" — looking up...\";\n        html5QrCode.stop().catch(function() {});\n\n        var url = \"/scan/\" + encodeURIComponent(decodedText) + (mealID ? \"?meal=\" + mealID : \"\");\n        var xhr = new XMLHttpRequest();\n        xhr.open(\"POST\", url);\n        xhr.setRequestHeader(\"HX-Request\", \"true\");\n        xhr.onload = function() {\n          var loc = xhr.getResponseHeader(\"HX-Location\");\n          if (loc) {\n            window.location.href = loc;\n          } else if (xhr.status >= 400) {\n            statusEl.textContent = \"Product not found. Try another barcode.\";\n            scanning = true;\n            html5QrCode.start(camConfig, scanConfig, onScanSuccess, function() {}).catch(function() {});\n          }\n        };\n        xhr.onerror = function() {\n          statusEl.textContent = \"Network error. Please try again.\";\n          scanning = true;\n          html5QrCode.start(camConfig, scanConfig, onScanSuccess, function() {}).catch(function() {});\n        };\n        xhr.send();\n      }\n\n      html5QrCode.start(camConfig, scanConfig, onScanSuccess, function() {}).then(function() {\n        statusEl.textContent = \"Point camera at a barcode\";\n      }).catch(function(err) {\n        statusEl.textContent = \"Camera error: \" + err;\n      });\n    })();\n  </script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -10,6 +10,7 @@ import (
 	db "myapp/DB"
 	"myapp/view"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -89,7 +90,7 @@ func main() {
 	e.POST("/signin", signin)
 	e.GET("/signup", signupView)
 	e.POST("/signup", signup)
-	e.GET("/signout", signout)
+	e.POST("/signout", signout, validate)
 
 	e.GET("/onboarding", onboardingView, validate)
 	e.POST("/onboarding", saveOnboarding, validate)
@@ -148,8 +149,9 @@ func html5qrcode(c echo.Context) error {
 
 func scanView(c echo.Context) error {
 	userID := c.Get(ctxUserID).(int)
+	mealID, _ := strconv.Atoi(c.QueryParam("meal"))
 	nav := view.NavBack(userID, "/", "Scan")
-	scan := view.ScanPage()
+	scan := view.ScanPage(mealID)
 	component := view.Full(nav, scan)
 	return component.Render(context.Background(), c.Response().Writer)
 }
@@ -210,14 +212,18 @@ func scanBarcode(c echo.Context) error {
 		}
 	}
 
-	// Create meal and add the food
-	mealTime := time.Now().Format("3:04 PM")
-	mealID, err := db.CreateMeal(mealTime, userID, false)
-	if err != nil {
-		return c.NoContent(http.StatusInternalServerError)
+	// Use existing meal or create a new one
+	mealID, _ := strconv.Atoi(c.QueryParam("meal"))
+	if mealID == 0 {
+		mealTime := time.Now().Format("3:04 PM")
+		var err error
+		mealID, err = db.CreateMeal(mealTime, userID, false)
+		if err != nil {
+			return c.NoContent(http.StatusInternalServerError)
+		}
 	}
 	if err := db.CreateMealItem(mealID, foodID, 100, userID); err != nil {
-		return c.NoContent(http.StatusInternalServerError)
+		return handleDBErr(c, err)
 	}
 
 	c.Response().Header().Set("HX-Location", fmt.Sprint("/meal/", mealID, "/"))
@@ -238,7 +244,7 @@ func overview(c echo.Context) error {
 
 	nav := view.Nav(userID)
 	overview := view.DayOverview(date, totalMacros, target)
-	quickview := view.DayQuickview(macrosByID)
+	quickview := view.DayQuickview(macrosByID, date)
 	bottomNav := view.BottomNav()
 	component := view.Full(nav, overview, quickview, bottomNav)
 	return component.Render(context.Background(), c.Response().Writer)
@@ -378,7 +384,7 @@ func findMealOrTemplate(c echo.Context) error {
 	}
 	nav := view.NavBack(userID, backURL, title)
 	mealEdit := view.MealEdit(meal)
-	mealNav := view.MealEditNav()
+	mealNav := view.MealEditNav(id)
 	component := view.Full(nav, mealEdit, mealNav)
 	return component.Render(context.Background(), c.Response().Writer)
 }
@@ -396,7 +402,11 @@ func addFood(c echo.Context) error {
 	if err := db.CreateMealItem(mealID, foodID, 100, userID); err != nil {
 		return handleDBErr(c, err)
 	}
-	c.Response().Header().Set("HX-Location", ".")
+	loc := "food_search"
+	if search := c.FormValue("search"); search != "" {
+		loc += "?search=" + url.QueryEscape(search)
+	}
+	c.Response().Header().Set("HX-Location", loc)
 	return c.NoContent(http.StatusOK)
 }
 

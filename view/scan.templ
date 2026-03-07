@@ -1,54 +1,58 @@
 package view
 
-templ ScanPage() {
-  <div id="scan-page">
+import "strconv"
+
+templ ScanPage(mealID int) {
+  <div id="scan-page" data-meal={strconv.Itoa(mealID)}>
     <div id="reader" style="width:100%;border-radius:0.75rem;overflow:hidden;"></div>
     <p id="scan-status" style="text-align:center;margin-top:1rem;" class="text-base-content/60">
       Starting camera...
     </p>
   </div>
   <script src="/html5qrcode"></script>
-  <script>
+  @scanScript()
+}
+
+templ scanScript() {
+  <script type="text/javascript">
     (function() {
-      const html5QrCode = new Html5Qrcode("reader");
-      const statusEl = document.getElementById("scan-status");
-      let scanning = true;
+      var html5QrCode = new Html5Qrcode("reader");
+      var statusEl = document.getElementById("scan-status");
+      var mealID = document.getElementById("scan-page").getAttribute("data-meal");
+      if (mealID === "0") mealID = "";
+      var scanning = true;
+      var camConfig = { facingMode: "environment" };
+      var scanConfig = { fps: 10, qrbox: { width: 250, height: 150 } };
 
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 150 } },
-        function(decodedText) {
-          if (!scanning) return;
-          scanning = false;
-          statusEl.textContent = "Found: " + decodedText + " — looking up...";
-          html5QrCode.stop().catch(() => {});
+      function onScanSuccess(decodedText) {
+        if (!scanning) return;
+        scanning = false;
+        statusEl.textContent = "Found: " + decodedText + " — looking up...";
+        html5QrCode.stop().catch(function() {});
 
-          const xhr = new XMLHttpRequest();
-          xhr.open("POST", "/scan/" + encodeURIComponent(decodedText));
-          xhr.setRequestHeader("HX-Request", "true");
-          xhr.onload = function() {
-            const loc = xhr.getResponseHeader("HX-Location");
-            if (loc) {
-              window.location.href = loc;
-            } else if (xhr.status >= 400) {
-              statusEl.textContent = "Product not found. Try another barcode.";
-              scanning = true;
-              html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 150 } },
-                function() {},
-                function() {}
-              ).catch(() => {});
-            }
-          };
-          xhr.onerror = function() {
-            statusEl.textContent = "Network error. Please try again.";
+        var url = "/scan/" + encodeURIComponent(decodedText) + (mealID ? "?meal=" + mealID : "");
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", url);
+        xhr.setRequestHeader("HX-Request", "true");
+        xhr.onload = function() {
+          var loc = xhr.getResponseHeader("HX-Location");
+          if (loc) {
+            window.location.href = loc;
+          } else if (xhr.status >= 400) {
+            statusEl.textContent = "Product not found. Try another barcode.";
             scanning = true;
-          };
-          xhr.send();
-        },
-        function() {}
-      ).then(function() {
+            html5QrCode.start(camConfig, scanConfig, onScanSuccess, function() {}).catch(function() {});
+          }
+        };
+        xhr.onerror = function() {
+          statusEl.textContent = "Network error. Please try again.";
+          scanning = true;
+          html5QrCode.start(camConfig, scanConfig, onScanSuccess, function() {}).catch(function() {});
+        };
+        xhr.send();
+      }
+
+      html5QrCode.start(camConfig, scanConfig, onScanSuccess, function() {}).then(function() {
         statusEl.textContent = "Point camera at a barcode";
       }).catch(function(err) {
         statusEl.textContent = "Camera error: " + err;
