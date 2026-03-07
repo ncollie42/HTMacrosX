@@ -417,11 +417,6 @@ func findMealOrTemplate(c echo.Context) error {
 		return handleDBErr(c, err)
 	}
 
-	currentURL := c.Request().Header.Get("HX-Current-URL")
-	if strings.Contains(currentURL, "/food_search") {
-		c.Response().Header().Set("HX-Replace-Url", c.Request().URL.Path)
-	}
-
 	var backURL, title string
 	if isTemplate(c) {
 		backURL = "/template/"
@@ -450,8 +445,7 @@ func addFood(c echo.Context) error {
 	if err := db.CreateMealItem(mealID, foodID, 100, userID); err != nil {
 		return handleDBErr(c, err)
 	}
-	c.Response().Header().Set("HX-Location", editPath(c, mealID))
-	return c.NoContent(http.StatusOK)
+	return c.HTML(http.StatusOK, `<script>window.location.replace("`+editPath(c, mealID)+`")</script>`)
 }
 
 func removeFood(c echo.Context) error {
