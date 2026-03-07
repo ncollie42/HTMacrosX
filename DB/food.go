@@ -5,22 +5,20 @@ import (
 	"strings"
 )
 
-func CreateFood(name string, fat float64, carb float64, fiber float64, protein float64, grams float64, userID int) int {
+func CreateFood(name string, fat float64, carb float64, fiber float64, protein float64, grams float64, userID int) (int, error) {
 	return CreateFoodWithBarcode(name, fat, carb, fiber, protein, grams, userID, "")
 }
 
-func CreateFoodWithBarcode(name string, fat float64, carb float64, fiber float64, protein float64, grams float64, userID int, barcode string) int {
+func CreateFoodWithBarcode(name string, fat float64, carb float64, fiber float64, protein float64, grams float64, userID int, barcode string) (int, error) {
 	res, err := sqlDB.Exec(
 		`INSERT INTO foods (name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams, creator_user_id, barcode) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		name, protein/grams, fat/grams, carb/grams, fiber/grams, grams, userID, barcode,
 	)
 	if err != nil {
-		fmt.Println("CreateFoodWithBarcode error:", err)
-		return 0
+		return 0, fmt.Errorf("CreateFoodWithBarcode: %w", err)
 	}
 	id, _ := res.LastInsertId()
-	fmt.Println("Created Food:", name)
-	return int(id)
+	return int(id), nil
 }
 
 func FindFoodByBarcode(barcode string) *FoodRecord {

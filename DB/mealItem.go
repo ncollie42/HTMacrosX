@@ -1,23 +1,46 @@
 package database
 
-import (
-	"strconv"
-)
-
-func CreateMealItem(mealID string, foodID string, grams string) {
-	mid, _ := strconv.Atoi(mealID)
-	fid, _ := strconv.Atoi(foodID)
-	g, _ := strconv.ParseFloat(grams, 64)
-	sqlDB.Exec(`INSERT INTO meal_items (meal_id, food_id, grams) VALUES (?, ?, ?)`, mid, fid, g)
+func CreateMealItem(mealID int, foodID int, grams float64, userID int) error {
+	res, err := sqlDB.Exec(
+		`INSERT INTO meal_items (meal_id, food_id, grams) SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM meals WHERE id = ? AND user_id = ?)`,
+		mealID, foodID, grams, mealID, userID,
+	)
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return ErrNotOwned
+	}
+	return nil
 }
 
-func UpdateMealItem(joinID string, gramStr string) {
-	jid, _ := strconv.Atoi(joinID)
-	g, _ := strconv.ParseFloat(gramStr, 64)
-	sqlDB.Exec(`UPDATE meal_items SET grams = ? WHERE id = ?`, g, jid)
+func UpdateMealItem(joinID int, grams float64, userID int) error {
+	res, err := sqlDB.Exec(
+		`UPDATE meal_items SET grams = ? WHERE id = ? AND meal_id IN (SELECT id FROM meals WHERE user_id = ?)`,
+		grams, joinID, userID,
+	)
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return ErrNotOwned
+	}
+	return nil
 }
 
-func DeleteMealItem(joinID string) {
-	jid, _ := strconv.Atoi(joinID)
-	sqlDB.Exec(`DELETE FROM meal_items WHERE id = ?`, jid)
+func DeleteMealItem(joinID int, userID int) error {
+	res, err := sqlDB.Exec(
+		`DELETE FROM meal_items WHERE id = ? AND meal_id IN (SELECT id FROM meals WHERE user_id = ?)`,
+		joinID, userID,
+	)
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return ErrNotOwned
+	}
+	return nil
 }

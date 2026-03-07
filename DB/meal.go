@@ -2,11 +2,10 @@ package database
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 )
 
-func CreateMeal(name string, userID int, isPreset bool) int {
+func CreateMeal(name string, userID int, isPreset bool) (int, error) {
 	today := ""
 	if !isPreset {
 		today = time.Now().Format("2006-01-02")
@@ -20,26 +19,35 @@ func CreateMeal(name string, userID int, isPreset bool) int {
 		userID, name, today, isPresetInt,
 	)
 	if err != nil {
-		fmt.Println("CreateMeal error:", err)
-		return 0
+		return 0, fmt.Errorf("CreateMeal: %w", err)
 	}
 	id, _ := res.LastInsertId()
-	return int(id)
+	return int(id), nil
 }
 
-func DeleteMeal(mealID string) {
-	id, _ := strconv.Atoi(mealID)
+func DeleteMeal(mealID int, userID int) error {
 	tx, err := sqlDB.Begin()
 	if err != nil {
-		return
+		return err
 	}
-	tx.Exec(`DELETE FROM meal_items WHERE meal_id = ?`, id)
-	tx.Exec(`DELETE FROM meals WHERE id = ?`, id)
-	tx.Commit()
+	res, err := tx.Exec(`DELETE FROM meals WHERE id = ? AND user_id = ?`, mealID, userID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		tx.Rollback()
+		return ErrNotOwned
+	}
+	if _, err := tx.Exec(`DELETE FROM meal_items WHERE meal_id = ?`, mealID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
 }
 
-func GetMealByID(mealID string) Meal {
-	id, _ := strconv.Atoi(mealID)
+func GetMealByID(mealID int, userID int) (Meal, error) {
 	var model Meal
 	model.ID = mealID
 
@@ -48,14 +56,16 @@ func GetMealByID(mealID string) Meal {
 		FROM meals m
 		LEFT JOIN meal_items j ON j.meal_id = m.id
 		LEFT JOIN foods f ON f.id = j.food_id
-		WHERE m.id = ?
-	`, id)
+		WHERE m.id = ? AND m.user_id = ?
+	`, mealID, userID)
 	if err != nil {
-		return model
+		return model, err
 	}
 	defer rows.Close()
 
+	found := false
 	for rows.Next() {
+		found = true
 		var mealName string
 		var jid *int
 		var grams, ppg, fpg, cpg, fibpg *float64
@@ -74,13 +84,22 @@ func GetMealByID(mealID string) Meal {
 			Macros: macrosByGrams(makeMPG(*ppg, *fpg, *cpg, *fibpg), float32(*grams)),
 		})
 	}
-	return model
+	if !found {
+		return model, ErrNotOwned
+	}
+	return model, nil
 }
 
-func UpdateMealName(mealID string, name string) {
-	id, _ := strconv.Atoi(mealID)
-	sqlDB.Exec(`UPDATE meals SET name = ? WHERE id = ?`, name, id)
-	fmt.Println("Updated Meal Name:", mealID, name)
+func UpdateMealName(mealID int, userID int, name string) error {
+	res, err := sqlDB.Exec(`UPDATE meals SET name = ? WHERE id = ? AND user_id = ?`, name, mealID, userID)
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return ErrNotOwned
+	}
+	return nil
 }
 
 func GetTemplates(userID int) []MealSummary {
@@ -98,24 +117,22 @@ func GetTemplates(userID int) []MealSummary {
 	return scanMealSummaryRows(rows)
 }
 
-func TemplateToMeal(templateID string, userID int) int {
-	tid, _ := strconv.Atoi(templateID)
-
+func TemplateToMeal(templateID int, userID int) (int, error) {
 	tx, err := sqlDB.Begin()
 	if err != nil {
-		return 0
+		return 0, err
 	}
 
 	var presetName string
-	if err := tx.QueryRow(`SELECT name FROM meals WHERE id = ?`, tid).Scan(&presetName); err != nil {
+	if err := tx.QueryRow(`SELECT name FROM meals WHERE id = ? AND user_id = ?`, templateID, userID).Scan(&presetName); err != nil {
 		tx.Rollback()
-		return 0
+		return 0, ErrNotOwned
 	}
 
-	rows, err := tx.Query(`SELECT food_id, grams FROM meal_items WHERE meal_id = ?`, tid)
+	rows, err := tx.Query(`SELECT food_id, grams FROM meal_items WHERE meal_id = ?`, templateID)
 	if err != nil {
 		tx.Rollback()
-		return 0
+		return 0, fmt.Errorf("TemplateToMeal: %w", err)
 	}
 	type item struct {
 		FoodID int
@@ -138,16 +155,19 @@ func TemplateToMeal(templateID string, userID int) int {
 	)
 	if err != nil {
 		tx.Rollback()
-		return 0
+		return 0, fmt.Errorf("TemplateToMeal: %w", err)
 	}
 	mealID, _ := res.LastInsertId()
 
 	for _, it := range items {
-		tx.Exec(`INSERT INTO meal_items (meal_id, food_id, grams) VALUES (?, ?, ?)`, mealID, it.FoodID, it.Grams)
+		if _, err := tx.Exec(`INSERT INTO meal_items (meal_id, food_id, grams) VALUES (?, ?, ?)`, mealID, it.FoodID, it.Grams); err != nil {
+			tx.Rollback()
+			return 0, fmt.Errorf("TemplateToMeal: %w", err)
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		return 0
+		return 0, fmt.Errorf("TemplateToMeal: %w", err)
 	}
-	return int(mealID)
+	return int(mealID), nil
 }

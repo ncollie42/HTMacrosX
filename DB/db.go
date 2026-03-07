@@ -2,12 +2,15 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	_ "modernc.org/sqlite"
 )
 
 var sqlDB *sql.DB
+
+var ErrNotOwned = fmt.Errorf("resource not found or not owned by user")
 
 const schema = `
 CREATE TABLE IF NOT EXISTS users (
@@ -48,10 +51,18 @@ CREATE TABLE IF NOT EXISTS meal_items (
     grams REAL NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS sessions (
+    session_id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    token TEXT NOT NULL DEFAULT '',
+    expires_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_meal_items_meal_id ON meal_items(meal_id);
 CREATE INDEX IF NOT EXISTS idx_meals_user_date ON meals(user_id, meal_date);
 CREATE INDEX IF NOT EXISTS idx_foods_barcode ON foods(barcode);
 CREATE INDEX IF NOT EXISTS idx_foods_creator ON foods(creator_user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
 `
 
 func Open(path string) {
@@ -128,7 +139,7 @@ type MealSummary struct {
 
 type Meal struct {
 	Name  string
-	ID    string
+	ID    int
 	Items []MealItem
 }
 

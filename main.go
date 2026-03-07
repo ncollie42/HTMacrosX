@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	db "myapp/DB"
@@ -32,6 +33,10 @@ var presets = map[string]db.Macro{
 	"2000": {Calories: 2000, Fat: 60, Carb: 220, Fiber: 30, Protein: 145},
 	"2250": {Calories: 2250, Fat: 65, Carb: 250, Fiber: 32, Protein: 165},
 }
+
+const ctxUserID = "userID"
+
+var httpClient = &http.Client{Timeout: 10 * time.Second}
 
 // GET       -> SELECT
 // POST      -> INSERT -> New
@@ -101,27 +106,19 @@ func validate(next echo.HandlerFunc) echo.HandlerFunc {
 		// userID, err := 2, error(nil)
 		userID, err := auth.GetUserFromCookie(c)
 		if err != nil {
-			fmt.Println(err.Error())
 			return c.Redirect(http.StatusSeeOther, "/signin")
 		}
-		c.Set("userID", userID)
+		c.Set(ctxUserID, userID)
 		return next(c)
 	}
 }
 
-// func timedLogger(next echo.HandlerFunc) echo.HandlerFunc {
-// 	return func(c echo.Context) error {
-// 		start := time.Now()
-// 		defer func() {
-// 			log.Println(time.Since(start))
-// 		}()
-
-// 		if err := next(c); err != nil {
-// 			c.Error(err)
-// 		}
-// 		return nil
-// 	}
-// }
+func handleDBErr(c echo.Context, err error) error {
+	if errors.Is(err, db.ErrNotOwned) {
+		return c.NoContent(http.StatusNotFound)
+	}
+	return c.NoContent(http.StatusInternalServerError)
+}
 
 // ---------- Handlers ---------------------
 
@@ -131,24 +128,24 @@ func fav(c echo.Context) error {
 
 func htmx(c echo.Context) error {
 	c.Response().Header().Set("Content-Type", "application/javascript")
-	fmt.Fprint(c.Response().Writer, string(htmxJS))
-	return nil
+	_, err := c.Response().Writer.Write(htmxJS)
+	return err
 }
 
 func daisy(c echo.Context) error {
 	c.Response().Header().Set("Content-Type", "text/css")
-	fmt.Fprint(c.Response().Writer, string(daisyCSS))
-	return nil
+	_, err := c.Response().Writer.Write(daisyCSS)
+	return err
 }
 
 func html5qrcode(c echo.Context) error {
 	c.Response().Header().Set("Content-Type", "application/javascript")
-	fmt.Fprint(c.Response().Writer, string(html5QrcodeJS))
-	return nil
+	_, err := c.Response().Writer.Write(html5QrcodeJS)
+	return err
 }
 
 func scanView(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	userID := c.Get(ctxUserID).(int)
 	nav := view.Nav(userID)
 	scan := view.ScanPage()
 	component := view.Full(nav, scan)
@@ -156,7 +153,7 @@ func scanView(c echo.Context) error {
 }
 
 func scanBarcode(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	userID := c.Get(ctxUserID).(int)
 	barcode := c.Param("barcode")
 
 	// Check cache first
@@ -166,7 +163,7 @@ func scanBarcode(c echo.Context) error {
 		foodID = existing.ID
 	} else {
 		// Fetch from Open Food Facts
-		resp, err := http.Get("https://world.openfoodfacts.org/api/v2/product/" + barcode + ".json")
+		resp, err := httpClient.Get("https://world.openfoodfacts.org/api/v2/product/" + barcode + ".json")
 		if err != nil {
 			return c.JSON(http.StatusBadGateway, map[string]string{"error": "Failed to fetch product"})
 		}
@@ -195,7 +192,8 @@ func scanBarcode(c echo.Context) error {
 			name = "Unknown (" + barcode + ")"
 		}
 
-		foodID = db.CreateFoodWithBarcode(
+		var err2 error
+		foodID, err2 = db.CreateFoodWithBarcode(
 			name,
 			p.Nutriments.Fat100g,
 			p.Nutriments.Carbs100g,
@@ -205,19 +203,27 @@ func scanBarcode(c echo.Context) error {
 			userID,
 			barcode,
 		)
+		if err2 != nil {
+			return c.NoContent(http.StatusInternalServerError)
+		}
 	}
 
 	// Create meal and add the food
 	mealTime := time.Now().Format("3:04 PM")
-	mealID := db.CreateMeal(mealTime, userID, false)
-	db.CreateMealItem(strconv.Itoa(mealID), strconv.Itoa(foodID), "100")
+	mealID, err := db.CreateMeal(mealTime, userID, false)
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	if err := db.CreateMealItem(mealID, foodID, 100, userID); err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
 
 	c.Response().Header().Set("HX-Location", fmt.Sprint("/meal/", mealID, "/"))
 	return c.NoContent(http.StatusOK)
 }
 
 func overview(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	userID := c.Get(ctxUserID).(int)
 
 	target := db.GetUserTargets(userID)
 
@@ -240,7 +246,7 @@ func overview(c echo.Context) error {
 // NOTE: 1 template 2 endpoints, 1 function
 
 func foodSearch(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	userID := c.Get(ctxUserID).(int)
 	search := c.FormValue("search")
 	// TODO: Anitize input
 	foods := db.FoodSearch(search, userID)
@@ -252,7 +258,7 @@ func foodSearch(c echo.Context) error {
 }
 
 func createFood(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	userID := c.Get(ctxUserID).(int)
 	name := c.FormValue("name")
 	fat, _ := strconv.ParseFloat(c.FormValue("fat"), 64)
 	carb, _ := strconv.ParseFloat(c.FormValue("carb"), 64)
@@ -260,7 +266,9 @@ func createFood(c echo.Context) error {
 	protein, _ := strconv.ParseFloat(c.FormValue("protein"), 64)
 	grams, _ := strconv.ParseFloat(c.FormValue("grams"), 64)
 
-	db.CreateFood(name, fat, carb, fiber, protein, grams, userID)
+	if _, err := db.CreateFood(name, fat, carb, fiber, protein, grams, userID); err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
 
 	foods := db.FoodSearch("", userID)
 	component := view.FoodSearchResults(foods)
@@ -269,13 +277,18 @@ func createFood(c echo.Context) error {
 
 // --------  Templates ----------------------------
 func templateToMeal(c echo.Context) error {
-	templateID := c.Param("id")
-	userID := c.Get("userID").(int)
+	userID := c.Get(ctxUserID).(int)
+	templateID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
 	token := c.FormValue("token")
 	if ok := auth.ValidateDupToken(c, token); !ok {
 		return fmt.Errorf("Invalid token")
 	}
-	db.TemplateToMeal(templateID, userID)
+	if _, err := db.TemplateToMeal(templateID, userID); err != nil {
+		return handleDBErr(c, err)
+	}
 
 	auth.ClearDupToken(c)
 
@@ -284,7 +297,7 @@ func templateToMeal(c echo.Context) error {
 }
 
 func findAllTemplates(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	userID := c.Get(ctxUserID).(int)
 	macros := db.GetTemplates(userID)
 
 	token := auth.GenToken()
@@ -298,26 +311,41 @@ func findAllTemplates(c echo.Context) error {
 }
 
 func createTemplate(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	userID := c.Get(ctxUserID).(int)
 
 	time := time.Now().Format("3:04 PM")
-	templateID := db.CreateMeal(time, userID, true)
+	templateID, err := db.CreateMeal(time, userID, true)
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
 
 	c.Response().Header().Set("HX-Location", fmt.Sprint("/template/", templateID, "/food_search"))
 	return c.NoContent(http.StatusOK)
 }
 
 func deleteTemplate(c echo.Context) error {
-	id := c.Param("id")
-	db.DeleteMeal(id)
+	userID := c.Get(ctxUserID).(int)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+	if err := db.DeleteMeal(id, userID); err != nil {
+		return handleDBErr(c, err)
+	}
 	return c.NoContent(http.StatusOK)
 }
 
 // --------  Shared Meal/Template Handlers ----------------------------
 func findMealOrTemplate(c echo.Context) error {
-	userID := c.Get("userID").(int)
-	id := c.Param("id")
-	meal := db.GetMealByID(id)
+	userID := c.Get(ctxUserID).(int)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+	meal, err := db.GetMealByID(id, userID)
+	if err != nil {
+		return handleDBErr(c, err)
+	}
 
 	nav := view.Nav(userID)
 	mealEdit := view.MealEdit(meal)
@@ -327,30 +355,65 @@ func findMealOrTemplate(c echo.Context) error {
 }
 
 func addFood(c echo.Context) error {
-	mealID := c.Param("id")
-	foodID := c.Param("foodID")
-	db.CreateMealItem(mealID, foodID, "100")
+	userID := c.Get(ctxUserID).(int)
+	mealID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+	foodID, err := strconv.Atoi(c.Param("foodID"))
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+	if err := db.CreateMealItem(mealID, foodID, 100, userID); err != nil {
+		return handleDBErr(c, err)
+	}
 	c.Response().Header().Set("HX-Location", ".")
 	return c.NoContent(http.StatusOK)
 }
 
 func removeFood(c echo.Context) error {
-	mealID := c.Param("id")
-	joinID := c.Param("joinID")
-	db.DeleteMealItem(joinID)
-	meal := db.GetMealByID(mealID)
+	userID := c.Get(ctxUserID).(int)
+	mealID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+	joinID, err := strconv.Atoi(c.Param("joinID"))
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+	if err := db.DeleteMealItem(joinID, userID); err != nil {
+		return handleDBErr(c, err)
+	}
+	meal, err := db.GetMealByID(mealID, userID)
+	if err != nil {
+		return handleDBErr(c, err)
+	}
 	return view.MealTotalsOOB(meal.Items).Render(context.Background(), c.Response().Writer)
 }
 
 func updateGrams(c echo.Context) error {
-	mealID := c.Param("id")
-	joinID := c.Param("joinID")
-	grams := c.FormValue("grams")
-	db.UpdateMealItem(joinID, grams)
-	meal := db.GetMealByID(mealID)
-	jid, _ := strconv.Atoi(joinID)
+	userID := c.Get(ctxUserID).(int)
+	mealID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+	joinID, err := strconv.Atoi(c.Param("joinID"))
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+	grams, err := strconv.ParseFloat(c.FormValue("grams"), 64)
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+	if err := db.UpdateMealItem(joinID, grams, userID); err != nil {
+		return handleDBErr(c, err)
+	}
+	meal, err := db.GetMealByID(mealID, userID)
+	if err != nil {
+		return handleDBErr(c, err)
+	}
 	for _, item := range meal.Items {
-		if item.ItemID == jid {
+		if item.ItemID == joinID {
 			if err := view.GramEdit(item).Render(context.Background(), c.Response().Writer); err != nil {
 				return err
 			}
@@ -361,9 +424,15 @@ func updateGrams(c echo.Context) error {
 }
 
 func updateName(c echo.Context) error {
-	id := c.Param("id")
+	userID := c.Get(ctxUserID).(int)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
 	name := c.FormValue("name")
-	db.UpdateMealName(id, name)
+	if err := db.UpdateMealName(id, userID, name); err != nil {
+		return handleDBErr(c, err)
+	}
 	return nil
 }
 
@@ -383,7 +452,7 @@ func signin(c echo.Context) error {
 }
 
 func settings(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	userID := c.Get(ctxUserID).(int)
 	targets := db.GetUserTargets(userID)
 
 	if p := c.QueryParam("preset"); p != "" {
@@ -403,7 +472,7 @@ func settings(c echo.Context) error {
 }
 
 func updateSettings(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	userID := c.Get(ctxUserID).(int)
 
 	fat, _ := strconv.ParseFloat(c.FormValue("fat"), 32)
 	carb, _ := strconv.ParseFloat(c.FormValue("carb"), 32)
@@ -417,7 +486,9 @@ func updateSettings(c echo.Context) error {
 		Fiber:    float32(fiber),
 		Protein:  float32(protein),
 	}
-	db.UpdateUserTargets(userID, targets)
+	if err := db.UpdateUserTargets(userID, targets); err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
 
 	component := view.Settings(targets)
 	return component.Render(context.Background(), c.Response().Writer)
@@ -440,7 +511,7 @@ func onboardingView(c echo.Context) error {
 }
 
 func saveOnboarding(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	userID := c.Get(ctxUserID).(int)
 
 	fat, _ := strconv.ParseFloat(c.FormValue("fat"), 32)
 	carb, _ := strconv.ParseFloat(c.FormValue("carb"), 32)
@@ -454,7 +525,9 @@ func saveOnboarding(c echo.Context) error {
 		Fiber:    float32(fiber),
 		Protein:  float32(protein),
 	}
-	db.UpdateUserTargets(userID, targets)
+	if err := db.UpdateUserTargets(userID, targets); err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
 
 	c.Response().Header().Set("HX-Location", "/")
 	return c.NoContent(http.StatusOK)
@@ -500,19 +573,28 @@ func signinView(c echo.Context) error {
 // --------  Meals --------------------------------
 func createMeal(c echo.Context) error {
 	// NOTE: this will create a empty meal entries, will probably want a way to clean it up in the future.
-	userID := c.Get("userID").(int)
+	userID := c.Get(ctxUserID).(int)
 
 	time := time.Now().Format("3:04 PM")
-	mealID := db.CreateMeal(time, userID, false)
+	mealID, err := db.CreateMeal(time, userID, false)
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
 
 	c.Response().Header().Set("HX-Location", fmt.Sprint("/meal/", mealID, "/food_search"))
 	return c.NoContent(http.StatusOK)
 }
 
 func deleteMeal(c echo.Context) error {
-	id := c.Param("id")
+	userID := c.Get(ctxUserID).(int)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
 
-	db.DeleteMeal(id)
+	if err := db.DeleteMeal(id, userID); err != nil {
+		return handleDBErr(c, err)
+	}
 
 	c.Response().Header().Set("HX-Location", "/")
 	return c.NoContent(http.StatusOK)

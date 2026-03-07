@@ -2,7 +2,6 @@ package database
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -23,10 +22,10 @@ func validateHashPassword(hashedPassword string, password string) bool {
 
 var defaultTargets = Macro{Calories: 1751.6, Fat: 44.8, Carb: 247.1, Fiber: 32.0, Protein: 90.0}
 
-func CreateUser(userName string, pass string) (string, error) {
+func CreateUser(userName string, pass string) (int, error) {
 	hashedPassword, err := hashPassword(pass)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
 	res, err := sqlDB.Exec(
@@ -36,13 +35,12 @@ func CreateUser(userName string, pass string) (string, error) {
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
-			return "", fmt.Errorf("username already taken")
+			return 0, fmt.Errorf("username already taken")
 		}
-		return "", err
+		return 0, err
 	}
 	id, _ := res.LastInsertId()
-	fmt.Println("Created User:", userName)
-	return strconv.Itoa(int(id)), nil
+	return int(id), nil
 }
 
 func GetUserTargets(userID int) Macro {
@@ -63,14 +61,15 @@ func GetUserTargets(userID int) Macro {
 	}
 }
 
-func UpdateUserTargets(userID int, targets Macro) {
-	sqlDB.Exec(
+func UpdateUserTargets(userID int, targets Macro) error {
+	_, err := sqlDB.Exec(
 		`UPDATE users SET target_calories=?, target_fat=?, target_carb=?, target_fiber=?, target_protein=? WHERE id=?`,
 		targets.Calories, targets.Fat, targets.Carb, targets.Fiber, targets.Protein, userID,
 	)
+	return err
 }
 
-func ValidateUser(userName string, pass string) (string, error) {
+func ValidateUser(userName string, pass string) (int, error) {
 	var id int
 	var hashedPassword string
 	err := sqlDB.QueryRow(
@@ -78,10 +77,10 @@ func ValidateUser(userName string, pass string) (string, error) {
 		userName,
 	).Scan(&id, &hashedPassword)
 	if err != nil {
-		return "", fmt.Errorf("Invalid username or password")
+		return 0, fmt.Errorf("Invalid username or password")
 	}
 	if !validateHashPassword(hashedPassword, pass) {
-		return "", fmt.Errorf("Invalid username or password")
+		return 0, fmt.Errorf("Invalid username or password")
 	}
-	return strconv.Itoa(id), nil
+	return id, nil
 }

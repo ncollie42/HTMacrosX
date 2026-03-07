@@ -1,11 +1,7 @@
 package auth
 
 import (
-	"crypto/md5"
 	"crypto/rand"
-	"io"
-	"strconv"
-
 	"encoding/base64"
 	"fmt"
 	db "myapp/DB"
@@ -20,44 +16,41 @@ func Signup(c echo.Context, login string, pass string) error {
 	if err != nil {
 		return err
 	}
-	setCookie(c, userID)
-	return nil
+	return setCookie(c, userID)
 }
 
 func Signin(c echo.Context, login string, pass string) error {
 	userID, err := db.ValidateUser(login, pass)
 	if err != nil {
-		fmt.Println("Err:", err)
 		return fmt.Errorf("Invalid username or password")
 	}
-
-	setCookie(c, userID)
-	return nil
+	return setCookie(c, userID)
 }
 
-// ---------------------- Generic --------------------------------
-
-const userID_tag = "userID"
+const cookieName = "sessionID"
 
 func InitSession() {
-	// Nothing needed for local sessions
+	db.CleanExpiredSessions()
 }
 
-func setCookie(c echo.Context, userID string) {
+func setCookie(c echo.Context, userID int) error {
 	sessionID, err := generateSessionID()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	setVarLocal(sessionID, userID_tag, userID)
-
 	expiration := time.Now().Add(time.Hour * 24)
+	if err := db.CreateSession(sessionID, userID, expiration); err != nil {
+		return err
+	}
+
 	cookie := http.Cookie{
 		Name:    cookieName,
 		Value:   sessionID,
 		Expires: expiration,
 	}
 	c.SetCookie(&cookie)
+	return nil
 }
 
 func ClearCookie(c echo.Context) {
@@ -65,8 +58,7 @@ func ClearCookie(c echo.Context) {
 	if err != nil {
 		return
 	}
-
-	clearSessionIDLocal(cookie.Value)
+	db.DeleteSession(cookie.Value)
 
 	newCookie := http.Cookie{
 		Name:   cookieName,
@@ -77,77 +69,41 @@ func ClearCookie(c echo.Context) {
 }
 
 func GetUserFromCookie(c echo.Context) (int, error) {
-	userID_str, err := getVarLocal(c, userID_tag)
+	cookie, err := c.Cookie(cookieName)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("No valid cookie")
 	}
-	userID_int, err := strconv.ParseInt(userID_str, 10, 64)
-	return int(userID_int), err
+	return db.GetSessionUserID(cookie.Value)
 }
 
 func SetDupToken(c echo.Context, token string) string {
-	sessionID, _ := getSessionID(c)
-	setVarLocal(sessionID, "token", token)
+	cookie, err := c.Cookie(cookieName)
+	if err != nil {
+		return token
+	}
+	db.SetSessionToken(cookie.Value, token)
 	return token
 }
 
 func ValidateDupToken(c echo.Context, token string) bool {
-	sessionToken, _ := getVarLocal(c, "token")
+	cookie, err := c.Cookie(cookieName)
+	if err != nil {
+		return false
+	}
+	sessionToken, err := db.GetSessionToken(cookie.Value)
+	if err != nil {
+		return false
+	}
 	return token == sessionToken
 }
 
 func ClearDupToken(c echo.Context) {
-	clearVarLocal(c, "token")
-}
-
-func getSessionID(c echo.Context) (string, error) {
 	cookie, err := c.Cookie(cookieName)
 	if err != nil {
-		return "", fmt.Errorf("No valid cookie")
-	}
-	return cookie.Value, nil
-}
-
-// ---------------------- Sessions Local --------------------------------
-var sessions = make(map[string]map[string]string)
-
-const cookieName = "sessionID"
-
-func setVarLocal(sessionID string, name string, val string) {
-	if _, exists := sessions[sessionID]; !exists {
-		sessions[sessionID] = make(map[string]string)
-	}
-	sessions[sessionID][name] = val
-}
-
-func clearVarLocal(c echo.Context, name string) {
-	sessionID, err := getSessionID(c)
-	if err != nil {
 		return
 	}
-
-	if _, exists := sessions[sessionID]; !exists {
-		return
-	}
-	sessions[sessionID][name] = ""
+	db.ClearSessionToken(cookie.Value)
 }
-
-func getVarLocal(c echo.Context, name string) (string, error) {
-	sessionID, err := getSessionID(c)
-	if err != nil {
-		return "", err
-	}
-	if val, ok := sessions[sessionID][name]; ok {
-		return val, nil
-	}
-	return "", fmt.Errorf("No var named %s available in session\n", name)
-}
-
-func clearSessionIDLocal(key string) {
-	delete(sessions, key)
-}
-
-// ----------------------    Util ---------------------------------
 
 func generateSessionID() (string, error) {
 	b := make([]byte, 32)
@@ -159,8 +115,7 @@ func generateSessionID() (string, error) {
 }
 
 func GenToken() string {
-	now := time.Now().Unix()
-	h := md5.New()
-	io.WriteString(h, strconv.FormatInt(now, 10))
-	return fmt.Sprintf("%x", h.Sum(nil))
+	b := make([]byte, 16)
+	rand.Read(b)
+	return fmt.Sprintf("%x", b)
 }
