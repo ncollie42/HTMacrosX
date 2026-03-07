@@ -8,13 +8,12 @@ import (
 templ Header() {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light dark" />
     <title> Macros - Simple</title>
 
     <!-- Htmx.js-->
     <script src="/htmx"></script>
-    <!-- pico.css -->
-    <link rel="stylesheet" href="/pico"></link>
+    <!-- daisy.css -->
+    <link rel="stylesheet" href="/daisy"></link>
     <style>
       :root {
         --macro-cal: #d81b60;
@@ -22,278 +21,37 @@ templ Header() {
         --macro-carb: #7cb342;
         --macro-fiber: #00acc1;
         --macro-protein: #3949ab;
-        --surface-1: rgba(255,255,255,0.04);
-        --surface-border: rgba(255,255,255,0.08);
-        --text-secondary: rgba(255,255,255,0.7);
-        --text-muted: rgba(255,255,255,0.45);
       }
-      .text-center { text-align: center; }
-
-      /* Dashboard grid */
-      .dash-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-      }
-      .dash-card {
-        background: var(--surface-1);
-        border: 1px solid var(--surface-border);
-        border-radius: 0.75rem;
-        padding: 1rem;
-        text-align: center;
-      }
-      .dash-card .label { font-size: 0.8rem; color: var(--text-muted); margin: 0; }
-      .dash-card .value { font-size: 1.8rem; font-weight: 700; margin: 0.25rem 0; }
-      .dash-card .sub { font-size: 0.75rem; color: var(--text-secondary); margin: 0; }
-      .dash-card-wide { grid-column: 1 / -1; }
-
-      /* Calorie headline */
-      .macro-cal-line {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: var(--macro-cal);
-        padding: 0.15rem 0;
-      }
-      .macro-cal-line span::before {
-        content: "";
-        display: inline-block;
-        width: 8px; height: 8px;
-        border-radius: 50%;
-        margin-right: 4px;
-        vertical-align: middle;
-        background: var(--macro-cal);
-      }
-
-      /* Compact macro inline */
-      .macro-inline {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem 1rem;
-        font-size: 0.85rem;
-        padding: 0.25rem 0;
-        color: var(--text-secondary);
-      }
-      .macro-inline span::before {
-        content: "";
-        display: inline-block;
-        width: 8px; height: 8px;
-        border-radius: 50%;
-        margin-right: 4px;
-        vertical-align: middle;
-      }
-      .macro-inline .mc::before { background: var(--macro-cal); }
-      .macro-inline .mf::before { background: var(--macro-fat); }
-      .macro-inline .mca::before { background: var(--macro-carb); }
-      .macro-inline .mfi::before { background: var(--macro-fiber); }
-      .macro-inline .mp::before { background: var(--macro-protein); }
-
       /* Macro bar */
-      .macro-bar {
-        display: flex;
-        height: 4px;
-        border-radius: 2px;
-        overflow: hidden;
-        margin-top: 0.5rem;
-      }
-      .macro-bar div { min-width: 4px; }
-      .macro-bar .bf { background: var(--macro-fat); }
-      .macro-bar .bc { background: var(--macro-carb); }
-      .macro-bar .bp { background: var(--macro-protein); }
-
-      /* Section rule */
-      .section-rule {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin: 1.5rem 0 1rem;
-      }
-      .section-rule h4 { margin: 0; white-space: nowrap; }
-      .section-rule hr { flex: 1; border: none; border-top: 1px solid var(--surface-border); margin: 0; }
-
-      /* Article refinements */
-      article {
-        border-radius: 0.75rem;
-        transition: border-color 0.2s;
-      }
-      article:hover {
-        border-color: var(--text-muted);
-      }
-
-      /* Date nav */
-      .date-nav {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
-      }
-      .date-nav a {
-        padding: 0.4rem 1rem;
-        border-radius: 2rem;
-        font-size: 0.85rem;
-        text-decoration: none;
-      }
-      .date-nav .current {
-        font-weight: 600;
-        font-size: 1rem;
-      }
-
-      /* Card header row */
-      .card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.5rem;
-        margin-bottom: 0.5rem;
-      }
-      .card-header strong { flex: 1; }
-      .card-header input[type="number"] {
-        width: 100px;
-        margin: 0;
-        padding: 0.3rem 0.5rem;
-        font-size: 0.85rem;
-      }
-
-      /* Dashboard progress thin */
-      .dash-progress {
-        height: 4px;
-        border-radius: 2px;
-        margin-top: 0.5rem;
-      }
-
-      /* Color utility classes */
-      .c-cal { color: var(--macro-cal); --pico-progress-color: var(--macro-cal); }
-      .c-fat { color: var(--macro-fat); --pico-progress-color: var(--macro-fat); }
-      .c-carb { color: var(--macro-carb); --pico-progress-color: var(--macro-carb); }
-      .c-fiber { color: var(--macro-fiber); --pico-progress-color: var(--macro-fiber); }
-      .c-protein { color: var(--macro-protein); --pico-progress-color: var(--macro-protein); }
-
-      /* Touch-friendly dropdown button */
-      .opt-btn {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.85rem;
-        margin: 0;
-        min-height: 40px;
-        min-width: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      /* Touch-friendly macro buttons */
-      a[role="button"].container,
-      button.outline.container {
-        min-height: 48px;
-        padding: 0.5rem 1rem;
-      }
-
+      .macro-bar { display:flex; height:4px; border-radius:2px; overflow:hidden; margin-top:0.5rem; }
+      .macro-bar div { min-width:4px; }
+      .macro-bar .bf { background:var(--macro-fat); }
+      .macro-bar .bc { background:var(--macro-carb); }
+      .macro-bar .bp { background:var(--macro-protein); }
+      /* Macro inline colors */
+      .mc { color:var(--macro-cal); }
+      .mf { color:var(--macro-fat); }
+      .mca { color:var(--macro-carb); }
+      .mfi { color:var(--macro-fiber); }
+      .mp { color:var(--macro-protein); }
+      /* Dashboard stat colors */
+      .c-cal { color:var(--macro-cal); }
+      .c-fat { color:var(--macro-fat); }
+      .c-carb { color:var(--macro-carb); }
+      .c-fiber { color:var(--macro-fiber); }
+      .c-protein { color:var(--macro-protein); }
       /* Prevent iOS input zoom */
-      input[type="search"],
-      input[type="text"],
-      input[type="password"],
-      input[type="number"],
-      select {
-        font-size: 1rem;
-      }
-
-      /* Auth card */
-      .auth-card {
-        max-width: 420px;
-        margin: 0 auto;
-        padding-top: 10vh;
-      }
-
-      /* Bottom nav spacer */
-      .bottom-nav-spacer {
-        height: 5rem;
-      }
-
-      /* Bottom nav bar */
-      .bottom-nav {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        background: rgba(20, 20, 28, 0.85);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-top: 1px solid var(--surface-border);
-        padding: 0.5rem 0;
-        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
-        z-index: 100;
-      }
-      .bottom-nav-tab {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.2rem;
-        padding: 0.4rem 1rem;
-        font-size: 0.7rem;
-        color: var(--text-secondary);
-        text-decoration: none;
-        background: none;
-        border: none;
-        cursor: pointer;
-        min-width: 64px;
-      }
-      .bottom-nav-tab:hover {
-        color: var(--macro-cal);
-      }
-      .bottom-nav-tab svg {
-        width: 22px;
-        height: 22px;
-      }
-
-      @media (max-width: 500px) {
-        .dash-grid {
-          grid-template-columns: repeat(2, 1fr);
-          gap: 0.5rem;
-          margin-bottom: 1rem;
-        }
-        .dash-card {
-          padding: 0.5rem;
-        }
-        .dash-card .value { font-size: 1.3rem; }
-        .dash-card .label { font-size: 0.7rem; }
-        .dash-card .sub { font-size: 0.65rem; }
-        .dash-card-wide {
-          grid-column: 1 / -1;
-          padding: 0.5rem 1rem;
-        }
-        .dash-card-wide .value { font-size: 1.5rem; }
-        .card-header {
-          flex-wrap: wrap;
-        }
-        .card-header strong {
-          flex-basis: 100%;
-        }
-        .macro-inline {
-          gap: 0.25rem 0.75rem;
-          font-size: 0.8rem;
-        }
-        .date-nav a {
-          padding: 0.6rem 1.2rem;
-          font-size: 0.8rem;
-        }
-        .auth-card {
-          max-width: 100%;
-          padding-top: 5vh;
-        }
-      }
+      input[type="search"],input[type="text"],input[type="password"],input[type="number"],select { font-size:1rem; }
     </style>
 }
 
 templ Full(components ...templ.Component) {
     <!DOCTYPE html>
-    <html lang="en" data-theme="dark">
+    <html lang="en" data-theme="dracula">
         <head>
           @Header()
         </head>
-        <body class="container" hx-boost="true">
+        <body class="max-w-md mx-auto px-4" hx-boost="true">
           for _, c := range components {
             @c
           }
@@ -302,89 +60,98 @@ templ Full(components ...templ.Component) {
 }
 
 templ Nav(id int) {
-  <nav>
-    <ul>
-      <li>
-        <a hx-boost="true" href="/">
-          <h2><span style="color:var(--macro-cal);">HT</span>MacrosX</h2>
-        </a>
-      </li>
-    </ul>
-    <ul>
-      <li>
-        <details class="dropdown">
-          <summary role="link" class="secondary">Account</summary>
-          <ul dir="rtl">
-            <li><a hx-boost="true" href="/settings">Update Macros</a></li>
-            <li><a hx-boost="true" href="/signout">Logout</a></li>
-          </ul>
-        </details>
-      </li>
-    </ul>
-  </nav>
+  <div class="navbar px-0 py-3">
+    <div class="navbar-start">
+      <a hx-boost="true" href="/">
+        <span class="text-lg font-bold"><span style="color:var(--macro-cal)">HT</span>MacrosX</span>
+      </a>
+    </div>
+    <div class="navbar-end">
+      <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-sm gap-1">
+          Account
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+        <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-200 rounded-box w-40 p-2 shadow-lg z-10">
+          <li><a hx-boost="true" href="/settings">Update Macros</a></li>
+          <li><a hx-boost="true" href="/signout">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
 }
 
 // ----------------------------------------------- BUTTON ----------------------
 
 templ mealOverviewButton(m db.MacroOverview) {
-  <article>
-    @buttonNav(m.Name, liDelete(fmt.Sprint("/meal/",m.ID,"/")))
-    @macroGet(m.Macros, fmt.Sprint("/meal/",m.ID,"/"))
-  </article>
+  <div class="card bg-base-200 shadow-sm mb-3">
+    <div class="card-body p-4 gap-2">
+      @buttonNav(m.Name, liDelete(fmt.Sprint("/meal/",m.ID,"/")))
+      @macroGet(m.Macros, fmt.Sprint("/meal/",m.ID,"/"))
+    </div>
+  </div>
 }
 
 templ templateOverviewButton(m db.MacroOverview, idempotentToken string) {
-  <article>
-    @buttonNav(m.Name, liEdit(fmt.Sprint(m.ID, "/")), liDelete(fmt.Sprint(m.ID, "/")))
-    @macroPost(m.Macros, fmt.Sprintf(`{"token": "%s"}`, idempotentToken), fmt.Sprint(m.ID, "/"))
-  </article>
+  <div class="card bg-base-200 shadow-sm mb-3">
+    <div class="card-body p-4 gap-2">
+      @buttonNav(m.Name, liEdit(fmt.Sprint(m.ID, "/")), liDelete(fmt.Sprint(m.ID, "/")))
+      @macroPost(m.Macros, fmt.Sprintf(`{"token": "%s"}`, idempotentToken), fmt.Sprint(m.ID, "/"))
+    </div>
+  </div>
 }
 
 templ GramEdit(food db.Join) {
-  <article>
-    <div class="card-header">
-      <strong>{food.Name}</strong>
-      <input type="number" name="grams" placeholder={fmt.Sprint(food.Grams,`g`)} aria-label="Grams"
-        hx-put={fmt.Sprint(`join/`, food.JoinID)}
-        hx-trigger="change"
-        hx-target="closest article"
-        hx-swap="outerHTML"/>
-      <details class="dropdown">
-        <summary role="link" class="secondary outline opt-btn">
-          ...
-        </summary>
-        <ul dir="rtl">
-          @liDelete(fmt.Sprint("join/", food.JoinID))
-        </ul>
-      </details>
+  <div class="card bg-base-200 shadow-sm mb-3">
+    <div class="card-body p-4 gap-2">
+      <div class="flex items-center justify-between gap-2">
+        <strong class="flex-1">{food.Name}</strong>
+        <div class="join">
+          <input type="number" name="grams" placeholder={fmt.Sprint(food.Grams,`g`)} aria-label="Grams"
+            class="input input-bordered input-sm join-item w-16 text-center"
+            hx-put={fmt.Sprint(`join/`, food.JoinID)}
+            hx-trigger="change"
+            hx-target="closest .card"
+            hx-swap="outerHTML"/>
+          <span class="join-item flex items-center px-2 text-xs bg-base-300 border border-base-300">g</span>
+        </div>
+        <div class="dropdown dropdown-end">
+          <div tabindex="0" role="button" class="btn btn-ghost btn-xs">···</div>
+          <ul tabindex="0" class="dropdown-content menu menu-xs bg-base-100 rounded-box w-28 p-1 shadow z-10">
+            @liDelete(fmt.Sprint("join/", food.JoinID))
+          </ul>
+        </div>
+      </div>
+      @macroViewCompact(food.Macros)
+      @macroBar(food.Macros)
     </div>
-    @macroViewCompact(food.Macros)
-    @macroBar(food.Macros)
-  </article>
+  </div>
 }
 
 templ foodSelect(food db.Food) {
-  <article>
-  	@buttonNav(food.Name)
-    @macroPost(food.Macros, "", fmt.Sprint("join/", food.ID))
-  </article>
+  <div class="card bg-base-200 shadow-sm mb-3">
+    <div class="card-body p-4 gap-2">
+      @buttonNav(food.Name)
+      @macroPost(food.Macros, "", fmt.Sprint("join/", food.ID))
+    </div>
+  </div>
 }
 
 //---------------------------------------- Button Components ----------------------------------------
 templ buttonNav(name string, lis ...templ.Component) {
-  <div class="card-header">
-    <strong>{name}</strong>
+  <div class="flex items-center justify-between gap-2">
+    <strong class="flex-1">{name}</strong>
     if len(lis) > 0 {
-      <details class="dropdown">
-        <summary role="link" class="secondary outline opt-btn">
-          ...
-        </summary>
-        <ul dir="rtl">
+      <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-xs">···</div>
+        <ul tabindex="0" class="dropdown-content menu menu-xs bg-base-100 rounded-box w-28 p-1 shadow z-10">
           for _, li := range lis{
             @li
           }
         </ul>
-      </details>
+      </div>
     }
   </div>
 }
@@ -399,29 +166,29 @@ templ liDelete(path string){
   <li>
     <a href={templ.SafeURL(path)}
       hx-delete={path}
-      hx-target="closest article"
+      hx-target="closest .card"
       hx-swap="outerHTML">Delete</a>
   </li>
 }
 
 templ macro(m db.Macro) {
-  <div class="container">
+  <div>
     @macroViewCompact(m)
     @macroBar(m)
   </div>
 }
 
 templ macroGet(m db.Macro, path string) {
-  <a href={templ.SafeURL(path)} role="button"
-    class="outline container">
+  <a href={templ.SafeURL(path)}
+    class="block hover:border-base-content/20 border border-transparent transition-all rounded-box">
     @macroViewCompact(m)
     @macroBar(m)
   </a>
 }
 
-templ macroPost(m db.Macro, idempotentToken string,  path string) {
+templ macroPost(m db.Macro, idempotentToken string, path string) {
   <button
-    class="outline container"
+    class="w-full text-left hover:border-base-content/20 border border-transparent transition-all rounded-box"
     hx-post={path}
     hx-vals={idempotentToken}>
     @macroViewCompact(m)
@@ -430,10 +197,10 @@ templ macroPost(m db.Macro, idempotentToken string,  path string) {
 }
 
 templ macroViewCompact(m db.Macro) {
-  <div class="macro-cal-line">
+  <div class="text-sm font-bold mt-0.5" style="color:var(--macro-cal)">
     <span class="mc">{fmt.Sprintf("%.0f", m.Calories)} cal</span>
   </div>
-  <div class="macro-inline">
+  <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
     <span class="mf">{fmt.Sprintf("%.1f", m.Fat)}g F</span>
     <span class="mca">{fmt.Sprintf("%.1f", m.Carb)}g C</span>
     <span class="mfi">{fmt.Sprintf("%.1f", m.Fiber)}g Fi</span>

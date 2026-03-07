@@ -10,6 +10,7 @@ primary_region = "lax"
 
 [env]
   PORT = "8080"
+  DB_PATH = "/data/app.db"
 
 [http_service]
   internal_port = 8080
@@ -18,3 +19,7 @@ primary_region = "lax"
   auto_start_machines = true
   min_machines_running = 0
   processes = ["app"]
+
+[[mounts]]
+  source = "data"
+  destination = "/data"

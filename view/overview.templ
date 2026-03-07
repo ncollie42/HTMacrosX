@@ -13,34 +13,46 @@ const (
     Carb
     Fiber
     Protein
-    Alcohol
 )
-var calories = [6]int{0,9,4,0,4,7}
-var macrosStr = [6]string{"Calories","Fat","Carbs","Fiber","Protein","Alcohol"}
-func (m Macro) String() string {
-  return macrosStr[m]
+var calories = [5]int{0,9,4,0,4}
+
+func progressClass(colorClass string) string {
+  switch colorClass {
+  case "c-cal":
+    return "progress-error"
+  case "c-fat":
+    return "progress-warning"
+  case "c-carb":
+    return "progress-success"
+  case "c-fiber":
+    return "progress-info"
+  case "c-protein":
+    return "progress-primary"
+  default:
+    return ""
+  }
 }
 
 templ DateNav(date time.Time) {
-  <div class="date-nav">
-    <a hx-boost="true" href={templ.SafeURL(fmt.Sprint("/",date.Add(-time.Hour * 24).Unix()))} role="button" class="outline secondary">Prev</a>
-    <a hx-boost="true" href="/" role="button" class="outline secondary current">Today</a>
-    <a hx-boost="true" href={templ.SafeURL(fmt.Sprint("/",date.Add(time.Hour * 24).Unix()))} role="button" class="outline secondary">Next</a>
+  <div class="flex justify-center items-center gap-2 mb-5">
+    <a hx-boost="true" href={templ.SafeURL(fmt.Sprint("/",date.Add(-time.Hour * 24).Unix()))} class="btn btn-sm btn-outline btn-ghost rounded-full px-4">Prev</a>
+    <a hx-boost="true" href="/" class="btn btn-sm btn-outline rounded-full px-5 font-semibold">Today</a>
+    <a hx-boost="true" href={templ.SafeURL(fmt.Sprint("/",date.Add(time.Hour * 24).Unix()))} class="btn btn-sm btn-outline btn-ghost rounded-full px-4">Next</a>
   </div>
 }
 
 templ dashCard(label string, current float32, target float32, colorClass string, wide bool) {
-  <div class={templ.KV("dash-card", true), templ.KV("dash-card-wide", wide)}>
-    <p class="label">{label}</p>
-    <p class={"value", colorClass}>{fmt.Sprintf("%.0f", current)}</p>
-    <progress class={"dash-progress", colorClass} value={fmt.Sprint(current / target * 100)} max="100"></progress>
-    <p class="sub">{fmt.Sprintf("%.0f", target - current)} left</p>
+  <div class={templ.KV("stat bg-base-200 rounded-box shadow text-center py-3 px-2", true), templ.KV("col-span-2", wide)}>
+    <div class="stat-title text-xs">{label}</div>
+    <div class={"stat-value text-xl", colorClass}>{fmt.Sprintf("%.0f", current)}</div>
+    <progress class={"progress w-full mt-1.5", progressClass(colorClass)} style="height:5px" value={fmt.Sprint(current/target*100)} max="100"></progress>
+    <div class="stat-desc text-xs mt-1">{fmt.Sprintf("%.0f", target-current)} left</div>
   </div>
 }
 
 templ DayOverview(date time.Time, total db.Macro, target db.Macro) {
   @DateNav(date)
-  <div class="dash-grid">
+  <div class="grid grid-cols-2 gap-3 mb-6">
     @dashCard("Calories", total.Calories, target.Calories, "c-cal", true)
     @dashCard("Fat", total.Fat, target.Fat, "c-fat", false)
     @dashCard("Carbs", total.Carb, target.Carb, "c-carb", false)
@@ -50,28 +62,25 @@ templ DayOverview(date time.Time, total db.Macro, target db.Macro) {
 }
 
 templ DayQuickview(macros []db.MacroOverview) {
-  <div class="section-rule">
-    <h4>Today's Meals</h4>
-    <hr/>
-  </div>
+  <div class="divider text-xs text-base-content/50 font-semibold tracking-widest uppercase my-4">Today's Meals</div>
   for _, m := range macros {
     @mealOverviewButton(m)
   }
-  <div class="bottom-nav-spacer"></div>
+  <div class="pb-28"></div>
 }
 
 templ BottomNav() {
-  <nav class="bottom-nav">
-    <a href="/template/" class="bottom-nav-tab" hx-boost="true">
+  <div class="dock">
+    <a href="/template/" class="dock-active" hx-boost="true">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 2h18v20H3z"></path>
         <path d="M7 7h10"></path>
         <path d="M7 12h10"></path>
         <path d="M7 17h6"></path>
       </svg>
-      <span>Meal</span>
+      <span class="dock-label">Meal</span>
     </a>
-    <a href="/scan" class="bottom-nav-tab" hx-boost="false">
+    <a href="/scan" hx-boost="false">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
         <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
@@ -79,17 +88,17 @@ templ BottomNav() {
         <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
         <line x1="7" y1="12" x2="17" y2="12"></line>
       </svg>
-      <span>Scan</span>
+      <span class="dock-label">Scan</span>
     </a>
-    <button class="bottom-nav-tab" hx-post="/meal">
+    <button hx-post="/meal">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"></circle>
         <line x1="12" y1="8" x2="12" y2="16"></line>
         <line x1="8" y1="12" x2="16" y2="12"></line>
       </svg>
-      <span>Ingredients</span>
+      <span class="dock-label">Ingredients</span>
     </button>
-  </nav>
+  </div>
 }
 
 // ---------------------------- TEMPLATE Overview -------------------------------
@@ -98,8 +107,8 @@ templ TemplateOverview(macros []db.MacroOverview, idempotentToken string) {
   for _, m := range macros {
     @templateOverviewButton(m, idempotentToken)
   }
-  <div role="group">
-    <button class="outline contrast" hx-post="/template/"> Create Template </button>
+  <div class="mt-4">
+    <button class="btn btn-outline btn-primary w-full" hx-post="/template/"> Create Template </button>
   </div>
 }
 
@@ -109,6 +118,7 @@ templ NameEdit(name string) {
   <input type="text"
     value={name}
     name="name"
+    class="input input-bordered w-full mb-3"
     hx-trigger="keyup changed delay:500ms"
     hx-put="name"/>
 }
@@ -118,12 +128,12 @@ templ MealEdit(meal db.Meal) {
   for _, food := range meal.Foods {
     @GramEdit(food)
   }
-  <div class="bottom-nav-spacer"></div>
+  <div class="pb-28"></div>
 }
 
 templ MealEditNav() {
-  <nav class="bottom-nav">
-    <a href="/scan" class="bottom-nav-tab" hx-boost="false">
+  <div class="dock">
+    <a href="/scan" hx-boost="false">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
         <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
@@ -131,15 +141,15 @@ templ MealEditNav() {
         <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
         <line x1="7" y1="12" x2="17" y2="12"></line>
       </svg>
-      <span>Scan</span>
+      <span class="dock-label">Scan</span>
     </a>
-    <a href="food_search" class="bottom-nav-tab" hx-boost="true">
+    <a href="food_search" class="dock-active" hx-boost="true">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"></circle>
         <line x1="12" y1="8" x2="12" y2="16"></line>
         <line x1="8" y1="12" x2="16" y2="12"></line>
       </svg>
-      <span>Ingredients</span>
+      <span class="dock-label">Ingredients</span>
     </a>
-  </nav>
+  </div>
 }

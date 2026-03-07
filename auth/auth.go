@@ -108,7 +108,6 @@ func setVarLocal(sessionID string, name string, val string) {
 	if _, exists := sessions[sessionID]; !exists {
 		sessions[sessionID] = make(map[string]string)
 	}
-	fmt.Println("SessionID:", sessionID)
 	sessions[sessionID][name] = val
 }
 

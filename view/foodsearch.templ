@@ -5,9 +5,10 @@ import (
 )
 
 templ FoodSearch(foods []db.Food) {
-  <h3>Add Food <small>per 100g</small></h3>
+  <h3 class="text-lg font-semibold mb-3">Add Food <small class="text-sm font-normal opacity-60">per 100g</small></h3>
   <input type="search" placeholder="Search..."
     name="search"
+    class="input input-bordered w-full mb-3"
 	  hx-get="food_search"
     hx-select="#search-results"
 	  hx-trigger="keyup changed delay:500ms, search"
@@ -30,32 +31,32 @@ templ FoodSearchResults(foods []db.Food) {
 }
 
 templ AddFoodForm() {
-  <details>
-    <summary role="button" class="outline">Create Custom Food</summary>
-    <form hx-post="/food" hx-target="#search-results" hx-swap="outerHTML">
-      <label>Name
-        <input type="text" name="name" required/>
-      </label>
-      <div class="grid">
-        <label>Fat (g)
-          <input type="number" name="fat" step="0.1" value="0" required/>
+  <details class="collapse collapse-arrow bg-base-200 mb-3">
+    <summary class="collapse-title text-sm font-medium">Create Custom Food</summary>
+    <div class="collapse-content">
+      <form hx-post="/food" hx-target="#search-results" hx-swap="outerHTML" class="flex flex-col gap-2 pt-2">
+        <label class="text-sm">Name
+          <input type="text" name="name" class="input input-bordered w-full mt-1" required/>
         </label>
-        <label>Carbs (g)
-          <input type="number" name="carb" step="0.1" value="0" required/>
-        </label>
-        <label>Fiber (g)
-          <input type="number" name="fiber" step="0.1" value="0" required/>
-        </label>
-      </div>
-      <div class="grid">
-        <label>Protein (g)
-          <input type="number" name="protein" step="0.1" value="0" required/>
-        </label>
-        <label>Serving size (g)
-          <input type="number" name="grams" step="0.1" value="100" required/>
-        </label>
-      </div>
-      <button type="submit">Create Food</button>
-    </form>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="text-sm">Fat (g)
+            <input type="number" name="fat" step="0.1" value="0" class="input input-bordered w-full mt-1" required/>
+          </label>
+          <label class="text-sm">Carbs (g)
+            <input type="number" name="carb" step="0.1" value="0" class="input input-bordered w-full mt-1" required/>
+          </label>
+          <label class="text-sm">Fiber (g)
+            <input type="number" name="fiber" step="0.1" value="0" class="input input-bordered w-full mt-1" required/>
+          </label>
+          <label class="text-sm">Protein (g)
+            <input type="number" name="protein" step="0.1" value="0" class="input input-bordered w-full mt-1" required/>
+          </label>
+          <label class="text-sm col-span-2">Serving size (g)
+            <input type="number" name="grams" step="0.1" value="100" class="input input-bordered w-full mt-1" required/>
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary w-full mt-2">Create Food</button>
+      </form>
+    </div>
   </details>
 }

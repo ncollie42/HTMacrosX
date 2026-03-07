@@ -1,48 +1,33 @@
 package view
 
 templ SignError(msg string) {
-    <input id="onError" type="text" placeholder={msg} aria-invalid="true" readonly/>
+    <div id="onError" class="alert alert-error text-sm">{msg}</div>
 }
 
 templ Signin() {
-    <main class="container">
-      <article class="auth-card">
-        <hgroup class="text-center">
-          <h1><span style="color:var(--macro-cal);">HT</span>MacrosX</h1>
-          <p>A minimalist macro tracker</p>
-        </hgroup>
-        <form hx-post="/signin" hx-target="#onError">
-          <input
-            type="text"
-            name="login"
-            placeholder="Login"
-            aria-label="Login"
-            autocomplete="nickname"
-            required
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            aria-label="Password"
-            autocomplete="current-password"
-            required
-          />
-          <fieldset>
-            <label for="remember">
-              <input type="checkbox" role="switch" id="remember" name="remember" />
-              Remember me
-            </label>
-          </fieldset>
-          <button class="contrast" >Login</button>
+  <div class="max-w-sm mx-auto px-4 pt-[10vh]">
+    <div class="card bg-base-200 shadow-xl">
+      <div class="card-body gap-4">
+        <div class="text-center">
+          <h1 class="text-3xl font-bold mb-1">
+            <span style="color:var(--macro-cal)">HT</span>MacrosX
+          </h1>
+          <p class="text-sm text-base-content/50">A minimalist macro tracker</p>
+        </div>
+        <form hx-post="/signin" hx-target="#onError" class="flex flex-col gap-3">
+          <input type="text" name="login" placeholder="Login" class="input input-bordered w-full" autocomplete="nickname" required/>
+          <input type="password" name="password" placeholder="Password" class="input input-bordered w-full" autocomplete="current-password" required/>
+          <label class="flex items-center gap-2 text-sm cursor-pointer">
+            <input type="checkbox" role="switch" class="toggle toggle-sm" name="remember"/>
+            Remember me
+          </label>
+          <button class="btn btn-primary w-full mt-1">Login</button>
         </form>
-        <nav class="container-fluid">
-          <div>
-            <a> Forgot Your Password?</a>
-          </div>
-        </nav>
+        <div class="text-center">
+          <a class="link link-hover text-sm text-base-content/40">Forgot Your Password?</a>
+        </div>
         <div id="onError"></div>
-      </article>
-    </main>
+      </div>
+    </div>
+  </div>
 }
-

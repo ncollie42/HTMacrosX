@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"embed"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,14 +21,11 @@ import (
 //go:embed js/htmx.min.js
 var htmxJS []byte
 
-//go:embed css/pico.min.css
-var picoCSS []byte
+//go:embed css/daisy.min.css
+var daisyCSS []byte
 
 //go:embed js/html5-qrcode.min.js
 var html5QrcodeJS []byte
-
-// go:embed js/*
-var resources embed.FS
 
 // GET       -> SELECT
 // POST      -> INSERT -> New
@@ -74,7 +71,7 @@ func main() {
 
 	e.GET("/favicon.ico", fav)
 	e.GET("/htmx", htmx)
-	e.GET("/pico", pico)
+	e.GET("/daisy", daisy)
 	e.GET("/html5qrcode", html5qrcode)
 	e.GET("/signin", signinView)
 	e.POST("/signin", signin)
@@ -128,9 +125,9 @@ func htmx(c echo.Context) error {
 	return nil
 }
 
-func pico(c echo.Context) error {
+func daisy(c echo.Context) error {
 	c.Response().Header().Set("Content-Type", "text/css")
-	fmt.Fprint(c.Response().Writer, string(picoCSS))
+	fmt.Fprint(c.Response().Writer, string(daisyCSS))
 	return nil
 }
 
@@ -498,9 +495,9 @@ func strconvTime(num string) time.Time {
 	if num == "" {
 		return time.Now()
 	}
-	ii, err := strconv.ParseInt(num, 10, 32)
+	ii, err := strconv.ParseInt(num, 10, 64)
 	if err != nil {
-		panic(err)
+		return time.Now()
 	}
-	return time.Unix(int64(ii), 0)
+	return time.Unix(ii, 0)
 }

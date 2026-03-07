@@ -2,7 +2,6 @@ package database
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 )
 
@@ -11,66 +10,66 @@ func CreateFood(name string, fat float64, carb float64, fiber float64, protein f
 }
 
 func CreateFoodWithBarcode(name string, fat float64, carb float64, fiber float64, protein float64, grams float64, userID int, barcode string) int {
-	mu.Lock()
-	defer mu.Unlock()
-
-	id := nextFoodID
-	nextFoodID++
-	foods[id] = &FoodRecord{
-		ID:             id,
-		Name:           name,
-		ProteinPerGram: float32(protein / grams),
-		FatPerGram:     float32(fat / grams),
-		CarbPerGram:    float32(carb / grams),
-		FiberPerGram:   float32(fiber / grams),
-		Grams:          float32(grams),
-		CreatorUserID:  userID,
-		Barcode:        barcode,
+	res, err := sqlDB.Exec(
+		`INSERT INTO foods (name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams, creator_user_id, barcode) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		name, protein/grams, fat/grams, carb/grams, fiber/grams, grams, userID, barcode,
+	)
+	if err != nil {
+		fmt.Println("CreateFoodWithBarcode error:", err)
+		return 0
 	}
-	fmt.Println("Created Food: ", name)
-	return id
+	id, _ := res.LastInsertId()
+	fmt.Println("Created Food:", name)
+	return int(id)
 }
 
 func FindFoodByBarcode(barcode string) *FoodRecord {
-	mu.Lock()
-	defer mu.Unlock()
-
-	for _, f := range foods {
-		if f.Barcode == barcode {
-			return f
-		}
+	var f FoodRecord
+	var ppg, fpg, cpg, fibpg, grams float64
+	err := sqlDB.QueryRow(
+		`SELECT id, name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams, creator_user_id, barcode FROM foods WHERE barcode = ?`,
+		barcode,
+	).Scan(&f.ID, &f.Name, &ppg, &fpg, &cpg, &fibpg, &grams, &f.CreatorUserID, &f.Barcode)
+	if err != nil {
+		return nil
 	}
-	return nil
+	f.ProteinPerGram = float32(ppg)
+	f.FatPerGram = float32(fpg)
+	f.CarbPerGram = float32(cpg)
+	f.FiberPerGram = float32(fibpg)
+	f.Grams = float32(grams)
+	return &f
 }
 
 func FoodSearch(name string, userID int) []Food {
-	mu.Lock()
-	defer mu.Unlock()
+	likePattern := "%" + strings.ToLower(name) + "%"
+	rows, err := sqlDB.Query(
+		`SELECT id, name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams
+		FROM foods
+		WHERE (creator_user_id = 1 OR creator_user_id = ?)
+		  AND (? = '' OR LOWER(name) LIKE ?)
+		ORDER BY name`,
+		userID, name, likePattern,
+	)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
 
-	search := strings.ToLower(name)
 	var result []Food
-	for _, f := range foods {
-		if f.CreatorUserID != 1 && f.CreatorUserID != userID {
+	for rows.Next() {
+		var id int
+		var fname string
+		var ppg, fpg, cpg, fibpg, grams float64
+		if err := rows.Scan(&id, &fname, &ppg, &fpg, &cpg, &fibpg, &grams); err != nil {
 			continue
-		}
-		if search != "" && !strings.Contains(strings.ToLower(f.Name), search) {
-			continue
-		}
-		mpg := MacroPerGram{
-			ProteinPerGram: f.ProteinPerGram,
-			FatPerGram:     f.FatPerGram,
-			CarbPerGram:    f.CarbPerGram,
-			FiberPerGram:   f.FiberPerGram,
 		}
 		result = append(result, Food{
-			ID:     f.ID,
-			Name:   f.Name,
-			Grams:  f.Grams,
-			Macros: macrosByGrams(mpg, 100),
+			ID:     id,
+			Name:   fname,
+			Grams:  float32(grams),
+			Macros: macrosByGrams(makeMPG(ppg, fpg, cpg, fibpg), 100),
 		})
 	}
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Name < result[j].Name
-	})
 	return result
 }

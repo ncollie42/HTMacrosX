@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -28,58 +29,59 @@ func CreateUser(userName string, pass string) (string, error) {
 		return "", err
 	}
 
-	mu.Lock()
-	defer mu.Unlock()
-
-	// Check for duplicate username
-	for _, u := range users {
-		if u.Username == userName {
+	res, err := sqlDB.Exec(
+		`INSERT INTO users (username, hashed_password, target_calories, target_fat, target_carb, target_fiber, target_protein) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		userName, hashedPassword,
+		defaultTargets.Calories, defaultTargets.Fat, defaultTargets.Carb, defaultTargets.Fiber, defaultTargets.Protein,
+	)
+	if err != nil {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			return "", fmt.Errorf("username already taken")
 		}
+		return "", err
 	}
-
-	id := nextUserID
-	nextUserID++
-	users[id] = &UserRecord{
-		ID:             id,
-		Username:       userName,
-		HashedPassword: hashedPassword,
-		Targets:        defaultTargets,
-	}
-	fmt.Println("Created User: ", userName)
-	return strconv.Itoa(id), nil
+	id, _ := res.LastInsertId()
+	fmt.Println("Created User:", userName)
+	return strconv.Itoa(int(id)), nil
 }
 
 func GetUserTargets(userID int) Macro {
-	mu.Lock()
-	defer mu.Unlock()
-
-	if u, ok := users[userID]; ok {
-		return u.Targets
+	var cal, fat, carb, fiber, protein float64
+	err := sqlDB.QueryRow(
+		`SELECT target_calories, target_fat, target_carb, target_fiber, target_protein FROM users WHERE id = ?`,
+		userID,
+	).Scan(&cal, &fat, &carb, &fiber, &protein)
+	if err != nil {
+		return defaultTargets
 	}
-	return defaultTargets
+	return Macro{
+		Calories: float32(cal),
+		Fat:      float32(fat),
+		Carb:     float32(carb),
+		Fiber:    float32(fiber),
+		Protein:  float32(protein),
+	}
 }
 
 func UpdateUserTargets(userID int, targets Macro) {
-	mu.Lock()
-	defer mu.Unlock()
-
-	if u, ok := users[userID]; ok {
-		u.Targets = targets
-	}
+	sqlDB.Exec(
+		`UPDATE users SET target_calories=?, target_fat=?, target_carb=?, target_fiber=?, target_protein=? WHERE id=?`,
+		targets.Calories, targets.Fat, targets.Carb, targets.Fiber, targets.Protein, userID,
+	)
 }
 
 func ValidateUser(userName string, pass string) (string, error) {
-	mu.Lock()
-	defer mu.Unlock()
-
-	for _, u := range users {
-		if u.Username == userName {
-			if !validateHashPassword(u.HashedPassword, pass) {
-				return "", fmt.Errorf("Invalid username or password")
-			}
-			return strconv.Itoa(u.ID), nil
-		}
+	var id int
+	var hashedPassword string
+	err := sqlDB.QueryRow(
+		`SELECT id, hashed_password FROM users WHERE username = ?`,
+		userName,
+	).Scan(&id, &hashedPassword)
+	if err != nil {
+		return "", fmt.Errorf("Invalid username or password")
 	}
-	return "", fmt.Errorf("Invalid username or password")
+	if !validateHashPassword(hashedPassword, pass) {
+		return "", fmt.Errorf("Invalid username or password")
+	}
+	return strconv.Itoa(id), nil
 }

@@ -4,4 +4,5 @@ t.db-wal
 env
 myapp
 .DS_Store
-myapp
+node_modules/
+.claude/

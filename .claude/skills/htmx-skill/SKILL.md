@@ -259,11 +259,9 @@ The line is fuzzier than you think. Most "we need React" decisions are actually 
 
 ### CSS Framework
 
-**Basecoat** — best choice for modern aesthetics. shadcn/ui design system ported to plain HTML + Tailwind. No React, no build step, works directly with htmx fragments. LLMs have strong shadcn training coverage which transfers directly. See `references/basecoat.md` for component patterns.
+**DaisyUI 5** — semantic component classes (`btn`, `card`, `badge`) on top of Tailwind CSS 4. Less verbose than raw Tailwind, solid LLM coverage, works directly with htmx fragments. See `references/daisyui.md` for component patterns.
 
-**DaisyUI** — semantic component classes (`btn`, `card`, `badge`) on top of Tailwind. Less verbose than raw Tailwind, solid LLM coverage.
-
-**Bootstrap 5** — most conservative choice, heaviest training data, most battle-tested with server-rendered HTML. Good fallback if Basecoat is unfamiliar.
+**Bootstrap 5** — most conservative choice, heaviest training data, most battle-tested with server-rendered HTML.
 
 For a bit of extra client-side sugar without a full JS framework: **_hyperscript** (from the htmx authors) handles simple DOM manipulation with an expressive syntax that stays in the HTML.
 
@@ -335,11 +333,10 @@ for a user — the examples are the canonical reference for correct attribute us
 
 ---
 
-## Basecoat UI Reference
+## DaisyUI Reference
 
-For Basecoat component HTML patterns (buttons, cards, tables, forms, dialogs, tabs, toasts, etc.)
-and htmx integration notes, read:
-`references/basecoat.md`
+For DaisyUI 5 component class names, install notes, and usage rules, read:
+`references/daisyui.md`
 
-**When to read it:** Whenever generating UI for an htmx project that uses Basecoat, or when
-the user asks about styling, components, or the shadcn/ui aesthetic without React.
+**When to read it:** Whenever generating UI for an htmx project that uses DaisyUI, or when
+the user asks about styling or components.

@@ -4,15 +4,24 @@ import (
 	"fmt"
 	"myapp/auth"
 	db "myapp/DB"
+	"os"
 )
 
 func init() {
-	fmt.Println("Running with in-memory storage")
-	fmt.Println("Starting server:")
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "./app.db"
+	}
+	db.Open(dbPath)
+	fmt.Println("Starting server with SQLite:", dbPath)
 	auth.InitSession()
 
-	db.CreateUser("All", "all")
-	db.CreateUser("Nico", "123")
-	db.CreateUser("Alejandro", "123")
-	db.CreateUser("foo", "123")
+	seedUser("All", "all")
+	seedUser("Nico", "123")
+	seedUser("Alejandro", "123")
+	seedUser("foo", "123")
+}
+
+func seedUser(username, password string) {
+	db.CreateUser(username, password)
 }

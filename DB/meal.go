@@ -7,139 +7,147 @@ import (
 )
 
 func CreateMeal(name string, userID int, isPreset bool) int {
-	mu.Lock()
-	defer mu.Unlock()
-
 	today := ""
 	if !isPreset {
 		today = time.Now().Format("2006-01-02")
 	}
-	id := nextMealID
-	nextMealID++
-	meals[id] = &MealRecord{
-		ID:       id,
-		UserID:   userID,
-		Name:     name,
-		MealDate: today,
-		IsPreset: isPreset,
+	isPresetInt := 0
+	if isPreset {
+		isPresetInt = 1
 	}
-	return id
+	res, err := sqlDB.Exec(
+		`INSERT INTO meals (user_id, name, meal_date, is_preset) VALUES (?, ?, ?, ?)`,
+		userID, name, today, isPresetInt,
+	)
+	if err != nil {
+		fmt.Println("CreateMeal error:", err)
+		return 0
+	}
+	id, _ := res.LastInsertId()
+	return int(id)
 }
 
 func DeleteMeal(mealID string) {
-	mu.Lock()
-	defer mu.Unlock()
-
 	id, _ := strconv.Atoi(mealID)
-
-	// Delete associated joins
-	for jid, j := range joins {
-		if j.MealID == id {
-			delete(joins, jid)
-		}
+	tx, err := sqlDB.Begin()
+	if err != nil {
+		return
 	}
-	delete(meals, id)
+	tx.Exec(`DELETE FROM joins WHERE meal_id = ?`, id)
+	tx.Exec(`DELETE FROM meals WHERE id = ?`, id)
+	tx.Commit()
 }
 
 func GetMealByID(mealID string) Meal {
-	mu.Lock()
-	defer mu.Unlock()
-
 	id, _ := strconv.Atoi(mealID)
 	var model Meal
 	model.ID = mealID
 
-	meal, ok := meals[id]
-	if !ok {
+	rows, err := sqlDB.Query(`
+		SELECT m.name, j.id, j.grams, f.name, f.protein_per_gram, f.fat_per_gram, f.carb_per_gram, f.fiber_per_gram
+		FROM meals m
+		LEFT JOIN joins j ON j.meal_id = m.id
+		LEFT JOIN foods f ON f.id = j.food_id
+		WHERE m.id = ?
+	`, id)
+	if err != nil {
 		return model
 	}
-	model.Name = meal.Name
+	defer rows.Close()
 
-	for _, j := range joins {
-		if j.MealID != id {
+	for rows.Next() {
+		var mealName string
+		var jid *int
+		var grams, ppg, fpg, cpg, fibpg *float64
+		var fname *string
+		if err := rows.Scan(&mealName, &jid, &grams, &fname, &ppg, &fpg, &cpg, &fibpg); err != nil {
 			continue
 		}
-		food, ok := foods[j.FoodID]
-		if !ok {
-			continue
+		model.Name = mealName
+		if jid == nil {
+			continue // meal has no foods yet
 		}
-		mpg := MacroPerGram{
-			FatPerGram:     food.FatPerGram,
-			ProteinPerGram: food.ProteinPerGram,
-			CarbPerGram:    food.CarbPerGram,
-			FiberPerGram:   food.FiberPerGram,
-		}
-		jn := Join{
-			Name:   food.Name,
-			JoinID: j.ID,
-			Grams:  j.Grams,
-			Macros: macrosByGrams(mpg, j.Grams),
-		}
-		model.Foods = append(model.Foods, jn)
+		model.Foods = append(model.Foods, Join{
+			Name:   *fname,
+			JoinID: *jid,
+			Grams:  float32(*grams),
+			Macros: macrosByGrams(makeMPG(*ppg, *fpg, *cpg, *fibpg), float32(*grams)),
+		})
 	}
 	return model
 }
 
 func UpdateMealName(mealID string, name string) {
-	mu.Lock()
-	defer mu.Unlock()
-
 	id, _ := strconv.Atoi(mealID)
-	if meal, ok := meals[id]; ok {
-		meal.Name = name
-	}
+	sqlDB.Exec(`UPDATE meals SET name = ? WHERE id = ?`, name, id)
 	fmt.Println("Updated Meal Name:", mealID, name)
 }
 
 func GetPresetsEntries(userID int) []MacroOverview {
-	mu.Lock()
-	defer mu.Unlock()
-
-	var results []MacroOverview
-	for _, j := range joins {
-		meal, mealOk := meals[j.MealID]
-		food, foodOk := foods[j.FoodID]
-		if !mealOk || !foodOk || !meal.IsPreset || meal.UserID != userID {
-			continue
-		}
-		mpg := MacroPerGram{
-			FatPerGram:     food.FatPerGram,
-			ProteinPerGram: food.ProteinPerGram,
-			CarbPerGram:    food.CarbPerGram,
-			FiberPerGram:   food.FiberPerGram,
-		}
-		results = append(results, MacroOverview{
-			Macros: macrosByGrams(mpg, j.Grams),
-			Name:   meal.Name,
-			ID:     meal.ID,
-		})
+	rows, err := sqlDB.Query(`
+		SELECT j.grams, m.name, m.id, f.protein_per_gram, f.fat_per_gram, f.carb_per_gram, f.fiber_per_gram
+		FROM joins j
+		JOIN meals m ON m.id = j.meal_id
+		JOIN foods f ON f.id = j.food_id
+		WHERE m.user_id = ? AND m.is_preset = 1
+	`, userID)
+	if err != nil {
+		return nil
 	}
-	return results
+	defer rows.Close()
+	return scanMacroOverviewRows(rows)
 }
 
 func TemplateToMeal(templateID string, userID int) int {
-	id, _ := strconv.Atoi(templateID)
+	tid, _ := strconv.Atoi(templateID)
 
-	mu.Lock()
+	tx, err := sqlDB.Begin()
+	if err != nil {
+		return 0
+	}
+
 	var presetName string
+	if err := tx.QueryRow(`SELECT name FROM meals WHERE id = ?`, tid).Scan(&presetName); err != nil {
+		tx.Rollback()
+		return 0
+	}
+
+	rows, err := tx.Query(`SELECT food_id, grams FROM joins WHERE meal_id = ?`, tid)
+	if err != nil {
+		tx.Rollback()
+		return 0
+	}
 	type item struct {
 		FoodID int
-		Grams  float32
+		Grams  float64
 	}
 	var items []item
-	if p, ok := meals[id]; ok {
-		presetName = p.Name
-		for _, j := range joins {
-			if j.MealID == id {
-				items = append(items, item{j.FoodID, j.Grams})
-			}
+	for rows.Next() {
+		var it item
+		if err := rows.Scan(&it.FoodID, &it.Grams); err != nil {
+			continue
 		}
+		items = append(items, it)
 	}
-	mu.Unlock()
+	rows.Close()
 
-	mealID := CreateMeal(presetName, userID, false)
-	for _, f := range items {
-		CreateMealJoin(strconv.Itoa(mealID), strconv.Itoa(f.FoodID), fmt.Sprint(f.Grams))
+	today := time.Now().Format("2006-01-02")
+	res, err := tx.Exec(
+		`INSERT INTO meals (user_id, name, meal_date, is_preset) VALUES (?, ?, ?, 0)`,
+		userID, presetName, today,
+	)
+	if err != nil {
+		tx.Rollback()
+		return 0
 	}
-	return mealID
+	mealID, _ := res.LastInsertId()
+
+	for _, it := range items {
+		tx.Exec(`INSERT INTO joins (meal_id, food_id, grams) VALUES (?, ?, ?)`, mealID, it.FoodID, it.Grams)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0
+	}
+	return int(mealID)
 }
