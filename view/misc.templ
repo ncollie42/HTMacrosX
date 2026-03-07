@@ -12,6 +12,7 @@ templ Header() {
 
     <!-- Htmx.js-->
     <script src="/htmx"></script>
+    <meta name="htmx-config" content='{"historyCacheSize": 0}'>
     <!-- daisy.css -->
     <link rel="stylesheet" href="/daisy"></link>
     <style>
@@ -40,6 +41,17 @@ templ Header() {
       .c-carb { color:var(--macro-carb); }
       .c-fiber { color:var(--macro-fiber); }
       .c-protein { color:var(--macro-protein); }
+      /* Custom progress bar colors */
+      .progress-macro-cal::-webkit-progress-value { background: var(--macro-cal); }
+      .progress-macro-cal::-moz-progress-bar { background: var(--macro-cal); }
+      .progress-macro-fat::-webkit-progress-value { background: var(--macro-fat); }
+      .progress-macro-fat::-moz-progress-bar { background: var(--macro-fat); }
+      .progress-macro-carb::-webkit-progress-value { background: var(--macro-carb); }
+      .progress-macro-carb::-moz-progress-bar { background: var(--macro-carb); }
+      .progress-macro-fiber::-webkit-progress-value { background: var(--macro-fiber); }
+      .progress-macro-fiber::-moz-progress-bar { background: var(--macro-fiber); }
+      .progress-macro-protein::-webkit-progress-value { background: var(--macro-protein); }
+      .progress-macro-protein::-moz-progress-bar { background: var(--macro-protein); }
       /* Prevent iOS input zoom */
       input[type="search"],input[type="text"],input[type="password"],input[type="number"],select { font-size:1rem; }
     </style>
@@ -59,6 +71,21 @@ templ Full(components ...templ.Component) {
     </html>
 }
 
+templ accountDropdown() {
+  <div class="dropdown dropdown-end">
+    <div tabindex="0" role="button" class="btn btn-ghost btn-sm gap-1">
+      Account
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </div>
+    <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-200 rounded-box w-40 p-2 shadow-lg z-10">
+      <li><a hx-boost="true" href="/settings">Update Macros</a></li>
+      <li><a hx-boost="true" href="/signout">Logout</a></li>
+    </ul>
+  </div>
+}
+
 templ Nav(id int) {
   <div class="navbar px-0 py-3">
     <div class="navbar-start">
@@ -67,18 +94,25 @@ templ Nav(id int) {
       </a>
     </div>
     <div class="navbar-end">
-      <div class="dropdown dropdown-end">
-        <div tabindex="0" role="button" class="btn btn-ghost btn-sm gap-1">
-          Account
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </div>
-        <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-200 rounded-box w-40 p-2 shadow-lg z-10">
-          <li><a hx-boost="true" href="/settings">Update Macros</a></li>
-          <li><a hx-boost="true" href="/signout">Logout</a></li>
-        </ul>
-      </div>
+      @accountDropdown()
+    </div>
+  </div>
+}
+
+templ NavBack(id int, backURL string, title string) {
+  <div class="navbar px-0 py-3">
+    <div class="navbar-start">
+      <a hx-boost="true" href={templ.SafeURL(backURL)} class="btn btn-ghost btn-sm px-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </a>
+    </div>
+    <div class="navbar-center">
+      <span class="text-lg font-bold">{title}</span>
+    </div>
+    <div class="navbar-end">
+      @accountDropdown()
     </div>
   </div>
 }
@@ -133,7 +167,7 @@ templ GramEdit(item db.MealItem) {
 templ foodSelect(food db.Food) {
   <div class="card bg-base-200 shadow-sm mb-3">
     <div class="card-body p-4 gap-2">
-      @buttonNav(food.Name)
+      @buttonNav(food.Name, liDelete(fmt.Sprint("/food/", food.ID)))
       @macroPost(food.Macros, "", fmt.Sprint("join/", food.ID))
     </div>
   </div>

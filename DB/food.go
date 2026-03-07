@@ -39,6 +39,21 @@ func FindFoodByBarcode(barcode string) *FoodRecord {
 	return &f
 }
 
+func DeleteFood(foodID int, userID int) error {
+	res, err := sqlDB.Exec(
+		`DELETE FROM foods WHERE id = ? AND creator_user_id = ?`,
+		foodID, userID,
+	)
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return ErrNotOwned
+	}
+	return nil
+}
+
 func FoodSearch(name string, userID int) []Food {
 	likePattern := "%" + strings.ToLower(name) + "%"
 	rows, err := sqlDB.Query(

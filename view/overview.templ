@@ -31,15 +31,15 @@ var calories = [5]int{0,9,4,0,4}
 func progressClass(colorClass string) string {
   switch colorClass {
   case "c-cal":
-    return "progress-error"
+    return "progress-macro-cal"
   case "c-fat":
-    return "progress-warning"
+    return "progress-macro-fat"
   case "c-carb":
-    return "progress-success"
+    return "progress-macro-carb"
   case "c-fiber":
-    return "progress-info"
+    return "progress-macro-fiber"
   case "c-protein":
-    return "progress-primary"
+    return "progress-macro-protein"
   default:
     return ""
   }

@@ -11,6 +11,7 @@ import (
 	"myapp/view"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"myapp/auth"
@@ -57,6 +58,7 @@ func main() {
 	e.GET("/meal/:id/", findMealOrTemplate, validate)
 	e.GET("/meal/:id/food_search", foodSearch, validate)
 	e.POST("/food", createFood, validate)
+	e.DELETE("/food/:id", deleteFood, validate)
 
 	// Shared meal/template handlers
 	e.POST("/meal/:id/join/:foodID", addFood, validate)
@@ -146,7 +148,7 @@ func html5qrcode(c echo.Context) error {
 
 func scanView(c echo.Context) error {
 	userID := c.Get(ctxUserID).(int)
-	nav := view.Nav(userID)
+	nav := view.NavBack(userID, "/", "Scan")
 	scan := view.ScanPage()
 	component := view.Full(nav, scan)
 	return component.Render(context.Background(), c.Response().Writer)
@@ -251,7 +253,14 @@ func foodSearch(c echo.Context) error {
 	// TODO: Anitize input
 	foods := db.FoodSearch(search, userID)
 
-	nav := view.Nav(userID)
+	id, _ := strconv.Atoi(c.Param("id"))
+	var backURL string
+	if isTemplate(c) {
+		backURL = fmt.Sprint("/template/", id, "/")
+	} else {
+		backURL = fmt.Sprint("/meal/", id, "/")
+	}
+	nav := view.NavBack(userID, backURL, "Add Food")
 	searchResult := view.FoodSearch(foods)
 	component := view.Full(nav, searchResult)
 	return component.Render(context.Background(), c.Response().Writer)
@@ -273,6 +282,18 @@ func createFood(c echo.Context) error {
 	foods := db.FoodSearch("", userID)
 	component := view.FoodSearchResults(foods)
 	return component.Render(context.Background(), c.Response().Writer)
+}
+
+func deleteFood(c echo.Context) error {
+	userID := c.Get(ctxUserID).(int)
+	foodID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+	if err := db.DeleteFood(foodID, userID); err != nil {
+		return handleDBErr(c, err)
+	}
+	return c.NoContent(http.StatusOK)
 }
 
 // --------  Templates ----------------------------
@@ -304,7 +325,7 @@ func findAllTemplates(c echo.Context) error {
 	auth.SetDupToken(c, token)
 	macrosByID := db.SumMacrosByID(macros)
 
-	nav := view.Nav(userID)
+	nav := view.NavBack(userID, "/", "Templates")
 	overview := view.TemplateOverview(macrosByID, token)
 	component := view.Full(nav, overview)
 	return component.Render(context.Background(), c.Response().Writer)
@@ -347,7 +368,15 @@ func findMealOrTemplate(c echo.Context) error {
 		return handleDBErr(c, err)
 	}
 
-	nav := view.Nav(userID)
+	var backURL, title string
+	if isTemplate(c) {
+		backURL = "/template/"
+		title = "Edit Template"
+	} else {
+		backURL = "/"
+		title = "Edit Meal"
+	}
+	nav := view.NavBack(userID, backURL, title)
 	mealEdit := view.MealEdit(meal)
 	mealNav := view.MealEditNav()
 	component := view.Full(nav, mealEdit, mealNav)
@@ -465,7 +494,7 @@ func settings(c echo.Context) error {
 		return view.Settings(targets).Render(context.Background(), c.Response().Writer)
 	}
 
-	nav := view.Nav(userID)
+	nav := view.NavBack(userID, "/", "Settings")
 	settingsForm := view.Settings(targets)
 	component := view.Full(nav, settingsForm)
 	return component.Render(context.Background(), c.Response().Writer)
@@ -601,6 +630,10 @@ func deleteMeal(c echo.Context) error {
 }
 
 // --------  Util ---------------------------------
+
+func isTemplate(c echo.Context) bool {
+	return strings.HasPrefix(c.Path(), "/template")
+}
 
 func strconvTime(num string) time.Time {
 	if num == "" {
