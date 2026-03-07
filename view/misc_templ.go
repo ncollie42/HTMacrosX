@@ -110,7 +110,7 @@ func accountDropdown() templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"dropdown dropdown-end\"><div tabindex=\"0\" role=\"button\" class=\"btn btn-ghost btn-sm gap-1\">Account <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"6 9 12 15 18 9\"></polyline></svg></div><ul tabindex=\"0\" class=\"dropdown-content menu menu-sm bg-base-200 rounded-box w-40 p-2 shadow-lg z-10\"><li><a hx-boost=\"true\" href=\"/settings\">Update Macros</a></li><li><button hx-post=\"/signout\">Logout</button></li></ul></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"dropdown dropdown-end\"><div tabindex=\"0\" role=\"button\" class=\"btn btn-ghost btn-sm gap-1\">Account <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"6 9 12 15 18 9\"></polyline></svg></div><ul tabindex=\"0\" class=\"dropdown-content menu menu-sm bg-base-200 rounded-box w-40 p-2 shadow-lg z-10\"><li><a hx-boost=\"false\" href=\"/settings\">Update Macros</a></li><li><button hx-post=\"/signout\">Logout</button></li></ul></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -335,14 +335,14 @@ func GramEdit(item db.MealItem) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</strong><div class=\"join\"><input type=\"number\" name=\"grams\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</strong><div class=\"join\"><input type=\"number\" inputmode=\"decimal\" name=\"grams\" placeholder=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", item.Grams))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 119, Col: 82}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 119, Col: 108}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -361,7 +361,7 @@ func GramEdit(item db.MealItem) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" hx-trigger=\"change\" hx-target=\"closest .card\" hx-swap=\"outerHTML\"> <span class=\"join-item flex items-center px-2 text-xs bg-base-300 border border-base-300\">g</span></div><div class=\"dropdown dropdown-end\"><div tabindex=\"0\" role=\"button\" class=\"btn btn-ghost btn-xs\">···</div><ul tabindex=\"0\" class=\"dropdown-content menu menu-xs bg-base-100 rounded-box w-28 p-1 shadow z-10\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" hx-trigger=\"change\" hx-target=\"closest .card\" hx-swap=\"outerHTML\" onfocus=\"if(!this.value){this.value=this.placeholder;this.select()}\" onblur=\"if(this.value===this.placeholder)this.value=''\"> <span class=\"join-item flex items-center px-2 text-xs bg-base-300 border border-base-300\">g</span></div><div class=\"dropdown dropdown-end\"><div tabindex=\"0\" role=\"button\" class=\"btn btn-ghost btn-xs\">···</div><ul tabindex=\"0\" class=\"dropdown-content menu menu-xs bg-base-100 rounded-box w-28 p-1 shadow z-10\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -459,7 +459,7 @@ func buttonNav(name string, lis ...templ.Component) templ.Component {
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 152, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 154, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -521,7 +521,7 @@ func liEdit(path string) templ.Component {
 		var templ_7745c5c3_Var18 templ.SafeURL
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(path))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 168, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 170, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -563,7 +563,7 @@ func liDelete(path string) templ.Component {
 		var templ_7745c5c3_Var20 templ.SafeURL
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(path))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 174, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 176, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
@@ -576,7 +576,7 @@ func liDelete(path string) templ.Component {
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(path)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 175, Col: 21}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 177, Col: 21}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -659,7 +659,7 @@ func macroGet(m db.Macro, path string) templ.Component {
 		var templ_7745c5c3_Var24 templ.SafeURL
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(path))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 190, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 192, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -713,7 +713,7 @@ func macroPost(m db.Macro, idempotentToken string, path string) templ.Component 
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(path)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 200, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 202, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
@@ -726,7 +726,7 @@ func macroPost(m db.Macro, idempotentToken string, path string) templ.Component 
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(idempotentToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 201, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 203, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
@@ -780,7 +780,7 @@ func macroViewCompact(m db.Macro) templ.Component {
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", m.Calories))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 209, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 211, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -793,7 +793,7 @@ func macroViewCompact(m db.Macro) templ.Component {
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", m.Fat))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 212, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 214, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {
@@ -806,7 +806,7 @@ func macroViewCompact(m db.Macro) templ.Component {
 		var templ_7745c5c3_Var31 string
 		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", m.Carb))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 213, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 215, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 		if templ_7745c5c3_Err != nil {
@@ -819,7 +819,7 @@ func macroViewCompact(m db.Macro) templ.Component {
 		var templ_7745c5c3_Var32 string
 		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", m.Fiber))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 214, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 216, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 		if templ_7745c5c3_Err != nil {
@@ -832,7 +832,7 @@ func macroViewCompact(m db.Macro) templ.Component {
 		var templ_7745c5c3_Var33 string
 		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", m.Protein))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 215, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/misc.templ`, Line: 217, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 		if templ_7745c5c3_Err != nil {

@@ -121,8 +121,8 @@ func updateSettings(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	component := view.MacroTargets(targets, view.SettingsCfg)
-	return component.Render(context.Background(), c.Response().Writer)
+	c.Response().Header().Set("HX-Location", "/")
+	return c.NoContent(http.StatusOK)
 }
 
 func onboardingView(c echo.Context) error {

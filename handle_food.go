@@ -20,8 +20,17 @@ func foodSearch(c echo.Context) error {
 	search := c.FormValue("search")
 	foods := db.FoodSearch(search, userID)
 
-	id, _ := strconv.Atoi(c.Param("id"))
-	nav := view.NavBack(userID, editPath(c, id), "Ingredients")
+	var backURL string
+	if c.Param("id") == newMealParam {
+		backURL = "/"
+	} else {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.NoContent(http.StatusBadRequest)
+		}
+		backURL = editPath(c, id)
+	}
+	nav := view.NavBack(userID, backURL, "Ingredients")
 	searchResult := view.FoodSearch(foods)
 	component := view.Full(nav, searchResult)
 	return component.Render(context.Background(), c.Response().Writer)

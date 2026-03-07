@@ -34,6 +34,7 @@ var appCSS []byte
 
 const ctxUserID = "userID"
 const defaultMealName = "Quick Add Meal"
+const newMealParam = "new"
 
 func main() {
 	e := echo.New()

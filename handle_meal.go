@@ -26,15 +26,7 @@ func registerMealRoutes(e *echo.Echo) {
 }
 
 func createMeal(c echo.Context) error {
-	// NOTE: this will create a empty meal entries, will probably want a way to clean it up in the future.
-	userID := c.Get(ctxUserID).(int)
-
-	mealID, err := db.CreateMeal(defaultMealName, userID, false)
-	if err != nil {
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
-	c.Response().Header().Set("HX-Location", fmt.Sprint("/meal/", mealID, "/food_search"))
+	c.Response().Header().Set("HX-Location", "/meal/"+newMealParam+"/food_search")
 	return c.NoContent(http.StatusOK)
 }
 
@@ -88,14 +80,24 @@ func renderMealEdit(c echo.Context, id int) error {
 
 func addFood(c echo.Context) error {
 	userID := c.Get(ctxUserID).(int)
-	mealID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.NoContent(http.StatusBadRequest)
-	}
 	foodID, err := strconv.Atoi(c.Param("foodID"))
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
+
+	var mealID int
+	if c.Param("id") == newMealParam {
+		mealID, err = db.CreateMeal(defaultMealName, userID, false)
+		if err != nil {
+			return c.NoContent(http.StatusInternalServerError)
+		}
+	} else {
+		mealID, err = strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.NoContent(http.StatusBadRequest)
+		}
+	}
+
 	if err := db.CreateMealItem(mealID, foodID, 100, userID); err != nil {
 		return handleDBErr(c, err)
 	}
