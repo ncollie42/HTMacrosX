@@ -27,48 +27,7 @@ templ Header() {
     <meta name="htmx-config" content='{"historyCacheSize": 0}'>
     <!-- daisy.css -->
     <link rel="stylesheet" href="/daisy"></link>
-    <style>
-      :root {
-        --macro-cal: #d81b60;
-        --macro-fat: #fdd835;
-        --macro-carb: #7cb342;
-        --macro-fiber: #00acc1;
-        --macro-protein: #3949ab;
-      }
-      /* Macro bar */
-      .macro-bar { display:flex; height:4px; border-radius:2px; overflow:hidden; margin-top:0.5rem; }
-      .macro-bar div { min-width:4px; }
-      .macro-bar .bf { background:var(--macro-fat); }
-      .macro-bar .bc { background:var(--macro-carb); }
-      .macro-bar .bp { background:var(--macro-protein); }
-      /* Macro inline colors */
-      .mc { color:var(--macro-cal); }
-      .mf { color:var(--macro-fat); }
-      .mca { color:var(--macro-carb); }
-      .mfi { color:var(--macro-fiber); }
-      .mp { color:var(--macro-protein); }
-      /* Dashboard stat colors */
-      .c-cal { color:var(--macro-cal); }
-      .c-fat { color:var(--macro-fat); }
-      .c-carb { color:var(--macro-carb); }
-      .c-fiber { color:var(--macro-fiber); }
-      .c-protein { color:var(--macro-protein); }
-      /* Custom progress bar colors */
-      .progress-macro-cal::-webkit-progress-value { background: var(--macro-cal); }
-      .progress-macro-cal::-moz-progress-bar { background: var(--macro-cal); }
-      .progress-macro-fat::-webkit-progress-value { background: var(--macro-fat); }
-      .progress-macro-fat::-moz-progress-bar { background: var(--macro-fat); }
-      .progress-macro-carb::-webkit-progress-value { background: var(--macro-carb); }
-      .progress-macro-carb::-moz-progress-bar { background: var(--macro-carb); }
-      .progress-macro-fiber::-webkit-progress-value { background: var(--macro-fiber); }
-      .progress-macro-fiber::-moz-progress-bar { background: var(--macro-fiber); }
-      .progress-macro-protein::-webkit-progress-value { background: var(--macro-protein); }
-      .progress-macro-protein::-moz-progress-bar { background: var(--macro-protein); }
-      .card-meal { border-left: 4px solid var(--color-neutral); }
-      .card-template { border-left: 4px solid var(--color-secondary); }
-      /* Prevent iOS input zoom */
-      input[type="search"],input[type="text"],input[type="password"],input[type="number"],select { font-size:1rem; }
-    </style>
+    <link rel="stylesheet" href="/app.css"></link>
 }
 
 templ Full(components ...templ.Component) {

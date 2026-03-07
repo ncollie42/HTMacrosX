@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -13,6 +14,7 @@ var sqlDB *sql.DB
 var ErrNotOwned = fmt.Errorf("resource not found or not owned by user")
 
 const SystemUserID = 1
+const DefaultSavedMealName = "Saved Meal"
 
 const schema = `
 CREATE TABLE IF NOT EXISTS users (
@@ -193,20 +195,27 @@ type MealItemRecord struct {
 	Grams  float32
 }
 
-func GetMealItemsByDate(userID int, dateTime time.Time) []MealSummary {
-	date := dateTime.Format("2006-01-02")
-	rows, err := sqlDB.Query(`
-		SELECT j.grams, m.name, m.id, f.protein_per_gram, f.fat_per_gram, f.carb_per_gram, f.fiber_per_gram
-		FROM meal_items j
-		JOIN meals m ON m.id = j.meal_id
-		JOIN foods f ON f.id = j.food_id
-		WHERE m.user_id = ? AND m.meal_date = ? AND m.is_preset = 0
-	`, userID, date)
+const mealSummaryQuery = `
+	SELECT COALESCE(j.grams, 0), m.name, m.id,
+	       COALESCE(f.protein_per_gram, 0), COALESCE(f.fat_per_gram, 0),
+	       COALESCE(f.carb_per_gram, 0), COALESCE(f.fiber_per_gram, 0)
+	FROM meals m
+	LEFT JOIN meal_items j ON j.meal_id = m.id
+	LEFT JOIN foods f ON f.id = j.food_id`
+
+func queryMealSummaries(where string, args ...any) []MealSummary {
+	rows, err := sqlDB.Query(mealSummaryQuery+" "+where, args...)
 	if err != nil {
+		log.Printf("queryMealSummaries: %v", err)
 		return nil
 	}
 	defer rows.Close()
 	return scanMealSummaryRows(rows)
+}
+
+func GetMealItemsByDate(userID int, dateTime time.Time) []MealSummary {
+	date := dateTime.Format("2006-01-02")
+	return queryMealSummaries("WHERE m.user_id = ? AND m.meal_date = ? AND m.is_preset = 0", userID, date)
 }
 
 func macrosByGrams(macro MacroPerGram, grams float32) Macro {
@@ -236,6 +245,18 @@ func SumMacros(macros []MealSummary) Macro {
 		macro.Fiber += m.Macros.Fiber
 	}
 	return macro
+}
+
+func SumMealItemMacros(items []MealItem) Macro {
+	var m Macro
+	for _, item := range items {
+		m.Calories += item.Macros.Calories
+		m.Protein += item.Macros.Protein
+		m.Fat += item.Macros.Fat
+		m.Carb += item.Macros.Carb
+		m.Fiber += item.Macros.Fiber
+	}
+	return m
 }
 
 func SumMacrosByID(macros []MealSummary) []MealSummary {

@@ -1,7 +1,6 @@
 package view
 
 import (
-	"fmt"
 	db "myapp/DB"
 )
 
@@ -42,40 +41,13 @@ templ Onboarding(targets db.Macro) {
           <h1 class="text-3xl font-bold mb-1">Set Your Targets</h1>
           <p class="text-sm text-base-content/50">Pick a preset or customize your own</p>
         </div>
-        @OnboardingForm(targets)
-        <div class="flex gap-2">
-          <button class="btn btn-outline btn-xs flex-1" hx-get="/onboarding?preset=1750" hx-target="#macro-form" hx-swap="outerHTML">1750</button>
-          <button class="btn btn-outline btn-xs flex-1" hx-get="/onboarding?preset=2000" hx-target="#macro-form" hx-swap="outerHTML">2000</button>
-          <button class="btn btn-outline btn-xs flex-1" hx-get="/onboarding?preset=2250" hx-target="#macro-form" hx-swap="outerHTML">2250</button>
-        </div>
+        @MacroTargets(targets, OnboardingCfg)
         <div class="text-center">
           <a href="/" class="link link-hover text-sm text-base-content/40">Skip for now</a>
         </div>
       </div>
     </div>
   </div>
-}
-
-templ OnboardingForm(targets db.Macro) {
-  <form id="macro-form" hx-post="/onboarding" class="flex flex-col gap-3">
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Protein (g)</legend>
-      <input type="number" name="protein" step="1" value={fmt.Sprintf("%.0f", targets.Protein)} class="input w-full"/>
-    </fieldset>
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Fat (g)</legend>
-      <input type="number" name="fat" step="1" value={fmt.Sprintf("%.0f", targets.Fat)} class="input w-full"/>
-    </fieldset>
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Carbs (g)</legend>
-      <input type="number" name="carb" step="1" value={fmt.Sprintf("%.0f", targets.Carb)} class="input w-full"/>
-    </fieldset>
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Fiber (g)</legend>
-      <input type="number" name="fiber" step="1" value={fmt.Sprintf("%.0f", targets.Fiber)} class="input w-full"/>
-    </fieldset>
-    <button type="submit" class="btn btn-primary w-full">Save & Continue</button>
-  </form>
 }
 
 templ Signin() {

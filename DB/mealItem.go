@@ -15,10 +15,10 @@ func CreateMealItem(mealID int, foodID int, grams float64, userID int) error {
 	return nil
 }
 
-func UpdateMealItem(joinID int, grams float64, userID int) error {
+func UpdateMealItem(itemID int, grams float64, userID int) error {
 	res, err := sqlDB.Exec(
 		`UPDATE meal_items SET grams = ? WHERE id = ? AND meal_id IN (SELECT id FROM meals WHERE user_id = ?)`,
-		grams, joinID, userID,
+		grams, itemID, userID,
 	)
 	if err != nil {
 		return err
@@ -30,10 +30,10 @@ func UpdateMealItem(joinID int, grams float64, userID int) error {
 	return nil
 }
 
-func DeleteMealItem(joinID int, userID int) error {
+func DeleteMealItem(itemID int, userID int) error {
 	res, err := sqlDB.Exec(
 		`DELETE FROM meal_items WHERE id = ? AND meal_id IN (SELECT id FROM meals WHERE user_id = ?)`,
-		joinID, userID,
+		itemID, userID,
 	)
 	if err != nil {
 		return err

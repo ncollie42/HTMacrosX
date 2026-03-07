@@ -5,7 +5,24 @@ import (
 	db "myapp/DB"
 )
 
-templ Settings(targets db.Macro) {
+type MacroTargetsConfig struct {
+	Action     string
+	ButtonText string
+	IsPut      bool
+}
+
+var SettingsCfg = MacroTargetsConfig{
+	Action:     "/settings",
+	ButtonText: "Save Targets",
+	IsPut:      true,
+}
+
+var OnboardingCfg = MacroTargetsConfig{
+	Action:     "/onboarding",
+	ButtonText: "Save & Continue",
+}
+
+templ MacroTargets(targets db.Macro, cfg MacroTargetsConfig) {
   <div id="settings-form">
     <div class="text-lg font-semibold mb-4">Macro Targets</div>
     <div class="card bg-base-200 shadow-sm mb-4">
@@ -28,39 +45,30 @@ templ Settings(targets db.Macro) {
         </div>
       </div>
     </div>
-    <form hx-put="/settings" hx-target="#settings-form" hx-swap="outerHTML">
-      <fieldset class="fieldset mb-2">
-        <legend class="fieldset-legend">Fat (g)</legend>
-        <input type="number" name="fat" step="0.1" value={fmt.Sprintf("%.1f", targets.Fat)} class="input w-full"/>
-      </fieldset>
-      <fieldset class="fieldset mb-2">
-        <legend class="fieldset-legend">Carbs (g)</legend>
-        <input type="number" name="carb" step="0.1" value={fmt.Sprintf("%.1f", targets.Carb)} class="input w-full"/>
-      </fieldset>
-      <fieldset class="fieldset mb-2">
-        <legend class="fieldset-legend">Fiber (g)</legend>
-        <input type="number" name="fiber" step="0.1" value={fmt.Sprintf("%.1f", targets.Fiber)} class="input w-full"/>
-      </fieldset>
-      <fieldset class="fieldset mb-2">
-        <legend class="fieldset-legend">Protein (g)</legend>
-        <input type="number" name="protein" step="0.1" value={fmt.Sprintf("%.1f", targets.Protein)} class="input w-full"/>
-      </fieldset>
-      <button type="submit" class="btn btn-primary w-full mt-2">Save Targets</button>
-    </form>
+    if cfg.IsPut {
+      <form hx-put={cfg.Action} hx-target="#settings-form" hx-swap="outerHTML">
+        @macroFormBody(targets, cfg)
+      </form>
+    } else {
+      <form hx-post={cfg.Action} hx-target="#settings-form" hx-swap="outerHTML">
+        @macroFormBody(targets, cfg)
+      </form>
+    }
     <div class="flex gap-3 mt-4">
-      <button class="btn btn-outline btn-sm flex-1" hx-get="/settings?preset=1750" hx-target="#settings-form" hx-swap="outerHTML">1750</button>
-      <button class="btn btn-outline btn-sm flex-1" hx-get="/settings?preset=2000" hx-target="#settings-form" hx-swap="outerHTML">2000</button>
-      <button class="btn btn-outline btn-sm flex-1" hx-get="/settings?preset=2250" hx-target="#settings-form" hx-swap="outerHTML">2250</button>
+      <button class="btn btn-outline btn-sm flex-1" hx-get={cfg.Action + "?preset=1750"} hx-target="#settings-form" hx-swap="outerHTML">1750</button>
+      <button class="btn btn-outline btn-sm flex-1" hx-get={cfg.Action + "?preset=2000"} hx-target="#settings-form" hx-swap="outerHTML">2000</button>
+      <button class="btn btn-outline btn-sm flex-1" hx-get={cfg.Action + "?preset=2250"} hx-target="#settings-form" hx-swap="outerHTML">2250</button>
     </div>
     <script>
       (function(){
         var f=document.querySelector('#settings-form form');
         if(!f)return;
+        function v(el){return parseFloat(el.value)||parseFloat(el.placeholder)||0;}
         function u(){
-          var fat=parseFloat(f.fat.value)||0;
-          var carb=parseFloat(f.carb.value)||0;
-          var fiber=parseFloat(f.fiber.value)||0;
-          var prot=parseFloat(f.protein.value)||0;
+          var fat=v(f.fat);
+          var carb=v(f.carb);
+          var fiber=v(f.fiber);
+          var prot=v(f.protein);
           var cal=fat*9+carb*4+prot*4;
           document.getElementById('pv-cal').textContent=Math.round(cal)+' cal';
           document.getElementById('pv-fat').textContent=fat.toFixed(1)+'g F';
@@ -76,7 +84,33 @@ templ Settings(targets db.Macro) {
           }else{bar.innerHTML='';}
         }
         f.addEventListener('input',u);
+        f.addEventListener('submit',function(){
+          ['fat','carb','fiber','protein'].forEach(function(n){
+            var el=f[n];
+            if(!el.value&&el.placeholder)el.value=el.placeholder;
+          });
+        });
       })();
     </script>
   </div>
+}
+
+templ macroFormBody(targets db.Macro, cfg MacroTargetsConfig) {
+  <fieldset class="fieldset mb-2">
+    <legend class="fieldset-legend">Fat (g)</legend>
+    <input type="number" name="fat" step="0.1" placeholder={fmt.Sprintf("%.1f", targets.Fat)} class="input w-full"/>
+  </fieldset>
+  <fieldset class="fieldset mb-2">
+    <legend class="fieldset-legend">Carbs (g)</legend>
+    <input type="number" name="carb" step="0.1" placeholder={fmt.Sprintf("%.1f", targets.Carb)} class="input w-full"/>
+  </fieldset>
+  <fieldset class="fieldset mb-2">
+    <legend class="fieldset-legend">Fiber (g)</legend>
+    <input type="number" name="fiber" step="0.1" placeholder={fmt.Sprintf("%.1f", targets.Fiber)} class="input w-full"/>
+  </fieldset>
+  <fieldset class="fieldset mb-2">
+    <legend class="fieldset-legend">Protein (g)</legend>
+    <input type="number" name="protein" step="0.1" placeholder={fmt.Sprintf("%.1f", targets.Protein)} class="input w-full"/>
+  </fieldset>
+  <button type="submit" class="btn btn-primary w-full mt-2">{cfg.ButtonText}</button>
 }

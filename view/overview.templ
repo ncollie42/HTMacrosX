@@ -6,18 +6,6 @@ import (
 	"time"
 )
 
-func sumMealItems(items []db.MealItem) db.Macro {
-	var m db.Macro
-	for _, item := range items {
-		m.Calories += item.Macros.Calories
-		m.Protein += item.Macros.Protein
-		m.Fat += item.Macros.Fat
-		m.Carb += item.Macros.Carb
-		m.Fiber += item.Macros.Fiber
-	}
-	return m
-}
-
 type Nutrient int
 const (
     Calories Nutrient = iota
@@ -101,7 +89,7 @@ templ BottomNav() {
         <path d="M7 12h10"></path>
         <path d="M7 17h6"></path>
       </svg>
-      <span class="dock-label">Templates</span>
+      <span class="dock-label">Saved Meals</span>
     </a>
     <a href="/scan" hx-boost="false">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -111,7 +99,7 @@ templ BottomNav() {
         <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
         <line x1="7" y1="12" x2="17" y2="12"></line>
       </svg>
-      <span class="dock-label">Scan</span>
+      <span class="dock-label">Quick Scan</span>
     </a>
     <button hx-post="/meal">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -119,7 +107,7 @@ templ BottomNav() {
         <line x1="12" y1="8" x2="12" y2="16"></line>
         <line x1="8" y1="12" x2="16" y2="12"></line>
       </svg>
-      <span class="dock-label">Add Meal</span>
+      <span class="dock-label">Quick Add</span>
     </button>
   </div>
 }
@@ -131,19 +119,23 @@ templ TemplateOverview(macros []db.MealSummary, idempotentToken string) {
     @templateOverviewButton(m, idempotentToken)
   }
   <div class="mt-4">
-    <button class="btn btn-outline btn-primary w-full" hx-post="/template/"> Create Template </button>
+    <button class="btn btn-outline btn-primary w-full" hx-post="/template/"> New Saved Meal</button>
   </div>
 }
 
 // ---------------------------- Meal Overview -------------------------------
 
-templ NameEdit(name string) {
-  <input type="text"
-    value={name}
-    name="name"
-    class="input input-bordered w-full mb-3"
-    hx-trigger="keyup changed delay:500ms"
-    hx-put="name"/>
+templ NameEdit(name, placeholder string) {
+  <fieldset class="fieldset mb-3">
+    <legend class="fieldset-legend">Name</legend>
+    <input type="text"
+      value={name}
+      placeholder={placeholder}
+      name="name"
+      class="input w-full"
+      hx-trigger="keyup changed delay:500ms"
+      hx-put="name"/>
+  </fieldset>
 }
 
 templ mealTotalsContent(totals db.Macro) {
@@ -155,32 +147,32 @@ templ mealTotalsContent(totals db.Macro) {
           <span class="text-xl font-bold mc">{fmt.Sprintf("%.0f", totals.Calories)} <span class="text-sm font-normal">cal</span></span>
         </div>
         @macroBar(totals)
-        <div class="flex flex-wrap gap-x-4 gap-y-0.5 text-xs mt-1">
-          <span class="mp">P {fmt.Sprintf("%.0f", totals.Protein)}g</span>
-          <span class="mf">F {fmt.Sprintf("%.0f", totals.Fat)}g</span>
-          <span class="mca">C {fmt.Sprintf("%.0f", totals.Carb)}g</span>
-          <span class="mfi">Fib {fmt.Sprintf("%.0f", totals.Fiber)}g</span>
+        <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-xs mt-1">
+          <span class="mf">{fmt.Sprintf("%.1f", totals.Fat)}g F</span>
+          <span class="mca">{fmt.Sprintf("%.1f", totals.Carb)}g C</span>
+          <span class="mfi">{fmt.Sprintf("%.1f", totals.Fiber)}g Fi</span>
+          <span class="mp">{fmt.Sprintf("%.1f", totals.Protein)}g P</span>
         </div>
       </div>
     </div>
   }
 }
 
-templ MealTotals(items []db.MealItem) {
+templ MealTotals(totals db.Macro) {
   <div id="meal-totals">
-    @mealTotalsContent(sumMealItems(items))
+    @mealTotalsContent(totals)
   </div>
 }
 
-templ MealTotalsOOB(items []db.MealItem) {
+templ MealTotalsOOB(totals db.Macro) {
   <div id="meal-totals" hx-swap-oob="true">
-    @mealTotalsContent(sumMealItems(items))
+    @mealTotalsContent(totals)
   </div>
 }
 
-templ MealEdit(meal db.Meal) {
-  @NameEdit(meal.Name)
-  @MealTotals(meal.Items)
+templ MealEdit(meal db.Meal, placeholder string, totals db.Macro) {
+  @NameEdit(meal.Name, placeholder)
+  @MealTotals(totals)
   for _, item := range meal.Items {
     @GramEdit(item)
   }
@@ -205,7 +197,7 @@ templ MealEditNav(mealID int) {
         <line x1="12" y1="8" x2="12" y2="16"></line>
         <line x1="8" y1="12" x2="16" y2="12"></line>
       </svg>
-      <span class="dock-label">Add Food</span>
+      <span class="dock-label">Saved Ingredients</span>
     </a>
   </div>
 }

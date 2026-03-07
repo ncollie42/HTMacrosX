@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -72,6 +73,7 @@ func FoodSearch(name string, userID int) []Food {
 		SystemUserID, userID, name, likePattern,
 	)
 	if err != nil {
+		log.Printf("FoodSearch: %v", err)
 		return nil
 	}
 	defer rows.Close()

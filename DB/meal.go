@@ -103,18 +103,7 @@ func UpdateMealName(mealID int, userID int, name string) error {
 }
 
 func GetTemplates(userID int) []MealSummary {
-	rows, err := sqlDB.Query(`
-		SELECT j.grams, m.name, m.id, f.protein_per_gram, f.fat_per_gram, f.carb_per_gram, f.fiber_per_gram
-		FROM meal_items j
-		JOIN meals m ON m.id = j.meal_id
-		JOIN foods f ON f.id = j.food_id
-		WHERE m.user_id = ? AND m.is_preset = 1
-	`, userID)
-	if err != nil {
-		return nil
-	}
-	defer rows.Close()
-	return scanMealSummaryRows(rows)
+	return queryMealSummaries("WHERE m.user_id = ? AND m.is_preset = 1", userID)
 }
 
 func TemplateToMeal(templateID int, userID int) (int, error) {
@@ -127,6 +116,9 @@ func TemplateToMeal(templateID int, userID int) (int, error) {
 	if err := tx.QueryRow(`SELECT name FROM meals WHERE id = ? AND user_id = ?`, templateID, userID).Scan(&presetName); err != nil {
 		tx.Rollback()
 		return 0, ErrNotOwned
+	}
+	if presetName == "" {
+		presetName = DefaultSavedMealName
 	}
 
 	rows, err := tx.Query(`SELECT food_id, grams FROM meal_items WHERE meal_id = ?`, templateID)

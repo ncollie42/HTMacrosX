@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -50,6 +51,7 @@ func GetUserTargets(userID int) Macro {
 		userID,
 	).Scan(&cal, &fat, &carb, &fiber, &protein)
 	if err != nil {
+		log.Printf("GetUserTargets: %v", err)
 		return defaultTargets
 	}
 	return Macro{
