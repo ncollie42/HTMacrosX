@@ -519,7 +519,7 @@ func mealTotalsContent(totals db.Macro) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		if totals.Calories > 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<div class=\"card bg-base-200 shadow-sm mb-4\"><div class=\"card-body p-4 gap-2\"><div class=\"flex items-center justify-between\"><span class=\"text-xs font-semibold tracking-widest uppercase opacity-60\">Meal Totals</span> <span class=\"text-xl font-bold mc\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<div class=\"card bg-base-200 shadow-sm mb-4 card-meal\"><div class=\"card-body p-4 gap-2\"><div class=\"flex items-center justify-between\"><span class=\"text-xs font-semibold tracking-widest uppercase opacity-60\">Meal Totals</span> <span class=\"text-xl font-bold mc\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

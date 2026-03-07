@@ -407,11 +407,15 @@ func deleteTemplate(c echo.Context) error {
 
 // --------  Shared Meal/Template Handlers ----------------------------
 func findMealOrTemplate(c echo.Context) error {
-	userID := c.Get(ctxUserID).(int)
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
+	return renderMealEdit(c, id)
+}
+
+func renderMealEdit(c echo.Context, id int) error {
+	userID := c.Get(ctxUserID).(int)
 	meal, err := db.GetMealByID(id, userID)
 	if err != nil {
 		return handleDBErr(c, err)
@@ -445,7 +449,11 @@ func addFood(c echo.Context) error {
 	if err := db.CreateMealItem(mealID, foodID, 100, userID); err != nil {
 		return handleDBErr(c, err)
 	}
-	return c.HTML(http.StatusOK, `<script>window.location.replace("`+editPath(c, mealID)+`")</script>`)
+
+	c.Response().Header().Set("HX-Replace-Url", editPath(c, mealID))
+	c.Response().Header().Set("HX-Retarget", "body")
+	c.Response().Header().Set("HX-Reswap", "innerHTML")
+	return renderMealEdit(c, mealID)
 }
 
 func removeFood(c echo.Context) error {
