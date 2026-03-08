@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 func setupAuthTestDB(t *testing.T) int {
 	t.Helper()
 	db.Open(filepath.Join(t.TempDir(), "auth.db"))
-	userID, err := db.CreateUser("auth-user", "pass")
+	userID, err := db.CreateUser("auth-user", "password1")
 	if err != nil {
 		t.Fatalf("CreateUser: %v", err)
 	}
@@ -60,5 +61,53 @@ func TestConsumeDupToken(t *testing.T) {
 	}
 	if err := ConsumeDupToken(ctx, "wrong-token"); err != ErrDupTokenMismatch {
 		t.Fatalf("ConsumeDupToken mismatch err = %v, want ErrDupTokenMismatch", err)
+	}
+}
+
+func TestSetCookieUsesForwardedHTTPS(t *testing.T) {
+	userID := setupAuthTestDB(t)
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/signin", strings.NewReader(""))
+	req.Header.Set(echo.HeaderXForwardedProto, "https")
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+
+	if err := setCookie(ctx, userID); err != nil {
+		t.Fatalf("setCookie: %v", err)
+	}
+	cookies := rec.Result().Cookies()
+	if len(cookies) != 1 {
+		t.Fatalf("cookies = %d, want 1", len(cookies))
+	}
+	if !cookies[0].Secure {
+		t.Fatalf("cookie Secure = false, want true")
+	}
+}
+
+func TestClearCookieMatchesOriginalAttributes(t *testing.T) {
+	userID := setupAuthTestDB(t)
+	sessionID := "session-clear"
+	if err := db.CreateSession(sessionID, userID, time.Now().Add(time.Hour)); err != nil {
+		t.Fatalf("CreateSession: %v", err)
+	}
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/signout", nil)
+	req.AddCookie(&http.Cookie{Name: cookieName, Value: sessionID, Path: "/"})
+	req.Header.Set(echo.HeaderXForwardedProto, "https")
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+
+	ClearCookie(ctx)
+	cookies := rec.Result().Cookies()
+	if len(cookies) != 1 {
+		t.Fatalf("cookies = %d, want 1", len(cookies))
+	}
+	got := cookies[0]
+	if got.Path != "/" || !got.HttpOnly || !got.Secure {
+		t.Fatalf("clear cookie attrs = %+v", got)
+	}
+	if got.MaxAge != -1 {
+		t.Fatalf("clear cookie MaxAge = %d, want -1", got.MaxAge)
 	}
 }

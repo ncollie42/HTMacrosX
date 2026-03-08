@@ -7,6 +7,7 @@ import (
 	"myapp/auth"
 	"myapp/view"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -41,6 +42,10 @@ func signinView(c echo.Context) error {
 }
 
 func signin(c echo.Context) error {
+	if err := validateAuthPost(c); err != nil {
+		component := view.SignError(err.Error())
+		return component.Render(context.Background(), c.Response().Writer)
+	}
 	login := c.FormValue("login")
 	password := c.FormValue("password")
 	err := auth.Signin(c, login, password)
@@ -60,10 +65,22 @@ func signupView(c echo.Context) error {
 }
 
 func signup(c echo.Context) error {
+	if err := validateAuthPost(c); err != nil {
+		component := view.SignError(err.Error())
+		return component.Render(context.Background(), c.Response().Writer)
+	}
 	login := c.FormValue("login")
 	password := c.FormValue("password")
 	confirm := c.FormValue("confirm")
 
+	if strings.TrimSpace(login) == "" {
+		component := view.SignError("Username is required")
+		return component.Render(context.Background(), c.Response().Writer)
+	}
+	if len(password) < 8 {
+		component := view.SignError("Password must be at least 8 characters")
+		return component.Render(context.Background(), c.Response().Writer)
+	}
 	if password != confirm {
 		component := view.SignError("Passwords do not match")
 		return component.Render(context.Background(), c.Response().Writer)
@@ -90,15 +107,20 @@ func settings(c echo.Context) error {
 
 	targets, ok := presets[c.QueryParam("preset")]
 	if !ok {
-		targets = db.GetUserTargets(userID)
+		var err error
+		targets, err = db.GetUserTargets(userID)
+		if err != nil {
+			return handleDBErr(c, err)
+		}
 	}
+	form := view.NewMacroTargetsForm(targets)
 
 	if c.Request().Header.Get("HX-Request") != "" {
-		return view.MacroTargets(targets, view.SettingsCfg, "").Render(context.Background(), c.Response().Writer)
+		return view.MacroTargets(targets, form, view.SettingsCfg, "").Render(context.Background(), c.Response().Writer)
 	}
 
 	nav := view.NavBack(userID, "/", "Settings")
-	settingsForm := view.MacroTargets(targets, view.SettingsCfg, "")
+	settingsForm := view.MacroTargets(targets, form, view.SettingsCfg, "")
 	component := view.Full(nav, settingsForm)
 	return component.Render(context.Background(), c.Response().Writer)
 }
@@ -151,21 +173,17 @@ func parseMacroForm(c echo.Context) (db.Macro, error) {
 func updateSettings(c echo.Context) error {
 	userID := c.Get(ctxUserID).(int)
 	targets, err := parseMacroForm(c)
+	form := view.NewMacroTargetsFormFromRaw(
+		c.FormValue("fat"),
+		c.FormValue("carb"),
+		c.FormValue("fiber"),
+		c.FormValue("protein"),
+	)
 	if err != nil {
-		return view.MacroTargets(db.Macro{
-			Calories: db.CaloriesFromGrams(
-				mustFloat(c.FormValue("fat")),
-				mustFloat(c.FormValue("carb")),
-				mustFloat(c.FormValue("protein")),
-			),
-			Fat:     float32(mustFloat(c.FormValue("fat"))),
-			Carb:    float32(mustFloat(c.FormValue("carb"))),
-			Fiber:   float32(mustFloat(c.FormValue("fiber"))),
-			Protein: float32(mustFloat(c.FormValue("protein"))),
-		}, view.SettingsCfg, err.Error()).Render(context.Background(), c.Response().Writer)
+		return view.MacroTargets(form.ToMacro(), form, view.SettingsCfg, err.Error()).Render(context.Background(), c.Response().Writer)
 	}
 	if err := db.UpdateUserTargets(userID, targets); err != nil {
-		return c.NoContent(http.StatusInternalServerError)
+		return handleDBErr(c, err)
 	}
 
 	c.Response().Header().Set("HX-Location", "/")
@@ -179,33 +197,30 @@ func onboardingView(c echo.Context) error {
 			targets = preset
 		}
 	}
+	form := view.NewMacroTargetsForm(targets)
 
 	if c.Request().Header.Get("HX-Request") != "" {
-		return view.MacroTargets(targets, view.OnboardingCfg, "").Render(context.Background(), c.Response().Writer)
+		return view.MacroTargets(targets, form, view.OnboardingCfg, "").Render(context.Background(), c.Response().Writer)
 	}
 
-	component := view.Full(view.Onboarding(targets))
+	component := view.Full(view.Onboarding(targets, form))
 	return component.Render(context.Background(), c.Response().Writer)
 }
 
 func saveOnboarding(c echo.Context) error {
 	userID := c.Get(ctxUserID).(int)
 	targets, err := parseMacroForm(c)
+	form := view.NewMacroTargetsFormFromRaw(
+		c.FormValue("fat"),
+		c.FormValue("carb"),
+		c.FormValue("fiber"),
+		c.FormValue("protein"),
+	)
 	if err != nil {
-		return view.MacroTargets(db.Macro{
-			Calories: db.CaloriesFromGrams(
-				mustFloat(c.FormValue("fat")),
-				mustFloat(c.FormValue("carb")),
-				mustFloat(c.FormValue("protein")),
-			),
-			Fat:     float32(mustFloat(c.FormValue("fat"))),
-			Carb:    float32(mustFloat(c.FormValue("carb"))),
-			Fiber:   float32(mustFloat(c.FormValue("fiber"))),
-			Protein: float32(mustFloat(c.FormValue("protein"))),
-		}, view.OnboardingCfg, err.Error()).Render(context.Background(), c.Response().Writer)
+		return view.MacroTargets(form.ToMacro(), form, view.OnboardingCfg, err.Error()).Render(context.Background(), c.Response().Writer)
 	}
 	if err := db.UpdateUserTargets(userID, targets); err != nil {
-		return c.NoContent(http.StatusInternalServerError)
+		return handleDBErr(c, err)
 	}
 
 	c.Response().Header().Set("HX-Location", "/")
@@ -253,10 +268,20 @@ func editPathForType(id int, mealType string) string {
 	return "/meal/" + strconv.Itoa(id) + "/"
 }
 
-func mustFloat(raw string) float64 {
-	value, _ := strconv.ParseFloat(strings.TrimSpace(raw), 32)
-	if value < 0 {
-		return 0
+func validateAuthPost(c echo.Context) error {
+	if secFetchSite := strings.TrimSpace(c.Request().Header.Get("Sec-Fetch-Site")); strings.EqualFold(secFetchSite, "cross-site") {
+		return fmt.Errorf("Cross-site auth requests are not allowed")
 	}
-	return value
+	origin := strings.TrimSpace(c.Request().Header.Get("Origin"))
+	if origin == "" {
+		return nil
+	}
+	parsed, err := url.Parse(origin)
+	if err != nil || parsed.Host == "" {
+		return fmt.Errorf("Invalid auth request origin")
+	}
+	if !strings.EqualFold(parsed.Host, c.Request().Host) {
+		return fmt.Errorf("Cross-site auth requests are not allowed")
+	}
+	return nil
 }

@@ -60,8 +60,7 @@ templ AddFoodForm(joinPrefix string, querySuffix string, targetType string, targ
   <details class="collapse collapse-arrow bg-base-200 mb-3">
     <summary class="collapse-title text-sm font-medium">Create New</summary>
     <div class="collapse-content">
-      <form hx-post="/food" hx-target="#search-results" hx-swap="outerHTML" class="flex flex-col gap-2 pt-2"
-        hx-on::config-request="for(let el of this.querySelectorAll('input[placeholder]')){if(!event.detail.parameters[el.name])event.detail.parameters[el.name]=el.placeholder}">
+      <form hx-post="/food" hx-target="#search-results" hx-swap="outerHTML" class="flex flex-col gap-2 pt-2">
         <input type="hidden" name="joinPrefix" value={joinPrefix}/>
         <input type="hidden" name="querySuffix" value={querySuffix}/>
         <input type="hidden" name="targetType" value={targetType}/>
@@ -91,9 +90,7 @@ templ AddFoodForm(joinPrefix string, querySuffix string, targetType string, targ
           </fieldset>
           <fieldset class="fieldset col-span-2">
             <legend class="fieldset-legend">Serving size (g)</legend>
-            <input type="number" inputmode="decimal" name="grams" step="0.1" placeholder="100" class="input w-full"
-              onfocus="if(!this.value){this.value=this.placeholder;this.select()}"
-              onblur="if(this.value===this.placeholder)this.value=''"/>
+            <input type="number" inputmode="decimal" name="grams" step="0.1" value="100" class="input w-full"/>
           </fieldset>
         </div>
         <button type="submit" class="btn btn-primary w-full mt-2">Create & Add</button>

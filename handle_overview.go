@@ -18,7 +18,10 @@ func registerOverviewRoutes(e *echo.Echo) {
 func overview(c echo.Context) error {
 	userID := c.Get(ctxUserID).(int)
 
-	target := db.GetUserTargets(userID)
+	target, err := db.GetUserTargets(userID)
+	if err != nil {
+		return handleDBErr(c, err)
+	}
 
 	timeStr := c.Param("date")
 	date := strconvTime(timeStr)

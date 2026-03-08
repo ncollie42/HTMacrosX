@@ -1,8 +1,8 @@
 package database
 
 import (
+	"database/sql"
 	"fmt"
-	"log"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -24,6 +24,14 @@ func validateHashPassword(hashedPassword string, password string) bool {
 var defaultTargets = Macro{Calories: 1751.6, Fat: 44.8, Carb: 247.1, Fiber: 32.0, Protein: 90.0}
 
 func CreateUser(userName string, pass string) (int, error) {
+	userName = strings.TrimSpace(userName)
+	if userName == "" {
+		return 0, fmt.Errorf("username is required")
+	}
+	if len(pass) < 8 {
+		return 0, fmt.Errorf("password must be at least 8 characters")
+	}
+
 	hashedPassword, err := hashPassword(pass)
 	if err != nil {
 		return 0, err
@@ -44,15 +52,17 @@ func CreateUser(userName string, pass string) (int, error) {
 	return int(id), nil
 }
 
-func GetUserTargets(userID int) Macro {
+func GetUserTargets(userID int) (Macro, error) {
 	var cal, fat, carb, fiber, protein float64
 	err := sqlDB.QueryRow(
 		`SELECT target_calories, target_fat, target_carb, target_fiber, target_protein FROM users WHERE id = ?`,
 		userID,
 	).Scan(&cal, &fat, &carb, &fiber, &protein)
 	if err != nil {
-		log.Printf("GetUserTargets: %v", err)
-		return defaultTargets
+		if err == sql.ErrNoRows {
+			return Macro{}, ErrNotOwned
+		}
+		return Macro{}, err
 	}
 	return Macro{
 		Calories: float32(cal),
@@ -60,18 +70,26 @@ func GetUserTargets(userID int) Macro {
 		Carb:     float32(carb),
 		Fiber:    float32(fiber),
 		Protein:  float32(protein),
-	}
+	}, nil
 }
 
 func UpdateUserTargets(userID int, targets Macro) error {
-	_, err := sqlDB.Exec(
+	res, err := sqlDB.Exec(
 		`UPDATE users SET target_calories=?, target_fat=?, target_carb=?, target_fiber=?, target_protein=? WHERE id=?`,
 		targets.Calories, targets.Fat, targets.Carb, targets.Fiber, targets.Protein, userID,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return ErrNotOwned
+	}
+	return nil
 }
 
 func ValidateUser(userName string, pass string) (int, error) {
+	userName = strings.TrimSpace(userName)
 	var id int
 	var hashedPassword string
 	err := sqlDB.QueryRow(

@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	db "myapp/DB"
+	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -53,7 +55,7 @@ func setCookie(c echo.Context, userID int) error {
 		Value:    sessionID,
 		Expires:  expiration,
 		HttpOnly: true,
-		Secure:   c.Request().TLS != nil,
+		Secure:   isSecureRequest(c),
 		SameSite: http.SameSiteLaxMode,
 		Path:     "/",
 	}
@@ -69,9 +71,14 @@ func ClearCookie(c echo.Context) {
 	db.DeleteSession(cookie.Value)
 
 	newCookie := http.Cookie{
-		Name:   cookieName,
-		Value:  "",
-		MaxAge: -1,
+		Name:     cookieName,
+		Value:    "",
+		MaxAge:   -1,
+		Expires:  time.Unix(0, 0),
+		HttpOnly: true,
+		Secure:   isSecureRequest(c),
+		SameSite: http.SameSiteLaxMode,
+		Path:     "/",
 	}
 	c.SetCookie(&newCookie)
 }
@@ -143,4 +150,21 @@ func GenToken() string {
 	b := make([]byte, 16)
 	rand.Read(b)
 	return fmt.Sprintf("%x", b)
+}
+
+func isSecureRequest(c echo.Context) bool {
+	host := c.Request().Host
+	if forwarded := strings.TrimSpace(c.Request().Header.Get("X-Forwarded-Host")); forwarded != "" {
+		host = forwarded
+	}
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+	if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+		return false
+	}
+	if c.Request().TLS != nil {
+		return true
+	}
+	return strings.EqualFold(strings.TrimSpace(c.Request().Header.Get(echo.HeaderXForwardedProto)), "https")
 }

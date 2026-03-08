@@ -138,6 +138,9 @@ func resolveBarcodedFood(barcode string, userID int) (int, error) {
 }
 
 func scanBarcode(c echo.Context) error {
+	if strings.TrimSpace(c.Param("barcode")) == "" {
+		return c.NoContent(http.StatusBadRequest)
+	}
 	mealID, _ := strconv.Atoi(c.QueryParam("meal"))
 	mealType := c.QueryParam("type")
 	dateUnix := queryDateUnix(c)
@@ -146,9 +149,12 @@ func scanBarcode(c echo.Context) error {
 }
 
 func scanBarcodeManual(c echo.Context) error {
-	barcode := c.FormValue("barcode")
+	barcode := strings.TrimSpace(c.FormValue("barcode"))
 	if barcode == "" {
-		return c.NoContent(http.StatusBadRequest)
+		mealID, _ := strconv.Atoi(c.FormValue("meal"))
+		mealType := c.FormValue("type")
+		dateUnix := parseDateUnixValue(c.FormValue("date"))
+		return c.Redirect(http.StatusSeeOther, scanPathWithQuery(mealID, mealType, dateUnix, "Enter a barcode to continue"))
 	}
 	mealID, _ := strconv.Atoi(c.FormValue("meal"))
 	mealType := c.FormValue("type")
@@ -238,24 +244,25 @@ func previewBarcodedFood(barcode string, userID int) (db.Food, error) {
 
 func scanConfirmAdd(c echo.Context) error {
 	userID := c.Get(ctxUserID).(int)
-	barcode := c.FormValue("barcode")
+	barcode := strings.TrimSpace(c.FormValue("barcode"))
 	if barcode == "" {
 		return c.NoContent(http.StatusBadRequest)
 	}
+	mealID, _ := strconv.Atoi(c.FormValue("meal"))
+	mealType := c.FormValue("type")
+	dateUnix := parseDateUnixValue(c.FormValue("date"))
+	if mealID != 0 {
+		if err := db.ValidateMealAccess(mealID, userID, mealType == "template"); err != nil {
+			return handleDBErr(c, err)
+		}
+	}
 	foodID, err := resolveBarcodedFood(barcode, userID)
 	if err != nil {
-		mealID, _ := strconv.Atoi(c.FormValue("meal"))
-		mealType := c.FormValue("type")
-		dateUnix := parseDateUnixValue(c.FormValue("date"))
 		if errors.Is(err, errProductNotFound) {
 			return c.Redirect(http.StatusSeeOther, scanPathWithQuery(mealID, mealType, dateUnix, "Product not found"))
 		}
 		return c.Redirect(http.StatusSeeOther, scanPathWithQuery(mealID, mealType, dateUnix, "Lookup failed. Please try again"))
 	}
-
-	mealID, _ := strconv.Atoi(c.FormValue("meal"))
-	mealType := c.FormValue("type")
-	dateUnix := parseDateUnixValue(c.FormValue("date"))
 	if mealID == 0 {
 		mealDate := requestedMealDate(c)
 		if dateUnix != 0 {

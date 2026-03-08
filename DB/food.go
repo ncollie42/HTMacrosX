@@ -18,10 +18,43 @@ func CreateFoodWithBarcode(name string, fat float64, carb float64, fiber float64
 		name, protein/grams, fat/grams, carb/grams, fiber/grams, grams, userID, barcode,
 	)
 	if err != nil {
+		if barcode != "" && strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			if existing := FindFoodByBarcode(barcode, userID); existing != nil && existing.CreatorUserID == userID {
+				return existing.ID, nil
+			}
+		}
 		return 0, fmt.Errorf("CreateFoodWithBarcode: %w", err)
 	}
 	id, _ := res.LastInsertId()
 	return int(id), nil
+}
+
+func CreateFoodAndMealItem(name string, fat float64, carb float64, fiber float64, protein float64, servingGrams float64, userID int, barcode string, mealID int, isPreset bool, itemGrams float64) (int, error) {
+	tx, err := sqlDB.Begin()
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	if err := validateMealAccessTx(tx, mealID, userID, isPreset); err != nil {
+		return 0, err
+	}
+
+	res, err := tx.Exec(
+		`INSERT INTO foods (name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams, creator_user_id, barcode, is_shared) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+		name, protein/servingGrams, fat/servingGrams, carb/servingGrams, fiber/servingGrams, servingGrams, userID, barcode,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("CreateFoodAndMealItem: %w", err)
+	}
+	foodID, _ := res.LastInsertId()
+	if _, err := tx.Exec(`INSERT INTO meal_items (meal_id, food_id, grams) VALUES (?, ?, ?)`, mealID, foodID, itemGrams); err != nil {
+		return 0, fmt.Errorf("CreateFoodAndMealItem: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("CreateFoodAndMealItem: %w", err)
+	}
+	return int(foodID), nil
 }
 
 func FindFoodByBarcode(barcode string, userID int) *FoodRecord {
@@ -30,8 +63,10 @@ func FindFoodByBarcode(barcode string, userID int) *FoodRecord {
 	err := sqlDB.QueryRow(
 		`SELECT id, name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams, creator_user_id, barcode
 		FROM foods
-		WHERE barcode = ? AND (creator_user_id = ? OR creator_user_id = ?)`,
-		barcode, userID, SystemUserID,
+		WHERE barcode = ? AND (creator_user_id = ? OR is_shared = 1)
+		ORDER BY CASE WHEN creator_user_id = ? THEN 0 ELSE 1 END, id
+		LIMIT 1`,
+		barcode, userID, userID,
 	).Scan(&f.ID, &f.Name, &ppg, &fpg, &cpg, &fibpg, &grams, &f.CreatorUserID, &f.Barcode)
 	if err != nil {
 		return nil
@@ -81,10 +116,10 @@ func FoodSearch(name string, userID int) []Food {
 	rows, err := sqlDB.Query(
 		`SELECT id, name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams
 		FROM foods
-		WHERE (creator_user_id = ? OR creator_user_id = ?)
+		WHERE (creator_user_id = ? OR is_shared = 1)
 		  AND (? = '' OR LOWER(name) LIKE ?)
-		ORDER BY name`,
-		SystemUserID, userID, name, likePattern,
+		ORDER BY CASE WHEN creator_user_id = ? THEN 0 ELSE 1 END, name`,
+		userID, name, likePattern, userID,
 	)
 	if err != nil {
 		log.Printf("FoodSearch: %v", err)

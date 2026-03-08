@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	db "myapp/DB"
-	"myapp/auth"
 	"myapp/view"
 	"net/http"
 	"strconv"
@@ -33,11 +32,6 @@ func templateToMeal(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
-	token := c.FormValue("token")
-	if err := auth.ConsumeDupToken(c, token); err != nil {
-		c.Response().Header().Set("HX-Reswap", "none")
-		return c.NoContent(http.StatusConflict)
-	}
 	if _, err := db.TemplateToMeal(templateID, userID, requestedMealDate(c)); err != nil {
 		return handleDBErr(c, err)
 	}
@@ -49,13 +43,10 @@ func templateToMeal(c echo.Context) error {
 func findAllTemplates(c echo.Context) error {
 	userID := c.Get(ctxUserID).(int)
 	macros := db.GetTemplates(userID)
-
-	token := auth.GenToken()
-	auth.SetDupToken(c, token)
 	macrosByID := db.SumMacrosByID(macros)
 
 	nav := view.NavBack(userID, "/", "Saved Meals")
-	overview := view.TemplateOverview(macrosByID, token)
+	overview := view.TemplateOverview(macrosByID)
 	component := view.Full(nav, overview)
 	return component.Render(context.Background(), c.Response().Writer)
 }

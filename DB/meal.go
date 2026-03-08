@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 )
@@ -40,19 +41,14 @@ func DeleteMeal(mealID int, userID int, isPreset bool) error {
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback()
 	res, err := tx.Exec(`DELETE FROM meals WHERE id = ? AND user_id = ? AND is_preset = ?`, mealID, userID, presetInt(isPreset))
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 	n, _ := res.RowsAffected()
 	if n == 0 {
-		tx.Rollback()
 		return ErrNotOwned
-	}
-	if _, err := tx.Exec(`DELETE FROM meal_items WHERE meal_id = ?`, mealID); err != nil {
-		tx.Rollback()
-		return err
 	}
 	return tx.Commit()
 }
@@ -121,10 +117,10 @@ func TemplateToMeal(templateID int, userID int, mealDate time.Time) (int, error)
 	if err != nil {
 		return 0, err
 	}
+	defer tx.Rollback()
 
 	var presetName string
 	if err := tx.QueryRow(`SELECT name FROM meals WHERE id = ? AND user_id = ? AND is_preset = 1`, templateID, userID).Scan(&presetName); err != nil {
-		tx.Rollback()
 		return 0, ErrNotOwned
 	}
 	if presetName == "" {
@@ -133,7 +129,6 @@ func TemplateToMeal(templateID int, userID int, mealDate time.Time) (int, error)
 
 	rows, err := tx.Query(`SELECT food_id, grams FROM meal_items WHERE meal_id = ?`, templateID)
 	if err != nil {
-		tx.Rollback()
 		return 0, fmt.Errorf("TemplateToMeal: %w", err)
 	}
 	type item struct {
@@ -159,14 +154,12 @@ func TemplateToMeal(templateID int, userID int, mealDate time.Time) (int, error)
 		userID, presetName, dateValue,
 	)
 	if err != nil {
-		tx.Rollback()
 		return 0, fmt.Errorf("TemplateToMeal: %w", err)
 	}
 	mealID, _ := res.LastInsertId()
 
 	for _, it := range items {
 		if _, err := tx.Exec(`INSERT INTO meal_items (meal_id, food_id, grams) VALUES (?, ?, ?)`, mealID, it.FoodID, it.Grams); err != nil {
-			tx.Rollback()
 			return 0, fmt.Errorf("TemplateToMeal: %w", err)
 		}
 	}
@@ -175,4 +168,24 @@ func TemplateToMeal(templateID int, userID int, mealDate time.Time) (int, error)
 		return 0, fmt.Errorf("TemplateToMeal: %w", err)
 	}
 	return int(mealID), nil
+}
+
+func ValidateMealAccess(mealID int, userID int, isPreset bool) error {
+	return validateMealAccessTx(sqlDB, mealID, userID, isPreset)
+}
+
+type queryRower interface {
+	QueryRow(query string, args ...any) *sql.Row
+}
+
+func validateMealAccessTx(q queryRower, mealID int, userID int, isPreset bool) error {
+	var found int
+	err := q.QueryRow(`SELECT 1 FROM meals WHERE id = ? AND user_id = ? AND is_preset = ?`, mealID, userID, presetInt(isPreset)).Scan(&found)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNotOwned
+		}
+		return err
+	}
+	return nil
 }

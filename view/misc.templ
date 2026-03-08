@@ -101,11 +101,15 @@ templ mealOverviewButton(m db.MealSummary) {
   </div>
 }
 
-templ templateOverviewButton(m db.MealSummary, idempotentToken string) {
+templ templateOverviewButton(m db.MealSummary) {
   <div class="card bg-base-200 shadow-sm mb-3 card-template">
     <div class="card-body p-4 gap-2">
-      @buttonNav(m.Name, liEdit(fmt.Sprint(m.ID, "/")), liDelete(fmt.Sprint(m.ID, "/"), "Delete this saved meal?"))
-      @macroPost(m.Macros, fmt.Sprintf(`{"token": "%s"}`, idempotentToken), fmt.Sprint(m.ID, "/"))
+      @buttonNav(m.Name, liDelete(fmt.Sprint(m.ID, "/"), "Delete this saved meal?"))
+      @macro(m.Macros)
+      <div class="flex gap-2 pt-1">
+        <a href={templ.SafeURL(fmt.Sprint(m.ID, "/"))} class="btn btn-outline btn-sm flex-1">Edit</a>
+        <button class="btn btn-primary btn-sm flex-1" hx-post={fmt.Sprint(m.ID, "/")}>Add To Today</button>
+      </div>
     </div>
   </div>
 }
@@ -116,14 +120,12 @@ templ GramEdit(item db.MealItem) {
       <div class="flex items-center justify-between gap-2">
         <strong class="flex-1">{item.Name}</strong>
         <div class="join">
-          <input type="number" inputmode="decimal" name="grams" placeholder={fmt.Sprintf("%.0f", item.Grams)} aria-label="Grams"
+          <input type="number" inputmode="decimal" name="grams" value={fmt.Sprintf("%.0f", item.Grams)} aria-label="Grams"
             class="input input-bordered input-sm join-item w-16 text-center"
             hx-put={fmt.Sprint(`join/`, item.ItemID)}
             hx-trigger="change"
             hx-target="closest .card"
-            hx-swap="outerHTML"
-            onfocus="if(!this.value){this.value=this.placeholder;this.select()}"
-            onblur="if(this.value===this.placeholder)this.value=''"/>
+            hx-swap="outerHTML"/>
           <span class="join-item flex items-center px-2 text-xs bg-base-300 border border-base-300">g</span>
         </div>
         <div class="dropdown dropdown-end">

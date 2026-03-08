@@ -10,3 +10,4 @@ myapp
 node_modules/
 .claude/
 .gocache
+.gomodcache/cache/download

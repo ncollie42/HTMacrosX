@@ -74,11 +74,6 @@ func createFood(c echo.Context) error {
 		return view.FoodFeedbackOOB("Name is required").Render(context.Background(), c.Response().Writer)
 	}
 
-	foodID, err := db.CreateFood(name, fat, carb, fiber, protein, grams, userID)
-	if err != nil {
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
 	targetType := c.FormValue("targetType")
 	targetID := c.FormValue("targetID")
 	if c.FormValue("autoAdd") == "1" && targetType != "" && targetID != "" {
@@ -86,7 +81,7 @@ func createFood(c echo.Context) error {
 		if unix := parseDateUnixValue(c.FormValue("dateUnix")); unix != 0 {
 			mealDate = time.Unix(unix, 0)
 		}
-		mealID, err := addFoodByTarget(userID, targetType, targetID, foodID, mealDate)
+		mealID, err := createAndAddFoodByTarget(userID, targetType, targetID, name, fat, carb, fiber, protein, grams, mealDate)
 		if err != nil {
 			return handleDBErr(c, err)
 		}
@@ -94,6 +89,10 @@ func createFood(c echo.Context) error {
 		c.Response().Header().Set("HX-Retarget", "body")
 		c.Response().Header().Set("HX-Reswap", "innerHTML")
 		return renderMealEditForType(c, mealID, targetType == "template")
+	}
+
+	if _, err := db.CreateFood(name, fat, carb, fiber, protein, grams, userID); err != nil {
+		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	foods := db.FoodSearch("", userID)

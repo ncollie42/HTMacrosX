@@ -18,7 +18,7 @@ templ ScanPage(mealID int, mealType string, dateUnix int64, searchPath string, e
       <input type="hidden" name="meal" value={strconv.Itoa(mealID)}/>
       <input type="hidden" name="type" value={mealType}/>
       <input type="hidden" name="date" value={strconv.FormatInt(dateUnix, 10)}/>
-      <input type="text" name="barcode" inputmode="numeric" placeholder="Enter barcode manually" class="input input-bordered w-full"/>
+      <input type="text" name="barcode" inputmode="numeric" placeholder="Enter barcode manually" class="input input-bordered w-full" required/>
       <button type="submit" class="btn btn-outline w-full">Enter Barcode</button>
     </form>
     <a href={templ.SafeURL(searchPath)} class="btn btn-ghost w-full mt-2">Search Instead</a>
@@ -101,7 +101,7 @@ templ scanScript() {
       html5QrCode.start(camConfig, scanConfig, onScanSuccess, function() {}).then(function() {
         statusEl.textContent = "Point camera at a barcode";
       }).catch(function(err) {
-        statusEl.textContent = "Camera error: " + err;
+        statusEl.textContent = "Camera blocked or unavailable. Allow camera access or enter the barcode manually.";
       });
     })();
   </script>

@@ -257,14 +257,14 @@ func AddFoodForm(joinPrefix string, querySuffix string, targetType string, targe
 			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<details class=\"collapse collapse-arrow bg-base-200 mb-3\"><summary class=\"collapse-title text-sm font-medium\">Create New</summary><div class=\"collapse-content\"><form hx-post=\"/food\" hx-target=\"#search-results\" hx-swap=\"outerHTML\" class=\"flex flex-col gap-2 pt-2\" hx-on::config-request=\"for(let el of this.querySelectorAll('input[placeholder]')){if(!event.detail.parameters[el.name])event.detail.parameters[el.name]=el.placeholder}\"><input type=\"hidden\" name=\"joinPrefix\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<details class=\"collapse collapse-arrow bg-base-200 mb-3\"><summary class=\"collapse-title text-sm font-medium\">Create New</summary><div class=\"collapse-content\"><form hx-post=\"/food\" hx-target=\"#search-results\" hx-swap=\"outerHTML\" class=\"flex flex-col gap-2 pt-2\"><input type=\"hidden\" name=\"joinPrefix\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(joinPrefix)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 65, Col: 64}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 64, Col: 64}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -277,7 +277,7 @@ func AddFoodForm(joinPrefix string, querySuffix string, targetType string, targe
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(querySuffix)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 66, Col: 66}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 65, Col: 66}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -290,7 +290,7 @@ func AddFoodForm(joinPrefix string, querySuffix string, targetType string, targe
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(targetType)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 67, Col: 64}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 66, Col: 64}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -303,7 +303,7 @@ func AddFoodForm(joinPrefix string, querySuffix string, targetType string, targe
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(targetID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 68, Col: 60}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 67, Col: 60}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -316,13 +316,13 @@ func AddFoodForm(joinPrefix string, querySuffix string, targetType string, targe
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", dateUnix))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 69, Col: 79}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 68, Col: 79}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\"> <input type=\"hidden\" name=\"autoAdd\" value=\"1\"><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Name</legend> <input type=\"text\" name=\"name\" class=\"input w-full\" required></fieldset><div class=\"grid grid-cols-2 gap-3\"><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Fat (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"fat\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Carbs (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"carb\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Fiber (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"fiber\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Protein (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"protein\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset col-span-2\"><legend class=\"fieldset-legend\">Serving size (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"grams\" step=\"0.1\" placeholder=\"100\" class=\"input w-full\" onfocus=\"if(!this.value){this.value=this.placeholder;this.select()}\" onblur=\"if(this.value===this.placeholder)this.value=''\"></fieldset></div><button type=\"submit\" class=\"btn btn-primary w-full mt-2\">Create & Add</button></form></div></details>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\"> <input type=\"hidden\" name=\"autoAdd\" value=\"1\"><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Name</legend> <input type=\"text\" name=\"name\" class=\"input w-full\" required></fieldset><div class=\"grid grid-cols-2 gap-3\"><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Fat (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"fat\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Carbs (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"carb\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Fiber (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"fiber\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Protein (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"protein\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset col-span-2\"><legend class=\"fieldset-legend\">Serving size (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"grams\" step=\"0.1\" value=\"100\" class=\"input w-full\"></fieldset></div><button type=\"submit\" class=\"btn btn-primary w-full mt-2\">Create & Add</button></form></div></details>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

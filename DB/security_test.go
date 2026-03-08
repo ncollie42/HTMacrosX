@@ -23,7 +23,7 @@ func setupTestDB(t *testing.T) {
 
 func createTestUser(t *testing.T, username string) int {
 	t.Helper()
-	userID, err := CreateUser(username, "pass")
+	userID, err := CreateUser(username, "password1")
 	if err != nil {
 		t.Fatalf("CreateUser(%q): %v", username, err)
 	}
@@ -117,5 +117,26 @@ func TestMealTypeEnforcement(t *testing.T) {
 	}
 	if _, err := TemplateToMeal(mealID, userID, time.Date(2026, 3, 8, 12, 0, 0, 0, time.Local)); !errors.Is(err, ErrNotOwned) {
 		t.Fatalf("TemplateToMeal normal meal err = %v, want ErrNotOwned", err)
+	}
+}
+
+func TestFoodSearchDoesNotLeakFirstUsersFoods(t *testing.T) {
+	setupTestDB(t)
+
+	firstUser := createTestUser(t, "first")
+	secondUser := createTestUser(t, "second")
+
+	foodID := createTestFood(t, firstUser, "Private Chicken")
+	if got := FindFoodByBarcode("missing", secondUser); got != nil {
+		t.Fatalf("FindFoodByBarcode missing = %+v, want nil", got)
+	}
+
+	results := FoodSearch("Private", secondUser)
+	if len(results) != 0 {
+		t.Fatalf("FoodSearch leaked foods: %+v", results)
+	}
+
+	if err := CreateMealItem(createTestMeal(t, firstUser, false, "Lunch"), foodID, 100, secondUser, false); !errors.Is(err, ErrNotOwned) {
+		t.Fatalf("CreateMealItem cross-user food err = %v, want ErrNotOwned", err)
 	}
 }

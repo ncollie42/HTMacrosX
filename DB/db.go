@@ -12,9 +12,8 @@ import (
 var sqlDB *sql.DB
 
 var ErrNotOwned = fmt.Errorf("resource not found or not owned by user")
-
-const SystemUserID = 1
 const DefaultSavedMealName = "Saved Meal"
+const SharedFoodVisibility = 1
 
 const schema = `
 CREATE TABLE IF NOT EXISTS users (
@@ -35,14 +34,15 @@ CREATE TABLE IF NOT EXISTS foods (
     fat_per_gram REAL NOT NULL,
     carb_per_gram REAL NOT NULL,
     fiber_per_gram REAL NOT NULL,
-    grams REAL NOT NULL,
-    creator_user_id INTEGER NOT NULL,
-    barcode TEXT NOT NULL DEFAULT ''
+    grams REAL NOT NULL CHECK (grams > 0),
+    creator_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    barcode TEXT NOT NULL DEFAULT '',
+    is_shared INTEGER NOT NULL DEFAULT 0 CHECK (is_shared IN (0, 1))
 );
 
 CREATE TABLE IF NOT EXISTS meals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     meal_date TEXT NOT NULL DEFAULT '',
     is_preset INTEGER NOT NULL DEFAULT 0
@@ -50,14 +50,14 @@ CREATE TABLE IF NOT EXISTS meals (
 
 CREATE TABLE IF NOT EXISTS meal_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    meal_id INTEGER NOT NULL,
-    food_id INTEGER NOT NULL,
-    grams REAL NOT NULL
+    meal_id INTEGER NOT NULL REFERENCES meals(id) ON DELETE CASCADE,
+    food_id INTEGER NOT NULL REFERENCES foods(id) ON DELETE CASCADE,
+    grams REAL NOT NULL CHECK (grams > 0)
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
     session_id TEXT PRIMARY KEY,
-    user_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     token TEXT NOT NULL DEFAULT '',
     expires_at TEXT NOT NULL
 );
@@ -66,6 +66,7 @@ CREATE INDEX IF NOT EXISTS idx_meal_items_meal_id ON meal_items(meal_id);
 CREATE INDEX IF NOT EXISTS idx_meals_user_date ON meals(user_id, meal_date);
 CREATE INDEX IF NOT EXISTS idx_foods_barcode ON foods(barcode);
 CREATE INDEX IF NOT EXISTS idx_foods_creator ON foods(creator_user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_foods_user_barcode ON foods(creator_user_id, barcode) WHERE barcode <> '';
 CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
 `
 
@@ -76,12 +77,127 @@ func Open(path string) {
 		panic(err)
 	}
 	sqlDB.SetMaxOpenConns(1)
+	if _, err = sqlDB.Exec(`PRAGMA foreign_keys = ON`); err != nil {
+		panic(err)
+	}
 	// Migrate: rename old "joins" table to "meal_items" if it exists
 	sqlDB.Exec(`ALTER TABLE joins RENAME TO meal_items`)
 	sqlDB.Exec(`DROP INDEX IF EXISTS idx_joins_meal_id`)
+	if err := migrateLegacySchema(); err != nil {
+		panic(err)
+	}
 	if _, err = sqlDB.Exec(schema); err != nil {
 		panic(err)
 	}
+}
+
+func migrateLegacySchema() error {
+	hasFoods, err := tableExists("foods")
+	if err != nil || !hasFoods {
+		return err
+	}
+	hasShared, err := tableHasColumn("foods", "is_shared")
+	if err != nil || hasShared {
+		return err
+	}
+
+	tx, err := sqlDB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec(`PRAGMA foreign_keys = OFF`); err != nil {
+		return err
+	}
+
+	renames := []string{
+		`ALTER TABLE foods RENAME TO foods_legacy`,
+		`ALTER TABLE meals RENAME TO meals_legacy`,
+		`ALTER TABLE meal_items RENAME TO meal_items_legacy`,
+		`ALTER TABLE sessions RENAME TO sessions_legacy`,
+	}
+	for _, stmt := range renames {
+		if _, err := tx.Exec(stmt); err != nil {
+			return err
+		}
+	}
+	if _, err := tx.Exec(schema); err != nil {
+		return err
+	}
+
+	copyStmts := []string{
+		`INSERT INTO foods (id, name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams, creator_user_id, barcode, is_shared)
+		SELECT id, name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams, creator_user_id, barcode, 0
+		FROM foods_legacy f
+		WHERE EXISTS (SELECT 1 FROM users u WHERE u.id = f.creator_user_id)
+		  AND grams > 0`,
+		`INSERT INTO meals (id, user_id, name, meal_date, is_preset)
+		SELECT id, user_id, name, meal_date, is_preset
+		FROM meals_legacy m
+		WHERE EXISTS (SELECT 1 FROM users u WHERE u.id = m.user_id)`,
+		`INSERT INTO meal_items (id, meal_id, food_id, grams)
+		SELECT mi.id, mi.meal_id, mi.food_id, mi.grams
+		FROM meal_items_legacy mi
+		WHERE mi.grams > 0
+		  AND EXISTS (SELECT 1 FROM meals m WHERE m.id = mi.meal_id)
+		  AND EXISTS (SELECT 1 FROM foods f WHERE f.id = mi.food_id)`,
+		`INSERT INTO sessions (session_id, user_id, token, expires_at)
+		SELECT session_id, user_id, token, expires_at
+		FROM sessions_legacy s
+		WHERE EXISTS (SELECT 1 FROM users u WHERE u.id = s.user_id)`,
+	}
+	for _, stmt := range copyStmts {
+		if _, err := tx.Exec(stmt); err != nil {
+			return err
+		}
+	}
+
+	drops := []string{
+		`DROP TABLE foods_legacy`,
+		`DROP TABLE meals_legacy`,
+		`DROP TABLE meal_items_legacy`,
+		`DROP TABLE sessions_legacy`,
+	}
+	for _, stmt := range drops {
+		if _, err := tx.Exec(stmt); err != nil {
+			return err
+		}
+	}
+	if _, err := tx.Exec(`PRAGMA foreign_keys = ON`); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func tableExists(name string) (bool, error) {
+	var count int
+	err := sqlDB.QueryRow(`SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?`, name).Scan(&count)
+	return count > 0, err
+}
+
+func tableHasColumn(table string, column string) (bool, error) {
+	rows, err := sqlDB.Query(`PRAGMA table_info(` + table + `)`)
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var cid int
+		var name string
+		var colType string
+		var notNull int
+		var defaultVal sql.NullString
+		var pk int
+		if err := rows.Scan(&cid, &name, &colType, &notNull, &defaultVal, &pk); err != nil {
+			return false, err
+		}
+		if name == column {
+			return true, nil
+		}
+	}
+	return false, rows.Err()
 }
 
 func makeMPG(ppg, fpg, cpg, fibpg float64) MacroPerGram {

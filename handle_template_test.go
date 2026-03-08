@@ -2,7 +2,6 @@ package main
 
 import (
 	db "myapp/DB"
-	"myapp/auth"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -18,7 +17,7 @@ import (
 func setupMainTestDB(t *testing.T) int {
 	t.Helper()
 	db.Open(filepath.Join(t.TempDir(), "main.db"))
-	userID, err := db.CreateUser("main-user", "pass")
+	userID, err := db.CreateUser("main-user", "password1")
 	if err != nil {
 		t.Fatalf("CreateUser: %v", err)
 	}
@@ -30,9 +29,6 @@ func testSession(t *testing.T, userID int, token string) string {
 	sessionID := "session-" + token
 	if err := db.CreateSession(sessionID, userID, time.Now().Add(time.Hour)); err != nil {
 		t.Fatalf("CreateSession: %v", err)
-	}
-	if err := db.SetSessionToken(sessionID, token); err != nil {
-		t.Fatalf("SetSessionToken: %v", err)
 	}
 	return sessionID
 }
@@ -47,7 +43,7 @@ func newTemplateRequest(method, path string, form url.Values, sessionID string) 
 	return e.NewContext(req, rec), rec
 }
 
-func TestTemplateToMealRejectsStaleToken(t *testing.T) {
+func TestTemplateToMealCreatesMeal(t *testing.T) {
 	userID := setupMainTestDB(t)
 	templateID, err := db.CreateMeal(db.DefaultSavedMealName, userID, true, time.Time{})
 	if err != nil {
@@ -55,7 +51,7 @@ func TestTemplateToMealRejectsStaleToken(t *testing.T) {
 	}
 	sessionID := testSession(t, userID, "valid-token")
 
-	form := url.Values{"token": {"stale-token"}}
+	form := url.Values{}
 	ctx, rec := newTemplateRequest(http.MethodPost, "/template/1/", form, sessionID)
 	ctx.SetParamNames("id")
 	ctx.SetParamValues(strconv.Itoa(templateID))
@@ -64,8 +60,8 @@ func TestTemplateToMealRejectsStaleToken(t *testing.T) {
 	if err := templateToMeal(ctx); err != nil {
 		t.Fatalf("templateToMeal returned error: %v", err)
 	}
-	if rec.Code != http.StatusConflict {
-		t.Fatalf("status = %d, want %d", rec.Code, http.StatusConflict)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
 	}
 }
 
@@ -88,8 +84,5 @@ func TestTemplateToMealRejectsNormalMealID(t *testing.T) {
 	}
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
-	}
-	if tokenErr := auth.ValidateDupToken(ctx, "valid-token"); tokenErr == nil {
-		t.Fatalf("token should be consumed after request")
 	}
 }

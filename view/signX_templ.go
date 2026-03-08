@@ -75,7 +75,7 @@ func Signup() templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"max-w-sm mx-auto px-4 pt-[10vh]\"><div class=\"card bg-base-200 shadow-xl\"><div class=\"card-body gap-4\"><div class=\"text-center\"><h1 class=\"text-3xl font-bold mb-1\">Macros</h1><p class=\"text-sm text-base-content/50\">Create your account</p></div><form hx-post=\"/signup\" hx-target=\"#onError\" class=\"flex flex-col gap-3\"><input type=\"text\" name=\"login\" placeholder=\"Username\" class=\"input input-bordered w-full\" autocomplete=\"username\" required> <input type=\"password\" name=\"password\" placeholder=\"Password\" class=\"input input-bordered w-full\" autocomplete=\"new-password\" required> <input type=\"password\" name=\"confirm\" placeholder=\"Confirm Password\" class=\"input input-bordered w-full\" autocomplete=\"new-password\" required> <button class=\"btn btn-primary w-full mt-1\">Create Account</button></form><div class=\"text-center\"><a href=\"/signin\" class=\"link link-hover text-sm text-base-content/40\">Already have an account? Sign in</a></div><div id=\"onError\"></div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"max-w-sm mx-auto px-4 pt-[10vh]\"><div class=\"card bg-base-200 shadow-xl\"><div class=\"card-body gap-4\"><div class=\"text-center\"><h1 class=\"text-3xl font-bold mb-1\">Macros</h1><p class=\"text-sm text-base-content/50\">Create your account</p></div><form hx-post=\"/signup\" hx-target=\"#onError\" class=\"flex flex-col gap-3\"><input type=\"text\" name=\"login\" placeholder=\"Username\" class=\"input input-bordered w-full\" autocomplete=\"username\" required> <input type=\"password\" name=\"password\" placeholder=\"Password\" class=\"input input-bordered w-full\" autocomplete=\"new-password\" minlength=\"8\" required> <input type=\"password\" name=\"confirm\" placeholder=\"Confirm Password\" class=\"input input-bordered w-full\" autocomplete=\"new-password\" minlength=\"8\" required> <button class=\"btn btn-primary w-full mt-1\">Create Account</button></form><div class=\"text-center\"><a href=\"/signin\" class=\"link link-hover text-sm text-base-content/40\">Already have an account? Sign in</a></div><div id=\"onError\"></div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -83,7 +83,7 @@ func Signup() templ.Component {
 	})
 }
 
-func Onboarding(targets db.Macro) templ.Component {
+func Onboarding(targets db.Macro, form MacroTargetsForm) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -108,7 +108,7 @@ func Onboarding(targets db.Macro) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = MacroTargets(targets, OnboardingCfg, "").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = MacroTargets(targets, form, OnboardingCfg, "").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
