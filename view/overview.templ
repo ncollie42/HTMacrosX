@@ -80,7 +80,7 @@ templ DayQuickview(macros []db.MealSummary, date time.Time) {
   <div class="pb-28"></div>
 }
 
-templ BottomNav() {
+templ BottomNav(date time.Time) {
   <div class="dock">
     <a href="/template/" hx-boost="true">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -91,7 +91,7 @@ templ BottomNav() {
       </svg>
       <span class="dock-label">Saved Meals</span>
     </a>
-    <a href="/scan" hx-boost="false">
+    <a href={templ.SafeURL(fmt.Sprintf("/scan?date=%d", date.Unix()))} hx-boost="false">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
         <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
@@ -101,14 +101,14 @@ templ BottomNav() {
       </svg>
       <span class="dock-label">Quick Scan</span>
     </a>
-    <button hx-post="/meal">
+    <a href={templ.SafeURL(fmt.Sprintf("/meal/new/food_search?date=%d", date.Unix()))}>
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"></circle>
         <line x1="12" y1="8" x2="12" y2="16"></line>
         <line x1="8" y1="12" x2="16" y2="12"></line>
       </svg>
-      <span class="dock-label">Quick Add</span>
-    </button>
+      <span class="dock-label">Add Food</span>
+    </a>
   </div>
 }
 
@@ -136,6 +136,22 @@ templ NameEdit(name, placeholder string) {
       hx-trigger="keyup changed delay:500ms"
       hx-put="name"/>
   </fieldset>
+}
+
+templ MealFeedback(msg string) {
+  <div id="meal-feedback">
+    if msg != "" {
+      <div class="alert alert-warning text-sm mb-3">{msg}</div>
+    }
+  </div>
+}
+
+templ MealFeedbackOOB(msg string) {
+  <div id="meal-feedback" hx-swap-oob="true">
+    if msg != "" {
+      <div class="alert alert-warning text-sm mb-3">{msg}</div>
+    }
+  </div>
 }
 
 templ mealTotalsContent(totals db.Macro) {
@@ -171,6 +187,7 @@ templ MealTotalsOOB(totals db.Macro) {
 }
 
 templ MealEdit(meal db.Meal, placeholder string, totals db.Macro) {
+  @MealFeedback("")
   @NameEdit(meal.Name, placeholder)
   @MealTotals(totals)
   for _, item := range meal.Items {
@@ -179,9 +196,9 @@ templ MealEdit(meal db.Meal, placeholder string, totals db.Macro) {
   <div class="pb-28"></div>
 }
 
-templ MealEditNav(mealID int) {
+templ MealEditNav(mealID int, isTemplate bool) {
   <div class="dock">
-    <a href={templ.SafeURL(fmt.Sprintf("/scan?meal=%d", mealID))} hx-boost="false">
+    <a href={templ.SafeURL(scanPath(mealID, isTemplate))} hx-boost="false">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
         <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
@@ -200,4 +217,11 @@ templ MealEditNav(mealID int) {
       <span class="dock-label">Saved Ingredients</span>
     </a>
   </div>
+}
+
+func scanPath(mealID int, isTemplate bool) string {
+  if isTemplate {
+    return fmt.Sprintf("/scan?meal=%d&type=template", mealID)
+  }
+  return fmt.Sprintf("/scan?meal=%d", mealID)
 }

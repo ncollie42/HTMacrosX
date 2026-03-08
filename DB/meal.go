@@ -5,10 +5,20 @@ import (
 	"time"
 )
 
-func CreateMeal(name string, userID int, isPreset bool) (int, error) {
-	today := ""
+func presetInt(isPreset bool) int {
+	if isPreset {
+		return 1
+	}
+	return 0
+}
+
+func CreateMeal(name string, userID int, isPreset bool, mealDate time.Time) (int, error) {
+	dateValue := ""
 	if !isPreset {
-		today = time.Now().Format("2006-01-02")
+		if mealDate.IsZero() {
+			mealDate = time.Now()
+		}
+		dateValue = mealDate.Format("2006-01-02")
 	}
 	isPresetInt := 0
 	if isPreset {
@@ -16,7 +26,7 @@ func CreateMeal(name string, userID int, isPreset bool) (int, error) {
 	}
 	res, err := sqlDB.Exec(
 		`INSERT INTO meals (user_id, name, meal_date, is_preset) VALUES (?, ?, ?, ?)`,
-		userID, name, today, isPresetInt,
+		userID, name, dateValue, isPresetInt,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("CreateMeal: %w", err)
@@ -25,12 +35,12 @@ func CreateMeal(name string, userID int, isPreset bool) (int, error) {
 	return int(id), nil
 }
 
-func DeleteMeal(mealID int, userID int) error {
+func DeleteMeal(mealID int, userID int, isPreset bool) error {
 	tx, err := sqlDB.Begin()
 	if err != nil {
 		return err
 	}
-	res, err := tx.Exec(`DELETE FROM meals WHERE id = ? AND user_id = ?`, mealID, userID)
+	res, err := tx.Exec(`DELETE FROM meals WHERE id = ? AND user_id = ? AND is_preset = ?`, mealID, userID, presetInt(isPreset))
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -47,7 +57,7 @@ func DeleteMeal(mealID int, userID int) error {
 	return tx.Commit()
 }
 
-func GetMealByID(mealID int, userID int) (Meal, error) {
+func GetMealByID(mealID int, userID int, isPreset bool) (Meal, error) {
 	var model Meal
 	model.ID = mealID
 
@@ -56,8 +66,8 @@ func GetMealByID(mealID int, userID int) (Meal, error) {
 		FROM meals m
 		LEFT JOIN meal_items j ON j.meal_id = m.id
 		LEFT JOIN foods f ON f.id = j.food_id
-		WHERE m.id = ? AND m.user_id = ?
-	`, mealID, userID)
+		WHERE m.id = ? AND m.user_id = ? AND m.is_preset = ?
+	`, mealID, userID, presetInt(isPreset))
 	if err != nil {
 		return model, err
 	}
@@ -90,8 +100,8 @@ func GetMealByID(mealID int, userID int) (Meal, error) {
 	return model, nil
 }
 
-func UpdateMealName(mealID int, userID int, name string) error {
-	res, err := sqlDB.Exec(`UPDATE meals SET name = ? WHERE id = ? AND user_id = ?`, name, mealID, userID)
+func UpdateMealName(mealID int, userID int, isPreset bool, name string) error {
+	res, err := sqlDB.Exec(`UPDATE meals SET name = ? WHERE id = ? AND user_id = ? AND is_preset = ?`, name, mealID, userID, presetInt(isPreset))
 	if err != nil {
 		return err
 	}
@@ -106,14 +116,14 @@ func GetTemplates(userID int) []MealSummary {
 	return queryMealSummaries("WHERE m.user_id = ? AND m.is_preset = 1", userID)
 }
 
-func TemplateToMeal(templateID int, userID int) (int, error) {
+func TemplateToMeal(templateID int, userID int, mealDate time.Time) (int, error) {
 	tx, err := sqlDB.Begin()
 	if err != nil {
 		return 0, err
 	}
 
 	var presetName string
-	if err := tx.QueryRow(`SELECT name FROM meals WHERE id = ? AND user_id = ?`, templateID, userID).Scan(&presetName); err != nil {
+	if err := tx.QueryRow(`SELECT name FROM meals WHERE id = ? AND user_id = ? AND is_preset = 1`, templateID, userID).Scan(&presetName); err != nil {
 		tx.Rollback()
 		return 0, ErrNotOwned
 	}
@@ -140,10 +150,13 @@ func TemplateToMeal(templateID int, userID int) (int, error) {
 	}
 	rows.Close()
 
-	today := time.Now().Format("2006-01-02")
+	if mealDate.IsZero() {
+		mealDate = time.Now()
+	}
+	dateValue := mealDate.Format("2006-01-02")
 	res, err := tx.Exec(
 		`INSERT INTO meals (user_id, name, meal_date, is_preset) VALUES (?, ?, ?, 0)`,
-		userID, presetName, today,
+		userID, presetName, dateValue,
 	)
 	if err != nil {
 		tx.Rollback()

@@ -1,16 +1,54 @@
 package view
 
-import "strconv"
+import (
+  db "myapp/DB"
+  "strconv"
+)
 
-templ ScanPage(mealID int) {
-  <div id="scan-page" data-meal={strconv.Itoa(mealID)}>
+templ ScanPage(mealID int, mealType string, dateUnix int64, searchPath string, errMsg string) {
+  <div id="scan-page" data-meal={strconv.Itoa(mealID)} data-type={mealType} data-date={strconv.FormatInt(dateUnix, 10)}>
+    if errMsg != "" {
+      <div class="alert alert-warning text-sm mb-3">{errMsg}</div>
+    }
     <div id="reader" style="width:100%;border-radius:0.75rem;overflow:hidden;"></div>
     <p id="scan-status" style="text-align:center;margin-top:1rem;" class="text-base-content/60">
       Starting camera...
     </p>
+    <form method="post" action="/scan" class="mt-4 flex flex-col gap-2">
+      <input type="hidden" name="meal" value={strconv.Itoa(mealID)}/>
+      <input type="hidden" name="type" value={mealType}/>
+      <input type="hidden" name="date" value={strconv.FormatInt(dateUnix, 10)}/>
+      <input type="text" name="barcode" inputmode="numeric" placeholder="Enter barcode manually" class="input input-bordered w-full"/>
+      <button type="submit" class="btn btn-outline w-full">Enter Barcode</button>
+    </form>
+    <a href={templ.SafeURL(searchPath)} class="btn btn-ghost w-full mt-2">Search Instead</a>
   </div>
   <script src="/html5qrcode"></script>
   @scanScript()
+}
+
+templ ScanConfirm(food db.Food, barcode string, mealID int, mealType string, dateUnix int64, searchPath string) {
+  <div class="flex flex-col gap-4">
+    <div class="card bg-base-200 shadow-sm">
+      <div class="card-body p-4 gap-2">
+        <div class="text-xs uppercase tracking-widest opacity-60">Scanned Item</div>
+        <strong class="text-lg">{food.Name}</strong>
+        <div class="text-xs opacity-60">Barcode: {barcode}</div>
+        @macroViewCompact(food.Macros)
+        @macroBar(food.Macros)
+        <div class="text-xs opacity-60">Values shown per 100g</div>
+      </div>
+    </div>
+    <form method="post" action="/scan/confirm" class="flex flex-col gap-2">
+      <input type="hidden" name="barcode" value={barcode}/>
+      <input type="hidden" name="meal" value={strconv.Itoa(mealID)}/>
+      <input type="hidden" name="type" value={mealType}/>
+      <input type="hidden" name="date" value={strconv.FormatInt(dateUnix, 10)}/>
+      <button type="submit" class="btn btn-primary w-full">Add To Meal</button>
+    </form>
+    <a href={templ.SafeURL(searchPath)} class="btn btn-outline w-full">Search Instead</a>
+    <a href="javascript:history.back()" class="btn btn-ghost w-full">Cancel</a>
+  </div>
 }
 
 templ scanScript() {
@@ -18,8 +56,12 @@ templ scanScript() {
     (function() {
       var html5QrCode = new Html5Qrcode("reader");
       var statusEl = document.getElementById("scan-status");
-      var mealID = document.getElementById("scan-page").getAttribute("data-meal");
+      var pageEl = document.getElementById("scan-page");
+      var mealID = pageEl.getAttribute("data-meal");
+      var mealType = pageEl.getAttribute("data-type");
+      var dateUnix = pageEl.getAttribute("data-date");
       if (mealID === "0") mealID = "";
+      if (dateUnix === "0") dateUnix = "";
       var scanning = true;
       var camConfig = { facingMode: "environment" };
       var scanConfig = { fps: 10, qrbox: { width: 250, height: 150 } };
@@ -30,7 +72,11 @@ templ scanScript() {
         statusEl.textContent = "Found: " + decodedText + " — looking up...";
         html5QrCode.stop().catch(function() {});
 
-        var url = "/scan/" + encodeURIComponent(decodedText) + (mealID ? "?meal=" + mealID : "");
+        var params = [];
+        if (mealID) params.push("meal=" + encodeURIComponent(mealID));
+        if (mealType) params.push("type=" + encodeURIComponent(mealType));
+        if (dateUnix) params.push("date=" + encodeURIComponent(dateUnix));
+        var url = "/scan/" + encodeURIComponent(decodedText) + (params.length ? "?" + params.join("&") : "");
         var xhr = new XMLHttpRequest();
         xhr.open("POST", url);
         xhr.setRequestHeader("HX-Request", "true");
@@ -39,7 +85,7 @@ templ scanScript() {
           if (loc) {
             window.location.replace(loc);
           } else if (xhr.status >= 400) {
-            statusEl.textContent = "Product not found. Try another barcode.";
+            statusEl.textContent = xhr.status === 404 ? "Product not found. Try another barcode." : "Lookup failed. Please try again.";
             scanning = true;
             html5QrCode.start(camConfig, scanConfig, onScanSuccess, function() {}).catch(function() {});
           }

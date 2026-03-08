@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	db "myapp/DB"
 	"net/http"
@@ -28,6 +29,9 @@ func Signin(c echo.Context, login string, pass string) error {
 }
 
 const cookieName = "sessionID"
+
+var ErrDupTokenMissing = errors.New("duplicate-submit token missing")
+var ErrDupTokenMismatch = errors.New("duplicate-submit token mismatch")
 
 func InitSession() {
 	db.CleanExpiredSessions()
@@ -89,16 +93,33 @@ func SetDupToken(c echo.Context, token string) string {
 	return token
 }
 
-func ValidateDupToken(c echo.Context, token string) bool {
+func ValidateDupToken(c echo.Context, token string) error {
 	cookie, err := c.Cookie(cookieName)
 	if err != nil {
-		return false
+		return ErrDupTokenMissing
+	}
+	if token == "" {
+		return ErrDupTokenMissing
 	}
 	sessionToken, err := db.GetSessionToken(cookie.Value)
 	if err != nil {
-		return false
+		return ErrDupTokenMissing
 	}
-	return token == sessionToken
+	if sessionToken == "" {
+		return ErrDupTokenMissing
+	}
+	if token != sessionToken {
+		return ErrDupTokenMismatch
+	}
+	return nil
+}
+
+func ConsumeDupToken(c echo.Context, token string) error {
+	if err := ValidateDupToken(c, token); err != nil {
+		return err
+	}
+	ClearDupToken(c)
+	return nil
 }
 
 func ClearDupToken(c echo.Context) {

@@ -30,7 +30,7 @@ func overview(c echo.Context) error {
 	nav := view.Nav(userID)
 	overview := view.DayOverview(date, totalMacros, target)
 	quickview := view.DayQuickview(macrosByID, date)
-	bottomNav := view.BottomNav()
+	bottomNav := view.BottomNav(date)
 	component := view.Full(nav, overview, quickview, bottomNav)
 	return component.Render(context.Background(), c.Response().Writer)
 }

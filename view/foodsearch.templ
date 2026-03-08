@@ -1,41 +1,73 @@
 package view
 
 import (
+	"fmt"
 	db "myapp/DB"
 )
 
-templ FoodSearch(foods []db.Food) {
+templ FoodSearch(foods []db.Food, searchPath string, joinPrefix string, querySuffix string, targetType string, targetID string, dateUnix int64) {
   <h3 class="text-lg font-semibold mb-3">Ingredients <small class="text-sm font-normal opacity-60">per 100g</small></h3>
+  @FoodFeedback("")
   <input type="search" placeholder="Search..."
     name="search"
     class="input input-bordered w-full mb-3"
-	  hx-get="food_search"
+	  hx-get={searchPath}
     hx-select="#search-results"
 	  hx-trigger="keyup changed delay:500ms, search"
 	  hx-target="#search-results"
-    hx-swap="outerHTML"/>
-  @AddFoodForm()
+    hx-swap="outerHTML"
+    hx-indicator="#food-search-loading"/>
+  <div id="food-search-loading" class="htmx-indicator text-sm opacity-60 mb-3">Searching...</div>
+  @AddFoodForm(joinPrefix, querySuffix, targetType, targetID, dateUnix)
   <div id="search-results">
   for _, food := range foods {
-    @foodSelect(food)
+    @foodSelect(food, fmt.Sprintf("%s%d%s", joinPrefix, food.ID, querySuffix))
+  }
+  if len(foods) == 0 {
+    <p class="text-center text-base-content/50 text-sm py-6">No ingredients found. Try a different search or create one.</p>
   }
   </div>
 }
 
-templ FoodSearchResults(foods []db.Food) {
+templ FoodSearchResults(foods []db.Food, joinPrefix string, querySuffix string) {
   <div id="search-results">
   for _, food := range foods {
-    @foodSelect(food)
+    @foodSelect(food, fmt.Sprintf("%s%d%s", joinPrefix, food.ID, querySuffix))
+  }
+  if len(foods) == 0 {
+    <p class="text-center text-base-content/50 text-sm py-6">No ingredients found. Try a different search or create one.</p>
   }
   </div>
 }
 
-templ AddFoodForm() {
+templ FoodFeedback(msg string) {
+  <div id="food-feedback">
+    if msg != "" {
+      <div class="alert alert-warning text-sm mb-3">{msg}</div>
+    }
+  </div>
+}
+
+templ FoodFeedbackOOB(msg string) {
+  <div id="food-feedback" hx-swap-oob="true">
+    if msg != "" {
+      <div class="alert alert-warning text-sm mb-3">{msg}</div>
+    }
+  </div>
+}
+
+templ AddFoodForm(joinPrefix string, querySuffix string, targetType string, targetID string, dateUnix int64) {
   <details class="collapse collapse-arrow bg-base-200 mb-3">
     <summary class="collapse-title text-sm font-medium">Create New</summary>
     <div class="collapse-content">
       <form hx-post="/food" hx-target="#search-results" hx-swap="outerHTML" class="flex flex-col gap-2 pt-2"
         hx-on::config-request="for(let el of this.querySelectorAll('input[placeholder]')){if(!event.detail.parameters[el.name])event.detail.parameters[el.name]=el.placeholder}">
+        <input type="hidden" name="joinPrefix" value={joinPrefix}/>
+        <input type="hidden" name="querySuffix" value={querySuffix}/>
+        <input type="hidden" name="targetType" value={targetType}/>
+        <input type="hidden" name="targetID" value={targetID}/>
+        <input type="hidden" name="dateUnix" value={fmt.Sprintf("%d", dateUnix)}/>
+        <input type="hidden" name="autoAdd" value="1"/>
         <fieldset class="fieldset">
           <legend class="fieldset-legend">Name</legend>
           <input type="text" name="name" class="input w-full" required/>
@@ -64,7 +96,7 @@ templ AddFoodForm() {
               onblur="if(this.value===this.placeholder)this.value=''"/>
           </fieldset>
         </div>
-        <button type="submit" class="btn btn-primary w-full mt-2">Create</button>
+        <button type="submit" class="btn btn-primary w-full mt-2">Create & Add</button>
       </form>
     </div>
   </details>

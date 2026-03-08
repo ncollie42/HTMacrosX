@@ -8,6 +8,7 @@ import (
 	"myapp/view"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -33,14 +34,13 @@ func templateToMeal(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 	token := c.FormValue("token")
-	if ok := auth.ValidateDupToken(c, token); !ok {
-		return fmt.Errorf("Invalid token")
+	if err := auth.ConsumeDupToken(c, token); err != nil {
+		c.Response().Header().Set("HX-Reswap", "none")
+		return c.NoContent(http.StatusConflict)
 	}
-	if _, err := db.TemplateToMeal(templateID, userID); err != nil {
+	if _, err := db.TemplateToMeal(templateID, userID, requestedMealDate(c)); err != nil {
 		return handleDBErr(c, err)
 	}
-
-	auth.ClearDupToken(c)
 
 	c.Response().Header().Set("HX-Location", "/")
 	return c.NoContent(http.StatusOK)
@@ -63,7 +63,7 @@ func findAllTemplates(c echo.Context) error {
 func createTemplate(c echo.Context) error {
 	userID := c.Get(ctxUserID).(int)
 
-	templateID, err := db.CreateMeal("", userID, true)
+	templateID, err := db.CreateMeal(db.DefaultSavedMealName, userID, true, time.Time{})
 	if err != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}
@@ -78,7 +78,7 @@ func deleteTemplate(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
-	if err := db.DeleteMeal(id, userID); err != nil {
+	if err := db.DeleteMeal(id, userID, true); err != nil {
 		return handleDBErr(c, err)
 	}
 	return c.NoContent(http.StatusOK)

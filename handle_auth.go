@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	db "myapp/DB"
 	"myapp/auth"
 	"myapp/view"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -91,32 +94,76 @@ func settings(c echo.Context) error {
 	}
 
 	if c.Request().Header.Get("HX-Request") != "" {
-		return view.MacroTargets(targets, view.SettingsCfg).Render(context.Background(), c.Response().Writer)
+		return view.MacroTargets(targets, view.SettingsCfg, "").Render(context.Background(), c.Response().Writer)
 	}
 
 	nav := view.NavBack(userID, "/", "Settings")
-	settingsForm := view.MacroTargets(targets, view.SettingsCfg)
+	settingsForm := view.MacroTargets(targets, view.SettingsCfg, "")
 	component := view.Full(nav, settingsForm)
 	return component.Render(context.Background(), c.Response().Writer)
 }
 
-func parseMacroForm(c echo.Context) db.Macro {
-	fat, _ := strconv.ParseFloat(c.FormValue("fat"), 32)
-	carb, _ := strconv.ParseFloat(c.FormValue("carb"), 32)
-	fiber, _ := strconv.ParseFloat(c.FormValue("fiber"), 32)
-	protein, _ := strconv.ParseFloat(c.FormValue("protein"), 32)
+func parseMacroField(raw string, label string) (float64, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return 0, fmt.Errorf("%s is required", label)
+	}
+	value, err := strconv.ParseFloat(raw, 32)
+	if err != nil {
+		return 0, fmt.Errorf("%s must be a number", label)
+	}
+	if value < 0 {
+		return 0, fmt.Errorf("%s cannot be negative", label)
+	}
+	return value, nil
+}
+
+func parseMacroForm(c echo.Context) (db.Macro, error) {
+	fat, err := parseMacroField(c.FormValue("fat"), "Fat")
+	if err != nil {
+		return db.Macro{}, err
+	}
+	carb, err := parseMacroField(c.FormValue("carb"), "Carbs")
+	if err != nil {
+		return db.Macro{}, err
+	}
+	fiber, err := parseMacroField(c.FormValue("fiber"), "Fiber")
+	if err != nil {
+		return db.Macro{}, err
+	}
+	protein, err := parseMacroField(c.FormValue("protein"), "Protein")
+	if err != nil {
+		return db.Macro{}, err
+	}
+	calories := db.CaloriesFromGrams(fat, carb, protein)
+	if calories <= 0 {
+		return db.Macro{}, fmt.Errorf("Calories must be greater than 0")
+	}
 	return db.Macro{
-		Calories: db.CaloriesFromGrams(fat, carb, protein),
+		Calories: calories,
 		Fat:      float32(fat),
 		Carb:     float32(carb),
 		Fiber:    float32(fiber),
 		Protein:  float32(protein),
-	}
+	}, nil
 }
 
 func updateSettings(c echo.Context) error {
 	userID := c.Get(ctxUserID).(int)
-	targets := parseMacroForm(c)
+	targets, err := parseMacroForm(c)
+	if err != nil {
+		return view.MacroTargets(db.Macro{
+			Calories: db.CaloriesFromGrams(
+				mustFloat(c.FormValue("fat")),
+				mustFloat(c.FormValue("carb")),
+				mustFloat(c.FormValue("protein")),
+			),
+			Fat:     float32(mustFloat(c.FormValue("fat"))),
+			Carb:    float32(mustFloat(c.FormValue("carb"))),
+			Fiber:   float32(mustFloat(c.FormValue("fiber"))),
+			Protein: float32(mustFloat(c.FormValue("protein"))),
+		}, view.SettingsCfg, err.Error()).Render(context.Background(), c.Response().Writer)
+	}
 	if err := db.UpdateUserTargets(userID, targets); err != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}
@@ -134,7 +181,7 @@ func onboardingView(c echo.Context) error {
 	}
 
 	if c.Request().Header.Get("HX-Request") != "" {
-		return view.MacroTargets(targets, view.OnboardingCfg).Render(context.Background(), c.Response().Writer)
+		return view.MacroTargets(targets, view.OnboardingCfg, "").Render(context.Background(), c.Response().Writer)
 	}
 
 	component := view.Full(view.Onboarding(targets))
@@ -143,11 +190,73 @@ func onboardingView(c echo.Context) error {
 
 func saveOnboarding(c echo.Context) error {
 	userID := c.Get(ctxUserID).(int)
-	targets := parseMacroForm(c)
+	targets, err := parseMacroForm(c)
+	if err != nil {
+		return view.MacroTargets(db.Macro{
+			Calories: db.CaloriesFromGrams(
+				mustFloat(c.FormValue("fat")),
+				mustFloat(c.FormValue("carb")),
+				mustFloat(c.FormValue("protein")),
+			),
+			Fat:     float32(mustFloat(c.FormValue("fat"))),
+			Carb:    float32(mustFloat(c.FormValue("carb"))),
+			Fiber:   float32(mustFloat(c.FormValue("fiber"))),
+			Protein: float32(mustFloat(c.FormValue("protein"))),
+		}, view.OnboardingCfg, err.Error()).Render(context.Background(), c.Response().Writer)
+	}
 	if err := db.UpdateUserTargets(userID, targets); err != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	c.Response().Header().Set("HX-Location", "/")
 	return c.NoContent(http.StatusOK)
+}
+
+func queryDateUnix(c echo.Context) int64 {
+	raw := c.QueryParam("date")
+	if raw == "" {
+		return 0
+	}
+	ii, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return ii
+}
+
+func requestedMealDate(c echo.Context) time.Time {
+	if unix := queryDateUnix(c); unix != 0 {
+		return time.Unix(unix, 0)
+	}
+	return time.Now()
+}
+
+func querySuffixForDate(c echo.Context) string {
+	if unix := queryDateUnix(c); unix != 0 {
+		return "?date=" + strconv.FormatInt(unix, 10)
+	}
+	return ""
+}
+
+func overviewPath(date time.Time) string {
+	now := time.Now()
+	if date.Year() == now.Year() && date.YearDay() == now.YearDay() {
+		return "/"
+	}
+	return "/" + strconv.FormatInt(date.Unix(), 10)
+}
+
+func editPathForType(id int, mealType string) string {
+	if mealType == "template" {
+		return "/template/" + strconv.Itoa(id) + "/"
+	}
+	return "/meal/" + strconv.Itoa(id) + "/"
+}
+
+func mustFloat(raw string) float64 {
+	value, _ := strconv.ParseFloat(strings.TrimSpace(raw), 32)
+	if value < 0 {
+		return 0
+	}
+	return value
 }

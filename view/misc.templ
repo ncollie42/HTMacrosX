@@ -95,7 +95,7 @@ templ NavBack(id int, backURL string, title string) {
 templ mealOverviewButton(m db.MealSummary) {
   <div class="card bg-base-200 shadow-sm mb-3 card-meal">
     <div class="card-body p-4 gap-2">
-      @buttonNav(m.Name, liDelete(fmt.Sprint("/meal/",m.ID,"/")))
+      @buttonNav(m.Name, liDelete(fmt.Sprint("/meal/",m.ID,"/"), "Delete this meal?"))
       @macroGet(m.Macros, fmt.Sprint("/meal/",m.ID,"/"))
     </div>
   </div>
@@ -104,7 +104,7 @@ templ mealOverviewButton(m db.MealSummary) {
 templ templateOverviewButton(m db.MealSummary, idempotentToken string) {
   <div class="card bg-base-200 shadow-sm mb-3 card-template">
     <div class="card-body p-4 gap-2">
-      @buttonNav(m.Name, liEdit(fmt.Sprint(m.ID, "/")), liDelete(fmt.Sprint(m.ID, "/")))
+      @buttonNav(m.Name, liEdit(fmt.Sprint(m.ID, "/")), liDelete(fmt.Sprint(m.ID, "/"), "Delete this saved meal?"))
       @macroPost(m.Macros, fmt.Sprintf(`{"token": "%s"}`, idempotentToken), fmt.Sprint(m.ID, "/"))
     </div>
   </div>
@@ -129,7 +129,7 @@ templ GramEdit(item db.MealItem) {
         <div class="dropdown dropdown-end">
           <div tabindex="0" role="button" class="btn btn-ghost btn-xs">···</div>
           <ul tabindex="0" class="dropdown-content menu menu-xs bg-base-100 rounded-box w-28 p-1 shadow z-10">
-            @liDelete(fmt.Sprint("join/", item.ItemID))
+            @liDelete(fmt.Sprint("join/", item.ItemID), "Remove this food from the meal?")
           </ul>
         </div>
       </div>
@@ -139,11 +139,11 @@ templ GramEdit(item db.MealItem) {
   </div>
 }
 
-templ foodSelect(food db.Food) {
+templ foodSelect(food db.Food, path string) {
   <div class="card bg-base-200 shadow-sm mb-3">
     <div class="card-body p-4 gap-2">
-      @buttonNav(food.Name, liDelete(fmt.Sprint("/food/", food.ID)))
-      @macroPost(food.Macros, "", fmt.Sprint("join/", food.ID))
+      @buttonNav(food.Name, liDelete(fmt.Sprint("/food/", food.ID), "Delete this ingredient?"))
+      @macroPost(food.Macros, "", path)
     </div>
   </div>
 }
@@ -171,13 +171,13 @@ templ liEdit(path string ){
   </li>
 }
 
-templ liDelete(path string){
+templ liDelete(path string, confirmText string){
   <li>
     <a href={templ.SafeURL(path)}
       hx-delete={path}
       hx-target="closest .card"
       hx-swap="outerHTML"
-      hx-confirm="Delete this item?">Delete</a>
+      hx-confirm={confirmText}>Delete</a>
   </li>
 }
 

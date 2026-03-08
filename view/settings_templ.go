@@ -30,7 +30,7 @@ var OnboardingCfg = MacroTargetsConfig{
 	ButtonText: "Save & Continue",
 }
 
-func MacroTargets(targets db.Macro, cfg MacroTargetsConfig) templ.Component {
+func MacroTargets(targets db.Macro, cfg MacroTargetsConfig, errMsg string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -51,159 +51,156 @@ func MacroTargets(targets db.Macro, cfg MacroTargetsConfig) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"settings-form\"><div class=\"text-lg font-semibold mb-4\">Macro Targets</div><div class=\"card bg-base-200 shadow-sm mb-4\"><div class=\"card-body p-4 gap-2\"><div class=\"text-sm font-bold mt-0.5\" style=\"color:var(--macro-cal)\"><span class=\"mc\" id=\"pv-cal\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"settings-form\"><div class=\"text-lg font-semibold mb-4\">Macro Targets</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", targets.Calories))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 31, Col: 77}
+		if errMsg != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"alert alert-warning text-sm mb-4\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var2 string
+			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(errMsg)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 29, Col: 59}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " cal</span></div><div class=\"flex flex-wrap gap-x-3 gap-y-0.5 text-xs\"><span class=\"mf\" id=\"pv-fat\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"card bg-base-200 shadow-sm mb-4\"><div class=\"card-body p-4 gap-2\"><div class=\"text-sm font-bold mt-0.5\" style=\"color:var(--macro-cal)\"><span class=\"mc\" id=\"pv-cal\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
-		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Fat))
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", targets.Calories))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 34, Col: 72}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 34, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "g F</span> <span class=\"mca\" id=\"pv-carb\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, " cal</span></div><div class=\"flex flex-wrap gap-x-3 gap-y-0.5 text-xs\"><span class=\"mf\" id=\"pv-fat\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Carb))
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Fat))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 35, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 37, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "g C</span> <span class=\"mfi\" id=\"pv-fiber\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "g F</span> <span class=\"mca\" id=\"pv-carb\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Fiber))
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Carb))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 36, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 38, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "g Fi</span> <span class=\"mp\" id=\"pv-protein\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "g C</span> <span class=\"mfi\" id=\"pv-fiber\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var6 string
-		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Protein))
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Fiber))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 37, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 39, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "g P</span></div><div class=\"macro-bar\" id=\"pv-bar\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "g Fi</span> <span class=\"mp\" id=\"pv-protein\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var7 string
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Protein))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 40, Col: 80}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "g P</span></div><div class=\"macro-bar\" id=\"pv-bar\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if targets.Calories > 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div style=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var7 string
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("flex:%d", int(targets.Fat*9/targets.Calories*100)))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 41, Col: 87}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" class=\"bf\"></div><div style=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div style=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var8 string
-			templ_7745c5c3_Var8, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("flex:%d", int(targets.Carb*4/targets.Calories*100)))
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("flex:%d", int(targets.Fat*9/targets.Calories*100)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 42, Col: 88}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 44, Col: 87}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" class=\"bc\"></div><div style=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" class=\"bf\"></div><div style=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("flex:%d", int(targets.Protein*4/targets.Calories*100)))
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("flex:%d", int(targets.Carb*4/targets.Calories*100)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 43, Col: 91}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 45, Col: 88}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" class=\"bp\"></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div></div></div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if cfg.IsPut {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<form hx-put=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" class=\"bc\"></div><div style=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var10 string
-			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Action)
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("flex:%d", int(targets.Protein*4/targets.Calories*100)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 49, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 46, Col: 91}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" hx-target=\"#settings-form\" hx-swap=\"outerHTML\" hx-on::config-request=\"for(let el of this.querySelectorAll('input[placeholder]')){if(!event.detail.parameters[el.name])event.detail.parameters[el.name]=el.placeholder}\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" class=\"bp\"></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = macroFormBody(targets, cfg).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</form>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<form hx-post=\"")
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if cfg.IsPut {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<form hx-put=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Action)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 54, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 52, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -221,47 +218,73 @@ func MacroTargets(targets db.Macro, cfg MacroTargetsConfig) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<form hx-post=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var12 string
+			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Action)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 57, Col: 31}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" hx-target=\"#settings-form\" hx-swap=\"outerHTML\" hx-on::config-request=\"for(let el of this.querySelectorAll('input[placeholder]')){if(!event.detail.parameters[el.name])event.detail.parameters[el.name]=el.placeholder}\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = macroFormBody(targets, cfg).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</form>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div class=\"flex gap-3 mt-4\"><button class=\"btn btn-outline btn-sm flex-1\" hx-get=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var12 string
-		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Action + "?preset=1750")
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 60, Col: 87}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" hx-target=\"#settings-form\" hx-swap=\"outerHTML\">1750</button> <button class=\"btn btn-outline btn-sm flex-1\" hx-get=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<div class=\"flex gap-3 mt-4\"><button class=\"btn btn-outline btn-sm flex-1\" hx-get=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var13 string
-		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Action + "?preset=2000")
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Action + "?preset=1750")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 61, Col: 87}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 63, Col: 87}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\" hx-target=\"#settings-form\" hx-swap=\"outerHTML\">2000</button> <button class=\"btn btn-outline btn-sm flex-1\" hx-get=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" hx-target=\"#settings-form\" hx-swap=\"outerHTML\">1750</button> <button class=\"btn btn-outline btn-sm flex-1\" hx-get=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var14 string
-		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Action + "?preset=2250")
+		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Action + "?preset=2000")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 62, Col: 87}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 64, Col: 87}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" hx-target=\"#settings-form\" hx-swap=\"outerHTML\">2250</button></div><script>\n      (function(){\n        var f=document.querySelector('#settings-form form');\n        if(!f)return;\n        function v(el){return parseFloat(el.value)||parseFloat(el.placeholder)||0;}\n        function u(){\n          var fat=v(f.fat);\n          var carb=v(f.carb);\n          var fiber=v(f.fiber);\n          var prot=v(f.protein);\n          var cal=fat*9+carb*4+prot*4;\n          document.getElementById('pv-cal').textContent=Math.round(cal)+' cal';\n          document.getElementById('pv-fat').textContent=fat.toFixed(1)+'g F';\n          document.getElementById('pv-carb').textContent=carb.toFixed(1)+'g C';\n          document.getElementById('pv-fiber').textContent=fiber.toFixed(1)+'g Fi';\n          document.getElementById('pv-protein').textContent=prot.toFixed(1)+'g P';\n          var bar=document.getElementById('pv-bar');\n          if(cal>0){\n            var fp=Math.round(fat*9/cal*100);\n            var cp=Math.round(carb*4/cal*100);\n            var pp=Math.round(prot*4/cal*100);\n            bar.innerHTML='<div style=\"flex:'+fp+'\" class=\"bf\"></div><div style=\"flex:'+cp+'\" class=\"bc\"></div><div style=\"flex:'+pp+'\" class=\"bp\"></div>';\n          }else{bar.innerHTML='';}\n        }\n        f.addEventListener('input',u);\n      })();\n    </script></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\" hx-target=\"#settings-form\" hx-swap=\"outerHTML\">2000</button> <button class=\"btn btn-outline btn-sm flex-1\" hx-get=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var15 string
+		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Action + "?preset=2250")
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 65, Col: 87}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" hx-target=\"#settings-form\" hx-swap=\"outerHTML\">2250</button></div><script>\n      (function(){\n        var f=document.querySelector('#settings-form form');\n        if(!f)return;\n        function v(el){return parseFloat(el.value)||parseFloat(el.placeholder)||0;}\n        function u(){\n          var fat=v(f.fat);\n          var carb=v(f.carb);\n          var fiber=v(f.fiber);\n          var prot=v(f.protein);\n          var cal=fat*9+carb*4+prot*4;\n          document.getElementById('pv-cal').textContent=Math.round(cal)+' cal';\n          document.getElementById('pv-fat').textContent=fat.toFixed(1)+'g F';\n          document.getElementById('pv-carb').textContent=carb.toFixed(1)+'g C';\n          document.getElementById('pv-fiber').textContent=fiber.toFixed(1)+'g Fi';\n          document.getElementById('pv-protein').textContent=prot.toFixed(1)+'g P';\n          var bar=document.getElementById('pv-bar');\n          if(cal>0){\n            var fp=Math.round(fat*9/cal*100);\n            var cp=Math.round(carb*4/cal*100);\n            var pp=Math.round(prot*4/cal*100);\n            bar.innerHTML='<div style=\"flex:'+fp+'\" class=\"bf\"></div><div style=\"flex:'+cp+'\" class=\"bc\"></div><div style=\"flex:'+pp+'\" class=\"bp\"></div>';\n          }else{bar.innerHTML='';}\n        }\n        f.addEventListener('input',u);\n      })();\n    </script></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -285,77 +308,77 @@ func macroFormBody(targets db.Macro, cfg MacroTargetsConfig) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var15 == nil {
-			templ_7745c5c3_Var15 = templ.NopComponent
+		templ_7745c5c3_Var16 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var16 == nil {
+			templ_7745c5c3_Var16 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<fieldset class=\"fieldset mb-2\"><legend class=\"fieldset-legend\">Fat (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"fat\" step=\"0.1\" placeholder=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Fat))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 97, Col: 112}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\" class=\"input w-full\"></fieldset><fieldset class=\"fieldset mb-2\"><legend class=\"fieldset-legend\">Carbs (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"carb\" step=\"0.1\" placeholder=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<fieldset class=\"fieldset mb-2\"><legend class=\"fieldset-legend\">Fat (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"fat\" step=\"0.1\" placeholder=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var17 string
-		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Carb))
+		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Fat))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 101, Col: 114}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 100, Col: 112}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" class=\"input w-full\"></fieldset><fieldset class=\"fieldset mb-2\"><legend class=\"fieldset-legend\">Fiber (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"fiber\" step=\"0.1\" placeholder=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" class=\"input w-full\"></fieldset><fieldset class=\"fieldset mb-2\"><legend class=\"fieldset-legend\">Carbs (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"carb\" step=\"0.1\" placeholder=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Fiber))
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Carb))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 105, Col: 116}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 104, Col: 114}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\" class=\"input w-full\"></fieldset><fieldset class=\"fieldset mb-2\"><legend class=\"fieldset-legend\">Protein (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"protein\" step=\"0.1\" placeholder=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\" class=\"input w-full\"></fieldset><fieldset class=\"fieldset mb-2\"><legend class=\"fieldset-legend\">Fiber (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"fiber\" step=\"0.1\" placeholder=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var19 string
-		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Protein))
+		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Fiber))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 109, Col: 120}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 108, Col: 116}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" class=\"input w-full\"></fieldset><button type=\"submit\" class=\"btn btn-primary w-full mt-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\" class=\"input w-full\"></fieldset><fieldset class=\"fieldset mb-2\"><legend class=\"fieldset-legend\">Protein (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"protein\" step=\"0.1\" placeholder=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var20 string
-		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.ButtonText)
+		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Protein))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 111, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 112, Col: 120}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</button>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\" class=\"input w-full\"></fieldset><button type=\"submit\" class=\"btn btn-primary w-full mt-2\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var21 string
+		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.ButtonText)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 114, Col: 75}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</button>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

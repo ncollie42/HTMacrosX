@@ -22,9 +22,12 @@ var OnboardingCfg = MacroTargetsConfig{
 	ButtonText: "Save & Continue",
 }
 
-templ MacroTargets(targets db.Macro, cfg MacroTargetsConfig) {
+templ MacroTargets(targets db.Macro, cfg MacroTargetsConfig, errMsg string) {
   <div id="settings-form">
     <div class="text-lg font-semibold mb-4">Macro Targets</div>
+    if errMsg != "" {
+      <div class="alert alert-warning text-sm mb-4">{errMsg}</div>
+    }
     <div class="card bg-base-200 shadow-sm mb-4">
       <div class="card-body p-4 gap-2">
         <div class="text-sm font-bold mt-0.5" style="color:var(--macro-cal)">

@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+var ErrFoodInUse = fmt.Errorf("food is in use")
+
 func CreateFood(name string, fat float64, carb float64, fiber float64, protein float64, grams float64, userID int) (int, error) {
 	return CreateFoodWithBarcode(name, fat, carb, fiber, protein, grams, userID, "")
 }
@@ -22,12 +24,14 @@ func CreateFoodWithBarcode(name string, fat float64, carb float64, fiber float64
 	return int(id), nil
 }
 
-func FindFoodByBarcode(barcode string) *FoodRecord {
+func FindFoodByBarcode(barcode string, userID int) *FoodRecord {
 	var f FoodRecord
 	var ppg, fpg, cpg, fibpg, grams float64
 	err := sqlDB.QueryRow(
-		`SELECT id, name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams, creator_user_id, barcode FROM foods WHERE barcode = ?`,
-		barcode,
+		`SELECT id, name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams, creator_user_id, barcode
+		FROM foods
+		WHERE barcode = ? AND (creator_user_id = ? OR creator_user_id = ?)`,
+		barcode, userID, SystemUserID,
 	).Scan(&f.ID, &f.Name, &ppg, &fpg, &cpg, &fibpg, &grams, &f.CreatorUserID, &f.Barcode)
 	if err != nil {
 		return nil
@@ -45,6 +49,20 @@ func DeleteFood(foodID int, userID int) error {
 	if err != nil {
 		return err
 	}
+	var refCount int
+	if err := tx.QueryRow(
+		`SELECT COUNT(*) FROM meal_items mi
+		JOIN foods f ON f.id = mi.food_id
+		WHERE mi.food_id = ? AND f.creator_user_id = ?`,
+		foodID, userID,
+	).Scan(&refCount); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if refCount > 0 {
+		tx.Rollback()
+		return ErrFoodInUse
+	}
 	res, err := tx.Exec(`DELETE FROM foods WHERE id = ? AND creator_user_id = ?`, foodID, userID)
 	if err != nil {
 		tx.Rollback()
@@ -54,10 +72,6 @@ func DeleteFood(foodID int, userID int) error {
 	if n == 0 {
 		tx.Rollback()
 		return ErrNotOwned
-	}
-	if _, err := tx.Exec(`DELETE FROM meal_items WHERE food_id = ?`, foodID); err != nil {
-		tx.Rollback()
-		return err
 	}
 	return tx.Commit()
 }

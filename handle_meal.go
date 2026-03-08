@@ -2,18 +2,19 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	db "myapp/DB"
 	"myapp/view"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
 
 func registerMealRoutes(e *echo.Echo) {
-	e.POST("/meal", createMeal, validate)
 	e.DELETE("/meal/:id/", deleteMeal, validate)
 	e.GET("/meal/:id/", findMealOrTemplate, validate)
 	e.GET("/meal/:id/food_search", foodSearch, validate)
@@ -25,11 +26,6 @@ func registerMealRoutes(e *echo.Echo) {
 	e.PUT("/meal/:id/name", updateName, validate)
 }
 
-func createMeal(c echo.Context) error {
-	c.Response().Header().Set("HX-Location", "/meal/"+newMealParam+"/food_search")
-	return c.NoContent(http.StatusOK)
-}
-
 func deleteMeal(c echo.Context) error {
 	userID := c.Get(ctxUserID).(int)
 	id, err := strconv.Atoi(c.Param("id"))
@@ -37,7 +33,7 @@ func deleteMeal(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	if err := db.DeleteMeal(id, userID); err != nil {
+	if err := db.DeleteMeal(id, userID, false); err != nil {
 		return handleDBErr(c, err)
 	}
 
@@ -54,8 +50,12 @@ func findMealOrTemplate(c echo.Context) error {
 }
 
 func renderMealEdit(c echo.Context, id int) error {
+	return renderMealEditForType(c, id, isSavedMeal(c))
+}
+
+func renderMealEditForType(c echo.Context, id int, isTemplate bool) error {
 	userID := c.Get(ctxUserID).(int)
-	meal, err := db.GetMealByID(id, userID)
+	meal, err := db.GetMealByID(id, userID, isTemplate)
 	if err != nil {
 		return handleDBErr(c, err)
 	}
@@ -63,7 +63,7 @@ func renderMealEdit(c echo.Context, id int) error {
 	totals := db.SumMealItemMacros(meal.Items)
 
 	var backURL, title, placeholder string
-	if isSavedMeal(c) {
+	if isTemplate {
 		backURL = "/template/"
 		title = "Edit Saved Meal"
 		placeholder = "Meal Name"
@@ -73,7 +73,7 @@ func renderMealEdit(c echo.Context, id int) error {
 	}
 	nav := view.NavBack(userID, backURL, title)
 	mealEdit := view.MealEdit(meal, placeholder, totals)
-	mealNav := view.MealEditNav(id)
+	mealNav := view.MealEditNav(id, isTemplate)
 	component := view.Full(nav, mealEdit, mealNav)
 	return component.Render(context.Background(), c.Response().Writer)
 }
@@ -87,7 +87,7 @@ func addFood(c echo.Context) error {
 
 	var mealID int
 	if c.Param("id") == newMealParam {
-		mealID, err = db.CreateMeal(defaultMealName, userID, false)
+		mealID, err = db.CreateMeal(defaultMealName, userID, false, requestedMealDate(c))
 		if err != nil {
 			return c.NoContent(http.StatusInternalServerError)
 		}
@@ -98,7 +98,7 @@ func addFood(c echo.Context) error {
 		}
 	}
 
-	if err := db.CreateMealItem(mealID, foodID, 100, userID); err != nil {
+	if err := db.CreateMealItem(mealID, foodID, 100, userID, isSavedMeal(c)); err != nil {
 		return handleDBErr(c, err)
 	}
 
@@ -118,10 +118,11 @@ func removeFood(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
-	if err := db.DeleteMealItem(itemID, userID); err != nil {
+	isTemplate := isSavedMeal(c)
+	if err := db.DeleteMealItem(mealID, itemID, userID, isTemplate); err != nil {
 		return handleDBErr(c, err)
 	}
-	meal, err := db.GetMealByID(mealID, userID)
+	meal, err := db.GetMealByID(mealID, userID, isTemplate)
 	if err != nil {
 		return handleDBErr(c, err)
 	}
@@ -141,12 +142,18 @@ func updateGrams(c echo.Context) error {
 	}
 	grams, err := strconv.ParseFloat(c.FormValue("grams"), 64)
 	if err != nil {
-		return c.NoContent(http.StatusBadRequest)
+		c.Response().Header().Set("HX-Reswap", "none")
+		return view.MealFeedbackOOB("Grams must be a number").Render(context.Background(), c.Response().Writer)
 	}
-	if err := db.UpdateMealItem(itemID, grams, userID); err != nil {
+	if grams <= 0 {
+		c.Response().Header().Set("HX-Reswap", "none")
+		return view.MealFeedbackOOB("Grams must be greater than 0").Render(context.Background(), c.Response().Writer)
+	}
+	isTemplate := isSavedMeal(c)
+	if err := db.UpdateMealItem(mealID, itemID, grams, userID, isTemplate); err != nil {
 		return handleDBErr(c, err)
 	}
-	meal, err := db.GetMealByID(mealID, userID)
+	meal, err := db.GetMealByID(mealID, userID, isTemplate)
 	if err != nil {
 		return handleDBErr(c, err)
 	}
@@ -158,6 +165,9 @@ func updateGrams(c echo.Context) error {
 			break
 		}
 	}
+	if err := view.MealFeedbackOOB("").Render(context.Background(), c.Response().Writer); err != nil {
+		return err
+	}
 	totals := db.SumMealItemMacros(meal.Items)
 	return view.MealTotalsOOB(totals).Render(context.Background(), c.Response().Writer)
 }
@@ -168,8 +178,8 @@ func updateName(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
-	name := c.FormValue("name")
-	if err := db.UpdateMealName(id, userID, name); err != nil {
+	name := normalizedMealName(c.FormValue("name"), isSavedMeal(c))
+	if err := db.UpdateMealName(id, userID, isSavedMeal(c), name); err != nil {
 		return handleDBErr(c, err)
 	}
 	return nil
@@ -184,4 +194,35 @@ func editPath(c echo.Context, id int) string {
 		return fmt.Sprintf("/template/%d/", id)
 	}
 	return fmt.Sprintf("/meal/%d/", id)
+}
+
+func normalizedMealName(name string, isTemplate bool) string {
+	name = strings.TrimSpace(name)
+	if name != "" {
+		return name
+	}
+	if isTemplate {
+		return db.DefaultSavedMealName
+	}
+	return defaultMealName
+}
+
+func addFoodByTarget(userID int, targetType string, targetID string, foodID int, mealDate time.Time) (int, error) {
+	var mealID int
+	var err error
+	if targetType == "meal" && targetID == newMealParam {
+		mealID, err = db.CreateMeal(defaultMealName, userID, false, mealDate)
+		if err != nil {
+			return 0, err
+		}
+	} else {
+		mealID, err = strconv.Atoi(targetID)
+		if err != nil {
+			return 0, errors.New("invalid target")
+		}
+	}
+	if err := db.CreateMealItem(mealID, foodID, 100, userID, targetType == "template"); err != nil {
+		return 0, err
+	}
+	return mealID, nil
 }
