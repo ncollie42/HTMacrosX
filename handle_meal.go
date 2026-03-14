@@ -228,24 +228,5 @@ func addFoodByTarget(userID int, targetType string, targetID string, foodID int,
 }
 
 func createAndAddFoodByTarget(userID int, targetType string, targetID string, name string, fat float64, carb float64, fiber float64, protein float64, grams float64, mealDate time.Time) (int, error) {
-	var mealID int
-	var err error
-	if targetType == "meal" && targetID == newMealParam {
-		mealID, err = db.CreateMeal(defaultMealName, userID, false, mealDate)
-		if err != nil {
-			return 0, err
-		}
-	} else {
-		mealID, err = strconv.Atoi(targetID)
-		if err != nil {
-			return 0, errors.New("invalid target")
-		}
-		if err := db.ValidateMealAccess(mealID, userID, targetType == "template"); err != nil {
-			return 0, err
-		}
-	}
-	if _, err := db.CreateFoodAndMealItem(name, fat, carb, fiber, protein, grams, userID, "", mealID, targetType == "template", 100); err != nil {
-		return 0, err
-	}
-	return mealID, nil
+	return createAndAddFoodByTargetWithBarcode(userID, targetType, targetID, name, fat, carb, fiber, protein, grams, "", mealDate)
 }

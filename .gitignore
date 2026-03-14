@@ -11,3 +11,5 @@ node_modules/
 .claude/
 .gocache
 .gomodcache/cache/download
+.gocache_local
+fda_food.zip

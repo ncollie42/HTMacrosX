@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -23,11 +22,11 @@ func foodSearch(c echo.Context) error {
 	userID := c.Get(ctxUserID).(int)
 	search := c.FormValue("search")
 	foods := db.FoodSearch(search, userID)
-	searchPath, joinPrefix, querySuffix, targetType, targetID, dateUnix := foodSearchPaths(c)
+	searchPath, joinPrefix, querySuffix, targetType, targetID, dateValue := foodSearchPaths(c)
 
 	var backURL string
 	if c.Param("id") == newMealParam {
-		backURL = overviewPath(requestedMealDate(c))
+		backURL = overviewPath(c, requestedMealDate(c))
 	} else {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
@@ -36,7 +35,7 @@ func foodSearch(c echo.Context) error {
 		backURL = editPath(c, id)
 	}
 	nav := view.NavBack(userID, backURL, "Ingredients")
-	searchResult := view.FoodSearch(foods, searchPath, joinPrefix, querySuffix, targetType, targetID, dateUnix)
+	searchResult := view.FoodSearch(foods, searchPath, joinPrefix, querySuffix, targetType, targetID, dateValue)
 	component := view.Full(nav, searchResult)
 	return component.Render(context.Background(), c.Response().Writer)
 }
@@ -78,8 +77,8 @@ func createFood(c echo.Context) error {
 	targetID := c.FormValue("targetID")
 	if c.FormValue("autoAdd") == "1" && targetType != "" && targetID != "" {
 		mealDate := requestedMealDate(c)
-		if unix := parseDateUnixValue(c.FormValue("dateUnix")); unix != 0 {
-			mealDate = time.Unix(unix, 0)
+		if day, ok := parseDayValue(c.FormValue("date"), loadUserLocation(c)); ok {
+			mealDate = day
 		}
 		mealID, err := createAndAddFoodByTarget(userID, targetType, targetID, name, fat, carb, fiber, protein, grams, mealDate)
 		if err != nil {
@@ -124,14 +123,14 @@ func deleteFood(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func foodSearchPaths(c echo.Context) (string, string, string, string, string, int64) {
+func foodSearchPaths(c echo.Context) (string, string, string, string, string, string) {
 	basePath := c.Request().URL.Path
 	querySuffix := querySuffixForDate(c)
 	targetType := "meal"
 	if strings.HasPrefix(basePath, "/template/") {
 		targetType = "template"
 	}
-	return basePath + querySuffix, strings.TrimSuffix(basePath, "food_search") + "join/", querySuffix, targetType, c.Param("id"), queryDateUnix(c)
+	return basePath + querySuffix, strings.TrimSuffix(basePath, "food_search") + "join/", querySuffix, targetType, c.Param("id"), queryDayValue(c)
 }
 
 func parsePositiveFloat(raw string, label string) (float64, error) {
@@ -154,9 +153,4 @@ func parseNonNegativeFloat(raw string, label string) (float64, error) {
 		return 0, fmt.Errorf("%s cannot be negative", label)
 	}
 	return value, nil
-}
-
-func parseDateUnixValue(raw string) int64 {
-	parsed, _ := strconv.ParseInt(strings.TrimSpace(raw), 10, 64)
-	return parsed
 }

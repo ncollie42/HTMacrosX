@@ -5,28 +5,21 @@ import (
 	db "myapp/DB"
 )
 
-templ FoodSearch(foods []db.Food, searchPath string, joinPrefix string, querySuffix string, targetType string, targetID string, dateUnix int64) {
+templ FoodSearch(foods []db.Food, searchPath string, joinPrefix string, querySuffix string, targetType string, targetID string, dateValue string) {
   <h3 class="text-lg font-semibold mb-3">Ingredients <small class="text-sm font-normal opacity-60">per 100g</small></h3>
   @FoodFeedback("")
-  <input type="search" placeholder="Search..."
+  <input type="search" placeholder="Search ingredients..."
     name="search"
     class="input input-bordered w-full mb-3"
-	  hx-get={searchPath}
+    hx-get={searchPath}
     hx-select="#search-results"
-	  hx-trigger="keyup changed delay:500ms, search"
-	  hx-target="#search-results"
+    hx-trigger="keyup changed delay:500ms, search"
+    hx-target="#search-results"
     hx-swap="outerHTML"
     hx-indicator="#food-search-loading"/>
   <div id="food-search-loading" class="htmx-indicator text-sm opacity-60 mb-3">Searching...</div>
-  @AddFoodForm(joinPrefix, querySuffix, targetType, targetID, dateUnix)
-  <div id="search-results">
-  for _, food := range foods {
-    @foodSelect(food, fmt.Sprintf("%s%d%s", joinPrefix, food.ID, querySuffix))
-  }
-  if len(foods) == 0 {
-    <p class="text-center text-base-content/50 text-sm py-6">No ingredients found. Try a different search or create one.</p>
-  }
-  </div>
+  @AddFoodForm(joinPrefix, querySuffix, targetType, targetID, dateValue)
+  @FoodSearchResults(foods, joinPrefix, querySuffix)
 }
 
 templ FoodSearchResults(foods []db.Food, joinPrefix string, querySuffix string) {
@@ -56,7 +49,7 @@ templ FoodFeedbackOOB(msg string) {
   </div>
 }
 
-templ AddFoodForm(joinPrefix string, querySuffix string, targetType string, targetID string, dateUnix int64) {
+templ AddFoodForm(joinPrefix string, querySuffix string, targetType string, targetID string, dateValue string) {
   <details class="collapse collapse-arrow bg-base-200 mb-3">
     <summary class="collapse-title text-sm font-medium">Create New</summary>
     <div class="collapse-content">
@@ -65,7 +58,7 @@ templ AddFoodForm(joinPrefix string, querySuffix string, targetType string, targ
         <input type="hidden" name="querySuffix" value={querySuffix}/>
         <input type="hidden" name="targetType" value={targetType}/>
         <input type="hidden" name="targetID" value={targetID}/>
-        <input type="hidden" name="dateUnix" value={fmt.Sprintf("%d", dateUnix)}/>
+        <input type="hidden" name="date" value={dateValue}/>
         <input type="hidden" name="autoAdd" value="1"/>
         <fieldset class="fieldset">
           <legend class="fieldset-legend">Name</legend>

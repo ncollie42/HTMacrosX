@@ -30,6 +30,24 @@ templ Header() {
     <link rel="stylesheet" href="/app.css"></link>
 }
 
+templ BrowserTimezoneScript() {
+  <script>
+    (function() {
+      function syncTimezoneCookie() {
+        var tz = "";
+        try {
+          tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+        } catch (_) {}
+        if (!tz) return;
+        document.cookie = "tz=" + encodeURIComponent(tz) + "; Path=/; SameSite=Lax";
+      }
+      syncTimezoneCookie();
+      document.addEventListener("htmx:afterSwap", syncTimezoneCookie);
+      document.addEventListener("htmx:afterSettle", syncTimezoneCookie);
+    })();
+  </script>
+}
+
 templ Full(components ...templ.Component) {
     <!DOCTYPE html>
     <html lang="en" data-theme="dracula">
@@ -40,6 +58,7 @@ templ Full(components ...templ.Component) {
           for _, c := range components {
             @c
           }
+          @BrowserTimezoneScript()
         </body>
     </html>
 }
@@ -53,7 +72,7 @@ templ accountDropdown() {
       </svg>
     </div>
     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-200 rounded-box w-40 p-2 shadow-lg z-10">
-      <li><a hx-boost="false" href="/settings">Update Macros</a></li>
+      <li><a hx-boost="false" href="/settings">Settings</a></li>
       <li><button hx-post="/signout">Logout</button></li>
     </ul>
   </div>
@@ -144,7 +163,22 @@ templ GramEdit(item db.MealItem) {
 templ foodSelect(food db.Food, path string) {
   <div class="card bg-base-200 shadow-sm mb-3">
     <div class="card-body p-4 gap-2">
-      @buttonNav(food.Name, liDelete(fmt.Sprint("/food/", food.ID), "Delete this ingredient?"))
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex flex-col gap-1">
+          <strong>{food.Name}</strong>
+          if food.Source == db.USDAFoundationSource {
+            <div class="badge badge-outline badge-xs w-fit">USDA</div>
+          }
+        </div>
+        if food.Owned {
+          <div class="dropdown dropdown-end">
+            <div tabindex="0" role="button" class="btn btn-ghost btn-xs">···</div>
+            <ul tabindex="0" class="dropdown-content menu menu-xs bg-base-100 rounded-box w-28 p-1 shadow z-10">
+              @liDelete(fmt.Sprint("/food/", food.ID), "Delete this ingredient?")
+            </ul>
+          </div>
+        }
+      </div>
       @macroPost(food.Macros, "", path)
     </div>
   </div>

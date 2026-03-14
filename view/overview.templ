@@ -3,7 +3,6 @@ package view
 import (
 	db "myapp/DB"
 	"fmt"
-	"time"
 )
 
 type Nutrient int
@@ -33,19 +32,11 @@ func progressClass(colorClass string) string {
   }
 }
 
-func dateLabel(date time.Time) string {
-  now := time.Now()
-  if date.Year() == now.Year() && date.YearDay() == now.YearDay() {
-    return "Today"
-  }
-  return date.Format("Mon, Jan 2")
-}
-
-templ DateNav(date time.Time) {
+templ DateNav(prevPath string, todayPath string, nextPath string, label string) {
   <div class="flex justify-center items-center gap-2 mb-5">
-    <a hx-boost="true" href={templ.SafeURL(fmt.Sprint("/",date.AddDate(0, 0, -1).Unix()))} class="btn btn-sm btn-outline btn-ghost rounded-full px-4">Prev</a>
-    <a hx-boost="true" href="/" class="btn btn-sm btn-outline rounded-full px-5 font-semibold">{dateLabel(date)}</a>
-    <a hx-boost="true" href={templ.SafeURL(fmt.Sprint("/",date.AddDate(0, 0, 1).Unix()))} class="btn btn-sm btn-outline btn-ghost rounded-full px-4">Next</a>
+    <a hx-boost="true" href={templ.SafeURL(prevPath)} class="btn btn-sm btn-outline btn-ghost rounded-full px-4">Prev</a>
+    <a hx-boost="true" href={templ.SafeURL(todayPath)} class="btn btn-sm btn-outline rounded-full px-5 font-semibold">{label}</a>
+    <a hx-boost="true" href={templ.SafeURL(nextPath)} class="btn btn-sm btn-outline btn-ghost rounded-full px-4">Next</a>
   </div>
 }
 
@@ -58,8 +49,8 @@ templ dashCard(label string, current float32, target float32, colorClass string,
   </div>
 }
 
-templ DayOverview(date time.Time, total db.Macro, target db.Macro) {
-  @DateNav(date)
+templ DayOverview(total db.Macro, target db.Macro, prevPath string, todayPath string, nextPath string, label string) {
+  @DateNav(prevPath, todayPath, nextPath, label)
   <div class="grid grid-cols-2 gap-3 mb-6">
     @dashCard("Calories", total.Calories, target.Calories, "c-cal", true)
     @dashCard("Fat", total.Fat, target.Fat, "c-fat", false)
@@ -69,8 +60,8 @@ templ DayOverview(date time.Time, total db.Macro, target db.Macro) {
   </div>
 }
 
-templ DayQuickview(macros []db.MealSummary, date time.Time) {
-  <div class="divider text-xs text-base-content/50 font-semibold tracking-widest uppercase my-4">{dateLabel(date) + "'s Meals"}</div>
+templ DayQuickview(macros []db.MealSummary, label string) {
+  <div class="divider text-xs text-base-content/50 font-semibold tracking-widest uppercase my-4">{label + "'s Meals"}</div>
   if len(macros) == 0 {
     <p class="text-center text-base-content/40 text-sm py-8">No meals yet. Use Add Food or Quick Scan to start your first meal.</p>
   }
@@ -80,7 +71,7 @@ templ DayQuickview(macros []db.MealSummary, date time.Time) {
   <div class="pb-28"></div>
 }
 
-templ BottomNav(date time.Time) {
+templ BottomNav(scanPath string, addFoodPath string) {
   <div class="dock">
     <a href="/template/" hx-boost="true">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -91,7 +82,7 @@ templ BottomNav(date time.Time) {
       </svg>
       <span class="dock-label">Saved Meals</span>
     </a>
-    <a href={templ.SafeURL(fmt.Sprintf("/scan?date=%d", date.Unix()))} hx-boost="false">
+    <a href={templ.SafeURL(scanPath)} hx-boost="false">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
         <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
@@ -101,7 +92,7 @@ templ BottomNav(date time.Time) {
       </svg>
       <span class="dock-label">Quick Scan</span>
     </a>
-    <a href={templ.SafeURL(fmt.Sprintf("/meal/new/food_search?date=%d", date.Unix()))}>
+    <a href={templ.SafeURL(addFoodPath)}>
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"></circle>
         <line x1="12" y1="8" x2="12" y2="16"></line>
@@ -230,7 +221,7 @@ templ MealEditNav(mealID int, isTemplate bool) {
         <line x1="12" y1="8" x2="12" y2="16"></line>
         <line x1="8" y1="12" x2="16" y2="12"></line>
       </svg>
-      <span class="dock-label">Saved Ingredients</span>
+      <span class="dock-label">Ingredients</span>
     </a>
   </div>
 }

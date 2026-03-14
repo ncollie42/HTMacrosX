@@ -13,7 +13,7 @@ import (
 	db "myapp/DB"
 )
 
-func FoodSearch(foods []db.Food, searchPath string, joinPrefix string, querySuffix string, targetType string, targetID string, dateUnix int64) templ.Component {
+func FoodSearch(foods []db.Food, searchPath string, joinPrefix string, querySuffix string, targetType string, targetID string, dateValue string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -42,14 +42,14 @@ func FoodSearch(foods []db.Food, searchPath string, joinPrefix string, querySuff
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<input type=\"search\" placeholder=\"Search...\" name=\"search\" class=\"input input-bordered w-full mb-3\" hx-get=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<input type=\"search\" placeholder=\"Search ingredients...\" name=\"search\" class=\"input input-bordered w-full mb-3\" hx-get=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(searchPath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 14, Col: 21}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 14, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -59,27 +59,11 @@ func FoodSearch(foods []db.Food, searchPath string, joinPrefix string, querySuff
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = AddFoodForm(joinPrefix, querySuffix, targetType, targetID, dateUnix).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = AddFoodForm(joinPrefix, querySuffix, targetType, targetID, dateValue).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div id=\"search-results\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		for _, food := range foods {
-			templ_7745c5c3_Err = foodSelect(food, fmt.Sprintf("%s%d%s", joinPrefix, food.ID, querySuffix)).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		if len(foods) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<p class=\"text-center text-base-content/50 text-sm py-6\">No ingredients found. Try a different search or create one.</p>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div>")
+		templ_7745c5c3_Err = FoodSearchResults(foods, joinPrefix, querySuffix).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -108,7 +92,7 @@ func FoodSearchResults(foods []db.Food, joinPrefix string, querySuffix string) t
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div id=\"search-results\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div id=\"search-results\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -119,12 +103,12 @@ func FoodSearchResults(foods []db.Food, joinPrefix string, querySuffix string) t
 			}
 		}
 		if len(foods) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<p class=\"text-center text-base-content/50 text-sm py-6\">No ingredients found. Try a different search or create one.</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<p class=\"text-center text-base-content/50 text-sm py-6\">No ingredients found. Try a different search or create one.</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -153,30 +137,30 @@ func FoodFeedback(msg string) templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div id=\"food-feedback\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div id=\"food-feedback\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if msg != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"alert alert-warning text-sm mb-3\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"alert alert-warning text-sm mb-3\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(msg)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 46, Col: 56}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 39, Col: 56}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -205,30 +189,30 @@ func FoodFeedbackOOB(msg string) templ.Component {
 			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div id=\"food-feedback\" hx-swap-oob=\"true\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div id=\"food-feedback\" hx-swap-oob=\"true\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if msg != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<div class=\"alert alert-warning text-sm mb-3\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<div class=\"alert alert-warning text-sm mb-3\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(msg)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 54, Col: 56}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 47, Col: 56}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -236,7 +220,7 @@ func FoodFeedbackOOB(msg string) templ.Component {
 	})
 }
 
-func AddFoodForm(joinPrefix string, querySuffix string, targetType string, targetID string, dateUnix int64) templ.Component {
+func AddFoodForm(joinPrefix string, querySuffix string, targetType string, targetID string, dateValue string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -257,72 +241,72 @@ func AddFoodForm(joinPrefix string, querySuffix string, targetType string, targe
 			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<details class=\"collapse collapse-arrow bg-base-200 mb-3\"><summary class=\"collapse-title text-sm font-medium\">Create New</summary><div class=\"collapse-content\"><form hx-post=\"/food\" hx-target=\"#search-results\" hx-swap=\"outerHTML\" class=\"flex flex-col gap-2 pt-2\"><input type=\"hidden\" name=\"joinPrefix\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<details class=\"collapse collapse-arrow bg-base-200 mb-3\"><summary class=\"collapse-title text-sm font-medium\">Create New</summary><div class=\"collapse-content\"><form hx-post=\"/food\" hx-target=\"#search-results\" hx-swap=\"outerHTML\" class=\"flex flex-col gap-2 pt-2\"><input type=\"hidden\" name=\"joinPrefix\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(joinPrefix)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 64, Col: 64}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 57, Col: 64}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\"> <input type=\"hidden\" name=\"querySuffix\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\"> <input type=\"hidden\" name=\"querySuffix\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(querySuffix)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 65, Col: 66}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 58, Col: 66}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\"> <input type=\"hidden\" name=\"targetType\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"> <input type=\"hidden\" name=\"targetType\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(targetType)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 66, Col: 64}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 59, Col: 64}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\"> <input type=\"hidden\" name=\"targetID\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\"> <input type=\"hidden\" name=\"targetID\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(targetID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 67, Col: 60}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 60, Col: 60}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\"> <input type=\"hidden\" name=\"dateUnix\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\"> <input type=\"hidden\" name=\"date\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var13 string
-		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", dateUnix))
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(dateValue)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 68, Col: 79}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/foodsearch.templ`, Line: 61, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\"> <input type=\"hidden\" name=\"autoAdd\" value=\"1\"><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Name</legend> <input type=\"text\" name=\"name\" class=\"input w-full\" required></fieldset><div class=\"grid grid-cols-2 gap-3\"><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Fat (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"fat\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Carbs (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"carb\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Fiber (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"fiber\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Protein (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"protein\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset col-span-2\"><legend class=\"fieldset-legend\">Serving size (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"grams\" step=\"0.1\" value=\"100\" class=\"input w-full\"></fieldset></div><button type=\"submit\" class=\"btn btn-primary w-full mt-2\">Create & Add</button></form></div></details>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\"> <input type=\"hidden\" name=\"autoAdd\" value=\"1\"><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Name</legend> <input type=\"text\" name=\"name\" class=\"input w-full\" required></fieldset><div class=\"grid grid-cols-2 gap-3\"><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Fat (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"fat\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Carbs (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"carb\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Fiber (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"fiber\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Protein (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"protein\" step=\"0.1\" value=\"0\" class=\"input w-full\" required></fieldset><fieldset class=\"fieldset col-span-2\"><legend class=\"fieldset-legend\">Serving size (g)</legend> <input type=\"number\" inputmode=\"decimal\" name=\"grams\" step=\"0.1\" value=\"100\" class=\"input w-full\"></fieldset></div><button type=\"submit\" class=\"btn btn-primary w-full mt-2\">Create & Add</button></form></div></details>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -7,9 +7,10 @@ import (
 )
 
 type MacroTargetsConfig struct {
-  Action     string
-  ButtonText string
-  IsPut      bool
+  Action       string
+  ButtonText   string
+  IsPut        bool
+  ShowTimezone bool
 }
 
 type MacroTargetsForm struct {
@@ -64,9 +65,10 @@ func (f MacroTargetsForm) ToMacro() db.Macro {
 }
 
 var SettingsCfg = MacroTargetsConfig{
-	Action:     "/settings",
-	ButtonText: "Save & Back",
-	IsPut:      true,
+	Action:       "/settings",
+	ButtonText:   "Save & Back",
+	IsPut:        true,
+	ShowTimezone: true,
 }
 
 var OnboardingCfg = MacroTargetsConfig{
@@ -74,7 +76,7 @@ var OnboardingCfg = MacroTargetsConfig{
 	ButtonText: "Save & Continue",
 }
 
-templ MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfig, errMsg string) {
+templ MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfig, timezone string, errMsg string) {
   <div id="settings-form">
     <div class="text-lg font-semibold mb-4">Macro Targets</div>
     if errMsg != "" {
@@ -102,11 +104,11 @@ templ MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConf
     </div>
     if cfg.IsPut {
       <form hx-put={cfg.Action} hx-target="#settings-form" hx-swap="outerHTML">
-        @macroFormBody(form, cfg)
+        @macroFormBody(form, cfg, timezone)
       </form>
     } else {
       <form hx-post={cfg.Action} hx-target="#settings-form" hx-swap="outerHTML">
-        @macroFormBody(form, cfg)
+        @macroFormBody(form, cfg, timezone)
       </form>
     }
     <div class="flex gap-3 mt-4">
@@ -118,6 +120,8 @@ templ MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConf
       (function(){
         var f=document.querySelector('#settings-form form');
         if(!f)return;
+        var tzBtn=f.querySelector('[data-fill-timezone="true"]');
+        var tzInput=f.querySelector('input[name="timezone"]');
         function v(el){return parseFloat(el.value)||0;}
         function u(){
           var fat=v(f.fat);
@@ -139,12 +143,23 @@ templ MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConf
           }else{bar.innerHTML='';}
         }
         f.addEventListener('input',u);
+        if(tzBtn&&tzInput){
+          tzBtn.addEventListener('click',function(){
+            var tz="";
+            try{
+              tz=Intl.DateTimeFormat().resolvedOptions().timeZone||"";
+            }catch(_){}
+            if(!tz)return;
+            tzInput.value=tz;
+            tzInput.dispatchEvent(new Event('input',{bubbles:true}));
+          });
+        }
       })();
     </script>
   </div>
 }
 
-templ macroFormBody(form MacroTargetsForm, cfg MacroTargetsConfig) {
+templ macroFormBody(form MacroTargetsForm, cfg MacroTargetsConfig, timezone string) {
   <fieldset class="fieldset mb-2">
     <legend class="fieldset-legend">Fat (g)</legend>
     <input type="number" inputmode="decimal" name="fat" step="0.1" value={form.Fat} class="input w-full"/>
@@ -161,5 +176,13 @@ templ macroFormBody(form MacroTargetsForm, cfg MacroTargetsConfig) {
     <legend class="fieldset-legend">Protein (g)</legend>
     <input type="number" inputmode="decimal" name="protein" step="0.1" value={form.Protein} class="input w-full"/>
   </fieldset>
+  if cfg.ShowTimezone {
+    <fieldset class="fieldset mb-2">
+      <legend class="fieldset-legend">Timezone</legend>
+      <input type="text" name="timezone" value={timezone} class="input w-full" placeholder="America/Los_Angeles" autocomplete="off"/>
+      <p class="text-xs text-base-content/60 mt-1">Use an IANA timezone like <code>America/Los_Angeles</code>.</p>
+      <button type="button" class="btn btn-outline btn-sm mt-2" data-fill-timezone="true">Use device timezone</button>
+    </fieldset>
+  }
   <button type="submit" class="btn btn-primary w-full mt-2">{cfg.ButtonText}</button>
 }

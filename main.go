@@ -72,6 +72,7 @@ func validate(next echo.HandlerFunc) echo.HandlerFunc {
 			return c.Redirect(http.StatusSeeOther, "/signin")
 		}
 		c.Set(ctxUserID, userID)
+		persistInitialUserTimezone(c, userID)
 		return next(c)
 	}
 }

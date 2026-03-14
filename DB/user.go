@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -38,9 +39,9 @@ func CreateUser(userName string, pass string) (int, error) {
 	}
 
 	res, err := sqlDB.Exec(
-		`INSERT INTO users (username, hashed_password, target_calories, target_fat, target_carb, target_fiber, target_protein) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO users (username, hashed_password, target_calories, target_fat, target_carb, target_fiber, target_protein, timezone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		userName, hashedPassword,
-		defaultTargets.Calories, defaultTargets.Fat, defaultTargets.Carb, defaultTargets.Fiber, defaultTargets.Protein,
+		defaultTargets.Calories, defaultTargets.Fat, defaultTargets.Carb, defaultTargets.Fiber, defaultTargets.Protein, "",
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
@@ -50,6 +51,44 @@ func CreateUser(userName string, pass string) (int, error) {
 	}
 	id, _ := res.LastInsertId()
 	return int(id), nil
+}
+
+func EnsureSystemUser(userName string) (int, error) {
+	userName = strings.TrimSpace(userName)
+	if userName == "" {
+		return 0, fmt.Errorf("username is required")
+	}
+
+	var id int
+	err := sqlDB.QueryRow(`SELECT id FROM users WHERE username = ?`, userName).Scan(&id)
+	if err == nil {
+		return id, nil
+	}
+	if err != sql.ErrNoRows {
+		return 0, err
+	}
+
+	hashedPassword, err := hashPassword("system-user-disabled-password")
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := sqlDB.Exec(
+		`INSERT INTO users (username, hashed_password, target_calories, target_fat, target_carb, target_fiber, target_protein, timezone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		userName, hashedPassword,
+		defaultTargets.Calories, defaultTargets.Fat, defaultTargets.Carb, defaultTargets.Fiber, defaultTargets.Protein, "",
+	)
+	if err != nil {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			if err := sqlDB.QueryRow(`SELECT id FROM users WHERE username = ?`, userName).Scan(&id); err != nil {
+				return 0, err
+			}
+			return id, nil
+		}
+		return 0, err
+	}
+	id64, _ := res.LastInsertId()
+	return int(id64), nil
 }
 
 func GetUserTargets(userID int) (Macro, error) {
@@ -78,6 +117,35 @@ func UpdateUserTargets(userID int, targets Macro) error {
 		`UPDATE users SET target_calories=?, target_fat=?, target_carb=?, target_fiber=?, target_protein=? WHERE id=?`,
 		targets.Calories, targets.Fat, targets.Carb, targets.Fiber, targets.Protein, userID,
 	)
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return ErrNotOwned
+	}
+	return nil
+}
+
+func GetUserTimezone(userID int) (string, error) {
+	var timezone string
+	err := sqlDB.QueryRow(`SELECT timezone FROM users WHERE id = ?`, userID).Scan(&timezone)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", ErrNotOwned
+		}
+		return "", err
+	}
+	return timezone, nil
+}
+
+func UpdateUserTimezone(userID int, timezone string) error {
+	if timezone != "" {
+		if _, err := time.LoadLocation(timezone); err != nil {
+			return fmt.Errorf("invalid timezone: %w", err)
+		}
+	}
+	res, err := sqlDB.Exec(`UPDATE users SET timezone = ? WHERE id = ?`, timezone, userID)
 	if err != nil {
 		return err
 	}

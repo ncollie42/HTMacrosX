@@ -13,7 +13,7 @@ import (
 	"strconv"
 )
 
-func ScanPage(mealID int, mealType string, dateUnix int64, searchPath string, errMsg string) templ.Component {
+func ScanPage(mealID int, mealType string, dateValue string, searchPath string, errMsg string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -65,9 +65,9 @@ func ScanPage(mealID int, mealType string, dateUnix int64, searchPath string, er
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(dateUnix, 10))
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(dateValue)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/scan.templ`, Line: 9, Col: 118}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/scan.templ`, Line: 9, Col: 96}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -127,9 +127,9 @@ func ScanPage(mealID int, mealType string, dateUnix int64, searchPath string, er
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(dateUnix, 10))
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(dateValue)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/scan.templ`, Line: 20, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/scan.templ`, Line: 20, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -160,7 +160,7 @@ func ScanPage(mealID int, mealType string, dateUnix int64, searchPath string, er
 	})
 }
 
-func ScanConfirm(food db.Food, barcode string, mealID int, mealType string, dateUnix int64, searchPath string) templ.Component {
+func ScanConfirm(food db.Food, barcode string, mealID int, mealType string, dateValue string, searchPath string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -263,9 +263,9 @@ func ScanConfirm(food db.Food, barcode string, mealID int, mealType string, date
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(dateUnix, 10))
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(dateValue)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/scan.templ`, Line: 46, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/scan.templ`, Line: 46, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -313,7 +313,7 @@ func scanScript() templ.Component {
 			templ_7745c5c3_Var18 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<script type=\"text/javascript\">\n    (function() {\n      var html5QrCode = new Html5Qrcode(\"reader\");\n      var statusEl = document.getElementById(\"scan-status\");\n      var pageEl = document.getElementById(\"scan-page\");\n      var mealID = pageEl.getAttribute(\"data-meal\");\n      var mealType = pageEl.getAttribute(\"data-type\");\n      var dateUnix = pageEl.getAttribute(\"data-date\");\n      if (mealID === \"0\") mealID = \"\";\n      if (dateUnix === \"0\") dateUnix = \"\";\n      var scanning = true;\n      var camConfig = { facingMode: \"environment\" };\n      var scanConfig = { fps: 10, qrbox: { width: 250, height: 150 } };\n\n      function onScanSuccess(decodedText) {\n        if (!scanning) return;\n        scanning = false;\n        statusEl.textContent = \"Found: \" + decodedText + \" — looking up...\";\n        html5QrCode.stop().catch(function() {});\n\n        var params = [];\n        if (mealID) params.push(\"meal=\" + encodeURIComponent(mealID));\n        if (mealType) params.push(\"type=\" + encodeURIComponent(mealType));\n        if (dateUnix) params.push(\"date=\" + encodeURIComponent(dateUnix));\n        var url = \"/scan/\" + encodeURIComponent(decodedText) + (params.length ? \"?\" + params.join(\"&\") : \"\");\n        var xhr = new XMLHttpRequest();\n        xhr.open(\"POST\", url);\n        xhr.setRequestHeader(\"HX-Request\", \"true\");\n        xhr.onload = function() {\n          var loc = xhr.getResponseHeader(\"HX-Location\");\n          if (loc) {\n            window.location.replace(loc);\n          } else if (xhr.status >= 400) {\n            statusEl.textContent = xhr.status === 404 ? \"Product not found. Try another barcode.\" : \"Lookup failed. Please try again.\";\n            scanning = true;\n            html5QrCode.start(camConfig, scanConfig, onScanSuccess, function() {}).catch(function() {});\n          }\n        };\n        xhr.onerror = function() {\n          statusEl.textContent = \"Network error. Please try again.\";\n          scanning = true;\n          html5QrCode.start(camConfig, scanConfig, onScanSuccess, function() {}).catch(function() {});\n        };\n        xhr.send();\n      }\n\n      html5QrCode.start(camConfig, scanConfig, onScanSuccess, function() {}).then(function() {\n        statusEl.textContent = \"Point camera at a barcode\";\n      }).catch(function(err) {\n        statusEl.textContent = \"Camera blocked or unavailable. Allow camera access or enter the barcode manually.\";\n      });\n    })();\n  </script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<script type=\"text/javascript\">\n    (function() {\n      var html5QrCode = new Html5Qrcode(\"reader\");\n      var statusEl = document.getElementById(\"scan-status\");\n      var pageEl = document.getElementById(\"scan-page\");\n      var mealID = pageEl.getAttribute(\"data-meal\");\n      var mealType = pageEl.getAttribute(\"data-type\");\n      var dateValue = pageEl.getAttribute(\"data-date\");\n      if (mealID === \"0\") mealID = \"\";\n      if (!dateValue) dateValue = \"\";\n      var scanning = true;\n      var camConfig = { facingMode: \"environment\" };\n      var scanConfig = { fps: 10, qrbox: { width: 250, height: 150 } };\n\n      function onScanSuccess(decodedText) {\n        if (!scanning) return;\n        scanning = false;\n        statusEl.textContent = \"Found: \" + decodedText + \" — looking up...\";\n        html5QrCode.stop().catch(function() {});\n\n        var params = [];\n        if (mealID) params.push(\"meal=\" + encodeURIComponent(mealID));\n        if (mealType) params.push(\"type=\" + encodeURIComponent(mealType));\n        if (dateValue) params.push(\"date=\" + encodeURIComponent(dateValue));\n        var url = \"/scan/\" + encodeURIComponent(decodedText) + (params.length ? \"?\" + params.join(\"&\") : \"\");\n        var xhr = new XMLHttpRequest();\n        xhr.open(\"POST\", url);\n        xhr.setRequestHeader(\"HX-Request\", \"true\");\n        xhr.onload = function() {\n          var loc = xhr.getResponseHeader(\"HX-Location\");\n          if (loc) {\n            window.location.replace(loc);\n          } else if (xhr.status >= 400) {\n            statusEl.textContent = xhr.status === 404 ? \"Product not found. Try another barcode.\" : \"Lookup failed. Please try again.\";\n            scanning = true;\n            html5QrCode.start(camConfig, scanConfig, onScanSuccess, function() {}).catch(function() {});\n          }\n        };\n        xhr.onerror = function() {\n          statusEl.textContent = \"Network error. Please try again.\";\n          scanning = true;\n          html5QrCode.start(camConfig, scanConfig, onScanSuccess, function() {}).catch(function() {});\n        };\n        xhr.send();\n      }\n\n      html5QrCode.start(camConfig, scanConfig, onScanSuccess, function() {}).then(function() {\n        statusEl.textContent = \"Point camera at a barcode\";\n      }).catch(function(err) {\n        statusEl.textContent = \"Camera blocked or unavailable. Allow camera access or enter the barcode manually.\";\n      });\n    })();\n  </script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

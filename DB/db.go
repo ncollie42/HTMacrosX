@@ -12,6 +12,7 @@ import (
 var sqlDB *sql.DB
 
 var ErrNotOwned = fmt.Errorf("resource not found or not owned by user")
+
 const DefaultSavedMealName = "Saved Meal"
 const SharedFoodVisibility = 1
 
@@ -24,7 +25,8 @@ CREATE TABLE IF NOT EXISTS users (
     target_fat REAL NOT NULL DEFAULT 44.8,
     target_carb REAL NOT NULL DEFAULT 247.1,
     target_fiber REAL NOT NULL DEFAULT 32.0,
-    target_protein REAL NOT NULL DEFAULT 90.0
+    target_protein REAL NOT NULL DEFAULT 90.0,
+    timezone TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS foods (
@@ -37,7 +39,9 @@ CREATE TABLE IF NOT EXISTS foods (
     grams REAL NOT NULL CHECK (grams > 0),
     creator_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     barcode TEXT NOT NULL DEFAULT '',
-    is_shared INTEGER NOT NULL DEFAULT 0 CHECK (is_shared IN (0, 1))
+    is_shared INTEGER NOT NULL DEFAULT 0 CHECK (is_shared IN (0, 1)),
+    source TEXT NOT NULL DEFAULT '',
+    source_ref TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS meals (
@@ -89,6 +93,12 @@ func Open(path string) {
 	if _, err = sqlDB.Exec(schema); err != nil {
 		panic(err)
 	}
+	if err := migrateUserTimezone(); err != nil {
+		panic(err)
+	}
+	if err := migrateFoodSourceColumns(); err != nil {
+		panic(err)
+	}
 }
 
 func migrateLegacySchema() error {
@@ -127,8 +137,8 @@ func migrateLegacySchema() error {
 	}
 
 	copyStmts := []string{
-		`INSERT INTO foods (id, name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams, creator_user_id, barcode, is_shared)
-		SELECT id, name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams, creator_user_id, barcode, 0
+		`INSERT INTO foods (id, name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams, creator_user_id, barcode, is_shared, source, source_ref)
+		SELECT id, name, protein_per_gram, fat_per_gram, carb_per_gram, fiber_per_gram, grams, creator_user_id, barcode, 0, '', ''
 		FROM foods_legacy f
 		WHERE EXISTS (SELECT 1 FROM users u WHERE u.id = f.creator_user_id)
 		  AND grams > 0`,
@@ -168,6 +178,39 @@ func migrateLegacySchema() error {
 		return err
 	}
 	return tx.Commit()
+}
+
+func migrateUserTimezone() error {
+	hasTimezone, err := tableHasColumn("users", "timezone")
+	if err != nil || hasTimezone {
+		return err
+	}
+	_, err = sqlDB.Exec(`ALTER TABLE users ADD COLUMN timezone TEXT NOT NULL DEFAULT ''`)
+	return err
+}
+
+func migrateFoodSourceColumns() error {
+	hasSource, err := tableHasColumn("foods", "source")
+	if err != nil {
+		return err
+	}
+	if !hasSource {
+		if _, err := sqlDB.Exec(`ALTER TABLE foods ADD COLUMN source TEXT NOT NULL DEFAULT ''`); err != nil {
+			return err
+		}
+	}
+
+	hasSourceRef, err := tableHasColumn("foods", "source_ref")
+	if err != nil {
+		return err
+	}
+	if !hasSourceRef {
+		if _, err := sqlDB.Exec(`ALTER TABLE foods ADD COLUMN source_ref TEXT NOT NULL DEFAULT ''`); err != nil {
+			return err
+		}
+	}
+	_, err = sqlDB.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_foods_source_ref ON foods(source, source_ref) WHERE source_ref <> ''`)
+	return err
 }
 
 func tableExists(name string) (bool, error) {
@@ -268,6 +311,8 @@ type Food struct {
 	Name   string
 	ID     int
 	Grams  float32
+	Owned  bool
+	Source string
 }
 
 type MealItem struct {
@@ -294,6 +339,8 @@ type FoodRecord struct {
 	Grams          float32
 	CreatorUserID  int
 	Barcode        string
+	Source         string
+	SourceRef      string
 }
 
 type MealRecord struct {

@@ -104,10 +104,20 @@ func signout(c echo.Context) error {
 
 func settings(c echo.Context) error {
 	userID := c.Get(ctxUserID).(int)
+	timezone, err := db.GetUserTimezone(userID)
+	if err != nil {
+		return handleDBErr(c, err)
+	}
+	if timezone == "" {
+		if browser := browserTimezone(c); browser != "" {
+			timezone = browser
+		} else {
+			timezone = defaultAppTimezone
+		}
+	}
 
 	targets, ok := presets[c.QueryParam("preset")]
 	if !ok {
-		var err error
 		targets, err = db.GetUserTargets(userID)
 		if err != nil {
 			return handleDBErr(c, err)
@@ -116,11 +126,11 @@ func settings(c echo.Context) error {
 	form := view.NewMacroTargetsForm(targets)
 
 	if c.Request().Header.Get("HX-Request") != "" {
-		return view.MacroTargets(targets, form, view.SettingsCfg, "").Render(context.Background(), c.Response().Writer)
+		return view.MacroTargets(targets, form, view.SettingsCfg, timezone, "").Render(context.Background(), c.Response().Writer)
 	}
 
 	nav := view.NavBack(userID, "/", "Settings")
-	settingsForm := view.MacroTargets(targets, form, view.SettingsCfg, "")
+	settingsForm := view.MacroTargets(targets, form, view.SettingsCfg, timezone, "")
 	component := view.Full(nav, settingsForm)
 	return component.Render(context.Background(), c.Response().Writer)
 }
@@ -173,6 +183,7 @@ func parseMacroForm(c echo.Context) (db.Macro, error) {
 func updateSettings(c echo.Context) error {
 	userID := c.Get(ctxUserID).(int)
 	targets, err := parseMacroForm(c)
+	timezone, timezoneErr := requireTimezone(c.FormValue("timezone"))
 	form := view.NewMacroTargetsFormFromRaw(
 		c.FormValue("fat"),
 		c.FormValue("carb"),
@@ -180,9 +191,15 @@ func updateSettings(c echo.Context) error {
 		c.FormValue("protein"),
 	)
 	if err != nil {
-		return view.MacroTargets(form.ToMacro(), form, view.SettingsCfg, err.Error()).Render(context.Background(), c.Response().Writer)
+		return view.MacroTargets(form.ToMacro(), form, view.SettingsCfg, c.FormValue("timezone"), err.Error()).Render(context.Background(), c.Response().Writer)
+	}
+	if timezoneErr != nil {
+		return view.MacroTargets(targets, form, view.SettingsCfg, c.FormValue("timezone"), timezoneErr.Error()).Render(context.Background(), c.Response().Writer)
 	}
 	if err := db.UpdateUserTargets(userID, targets); err != nil {
+		return handleDBErr(c, err)
+	}
+	if err := db.UpdateUserTimezone(userID, timezone); err != nil {
 		return handleDBErr(c, err)
 	}
 
@@ -200,7 +217,7 @@ func onboardingView(c echo.Context) error {
 	form := view.NewMacroTargetsForm(targets)
 
 	if c.Request().Header.Get("HX-Request") != "" {
-		return view.MacroTargets(targets, form, view.OnboardingCfg, "").Render(context.Background(), c.Response().Writer)
+		return view.MacroTargets(targets, form, view.OnboardingCfg, "", "").Render(context.Background(), c.Response().Writer)
 	}
 
 	component := view.Full(view.Onboarding(targets, form))
@@ -217,7 +234,7 @@ func saveOnboarding(c echo.Context) error {
 		c.FormValue("protein"),
 	)
 	if err != nil {
-		return view.MacroTargets(form.ToMacro(), form, view.OnboardingCfg, err.Error()).Render(context.Background(), c.Response().Writer)
+		return view.MacroTargets(form.ToMacro(), form, view.OnboardingCfg, "", err.Error()).Render(context.Background(), c.Response().Writer)
 	}
 	if err := db.UpdateUserTargets(userID, targets); err != nil {
 		return handleDBErr(c, err)
@@ -227,38 +244,16 @@ func saveOnboarding(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func queryDateUnix(c echo.Context) int64 {
-	raw := c.QueryParam("date")
-	if raw == "" {
-		return 0
-	}
-	ii, err := strconv.ParseInt(raw, 10, 64)
-	if err != nil {
-		return 0
-	}
-	return ii
-}
-
 func requestedMealDate(c echo.Context) time.Time {
-	if unix := queryDateUnix(c); unix != 0 {
-		return time.Unix(unix, 0)
-	}
-	return time.Now()
+	return parseRequestedDay(c)
 }
 
 func querySuffixForDate(c echo.Context) string {
-	if unix := queryDateUnix(c); unix != 0 {
-		return "?date=" + strconv.FormatInt(unix, 10)
-	}
-	return ""
+	return querySuffixForDay(c)
 }
 
-func overviewPath(date time.Time) string {
-	now := time.Now()
-	if date.Year() == now.Year() && date.YearDay() == now.YearDay() {
-		return "/"
-	}
-	return "/" + strconv.FormatInt(date.Unix(), 10)
+func overviewPath(c echo.Context, date time.Time) string {
+	return overviewPathForDay(date, loadUserLocation(c))
 }
 
 func editPathForType(id int, mealType string) string {

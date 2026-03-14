@@ -15,9 +15,10 @@ import (
 )
 
 type MacroTargetsConfig struct {
-	Action     string
-	ButtonText string
-	IsPut      bool
+	Action       string
+	ButtonText   string
+	IsPut        bool
+	ShowTimezone bool
 }
 
 type MacroTargetsForm struct {
@@ -72,9 +73,10 @@ func (f MacroTargetsForm) ToMacro() db.Macro {
 }
 
 var SettingsCfg = MacroTargetsConfig{
-	Action:     "/settings",
-	ButtonText: "Save & Back",
-	IsPut:      true,
+	Action:       "/settings",
+	ButtonText:   "Save & Back",
+	IsPut:        true,
+	ShowTimezone: true,
 }
 
 var OnboardingCfg = MacroTargetsConfig{
@@ -82,7 +84,7 @@ var OnboardingCfg = MacroTargetsConfig{
 	ButtonText: "Save & Continue",
 }
 
-func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfig, errMsg string) templ.Component {
+func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfig, timezone string, errMsg string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -115,7 +117,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(errMsg)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 81, Col: 59}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 83, Col: 59}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -133,7 +135,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0f", targets.Calories))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 86, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 88, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -146,7 +148,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Fat))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 89, Col: 72}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 91, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -159,7 +161,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Carb))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 90, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 92, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -172,7 +174,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Fiber))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 91, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 93, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -185,7 +187,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", targets.Protein))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 92, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 94, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -203,7 +205,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("flex:%d", int(targets.Fat*9/targets.Calories*100)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 96, Col: 87}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 98, Col: 87}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -216,7 +218,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("flex:%d", int(targets.Carb*4/targets.Calories*100)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 97, Col: 88}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 99, Col: 88}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -229,7 +231,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("flex:%d", int(targets.Protein*4/targets.Calories*100)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 98, Col: 91}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 100, Col: 91}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -252,7 +254,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Action)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 104, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 106, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -262,7 +264,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = macroFormBody(form, cfg).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = macroFormBody(form, cfg, timezone).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -278,7 +280,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Action)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 108, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 110, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -288,7 +290,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = macroFormBody(form, cfg).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = macroFormBody(form, cfg, timezone).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -304,7 +306,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Action + "?preset=1750")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 113, Col: 87}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 115, Col: 87}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -317,7 +319,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Action + "?preset=2000")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 114, Col: 87}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 116, Col: 87}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -330,13 +332,13 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.Action + "?preset=2250")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 115, Col: 87}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 117, Col: 87}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" hx-target=\"#settings-form\" hx-swap=\"outerHTML\">2250</button></div><script>\n      (function(){\n        var f=document.querySelector('#settings-form form');\n        if(!f)return;\n        function v(el){return parseFloat(el.value)||0;}\n        function u(){\n          var fat=v(f.fat);\n          var carb=v(f.carb);\n          var fiber=v(f.fiber);\n          var prot=v(f.protein);\n          var cal=fat*9+carb*4+prot*4;\n          document.getElementById('pv-cal').textContent=Math.round(cal)+' cal';\n          document.getElementById('pv-fat').textContent=fat.toFixed(1)+'g F';\n          document.getElementById('pv-carb').textContent=carb.toFixed(1)+'g C';\n          document.getElementById('pv-fiber').textContent=fiber.toFixed(1)+'g Fi';\n          document.getElementById('pv-protein').textContent=prot.toFixed(1)+'g P';\n          var bar=document.getElementById('pv-bar');\n          if(cal>0){\n            var fp=Math.round(fat*9/cal*100);\n            var cp=Math.round(carb*4/cal*100);\n            var pp=Math.round(prot*4/cal*100);\n            bar.innerHTML='<div style=\"flex:'+fp+'\" class=\"bf\"></div><div style=\"flex:'+cp+'\" class=\"bc\"></div><div style=\"flex:'+pp+'\" class=\"bp\"></div>';\n          }else{bar.innerHTML='';}\n        }\n        f.addEventListener('input',u);\n      })();\n    </script></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" hx-target=\"#settings-form\" hx-swap=\"outerHTML\">2250</button></div><script>\n      (function(){\n        var f=document.querySelector('#settings-form form');\n        if(!f)return;\n        var tzBtn=f.querySelector('[data-fill-timezone=\"true\"]');\n        var tzInput=f.querySelector('input[name=\"timezone\"]');\n        function v(el){return parseFloat(el.value)||0;}\n        function u(){\n          var fat=v(f.fat);\n          var carb=v(f.carb);\n          var fiber=v(f.fiber);\n          var prot=v(f.protein);\n          var cal=fat*9+carb*4+prot*4;\n          document.getElementById('pv-cal').textContent=Math.round(cal)+' cal';\n          document.getElementById('pv-fat').textContent=fat.toFixed(1)+'g F';\n          document.getElementById('pv-carb').textContent=carb.toFixed(1)+'g C';\n          document.getElementById('pv-fiber').textContent=fiber.toFixed(1)+'g Fi';\n          document.getElementById('pv-protein').textContent=prot.toFixed(1)+'g P';\n          var bar=document.getElementById('pv-bar');\n          if(cal>0){\n            var fp=Math.round(fat*9/cal*100);\n            var cp=Math.round(carb*4/cal*100);\n            var pp=Math.round(prot*4/cal*100);\n            bar.innerHTML='<div style=\"flex:'+fp+'\" class=\"bf\"></div><div style=\"flex:'+cp+'\" class=\"bc\"></div><div style=\"flex:'+pp+'\" class=\"bp\"></div>';\n          }else{bar.innerHTML='';}\n        }\n        f.addEventListener('input',u);\n        if(tzBtn&&tzInput){\n          tzBtn.addEventListener('click',function(){\n            var tz=\"\";\n            try{\n              tz=Intl.DateTimeFormat().resolvedOptions().timeZone||\"\";\n            }catch(_){}\n            if(!tz)return;\n            tzInput.value=tz;\n            tzInput.dispatchEvent(new Event('input',{bubbles:true}));\n          });\n        }\n      })();\n    </script></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -344,7 +346,7 @@ func MacroTargets(targets db.Macro, form MacroTargetsForm, cfg MacroTargetsConfi
 	})
 }
 
-func macroFormBody(form MacroTargetsForm, cfg MacroTargetsConfig) templ.Component {
+func macroFormBody(form MacroTargetsForm, cfg MacroTargetsConfig, timezone string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -372,7 +374,7 @@ func macroFormBody(form MacroTargetsForm, cfg MacroTargetsConfig) templ.Componen
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(form.Fat)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 150, Col: 82}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 165, Col: 82}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -385,7 +387,7 @@ func macroFormBody(form MacroTargetsForm, cfg MacroTargetsConfig) templ.Componen
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(form.Carb)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 154, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 169, Col: 84}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -398,7 +400,7 @@ func macroFormBody(form MacroTargetsForm, cfg MacroTargetsConfig) templ.Componen
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(form.Fiber)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 158, Col: 86}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 173, Col: 86}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -411,26 +413,49 @@ func macroFormBody(form MacroTargetsForm, cfg MacroTargetsConfig) templ.Componen
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(form.Protein)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 162, Col: 90}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 177, Col: 90}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\" class=\"input w-full\"></fieldset><button type=\"submit\" class=\"btn btn-primary w-full mt-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\" class=\"input w-full\"></fieldset>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var21 string
-		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.ButtonText)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 164, Col: 75}
+		if cfg.ShowTimezone {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<fieldset class=\"fieldset mb-2\"><legend class=\"fieldset-legend\">Timezone</legend> <input type=\"text\" name=\"timezone\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var21 string
+			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(timezone)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 182, Col: 56}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\" class=\"input w-full\" placeholder=\"America/Los_Angeles\" autocomplete=\"off\"><p class=\"text-xs text-base-content/60 mt-1\">Use an IANA timezone like <code>America/Los_Angeles</code>.</p><button type=\"button\" class=\"btn btn-outline btn-sm mt-2\" data-fill-timezone=\"true\">Use device timezone</button></fieldset>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<button type=\"submit\" class=\"btn btn-primary w-full mt-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</button>")
+		var templ_7745c5c3_Var22 string
+		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(cfg.ButtonText)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/settings.templ`, Line: 187, Col: 75}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</button>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"myapp/auth"
 	db "myapp/DB"
+	"myapp/auth"
 	"os"
 )
 
@@ -13,6 +13,7 @@ func init() {
 		dbPath = "./app.db"
 	}
 	db.Open(dbPath)
+	syncUSDAFoundationFoodsOnStartup()
 	fmt.Println("Starting server with SQLite:", dbPath)
 	auth.InitSession()
 }
